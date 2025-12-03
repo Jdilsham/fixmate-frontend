@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import TopWave from "../components/Login & signup/TopWave";
-import BottomWave from "../components/Login & signup/BottomWave";
+import TopWave from "../components/LoginSignup/TopWave";
+import BottomWave from "../components/LoginSignup/BottomWave";
 import { IoPersonCircleSharp } from "react-icons/io5";
 import { GiPadlock } from "react-icons/gi";
 import toast from "react-hot-toast";
