@@ -7,6 +7,8 @@ import { IoPersonCircleSharp } from "react-icons/io5";
 import { GiPadlock } from "react-icons/gi";
 import toast from "react-hot-toast";
 import Btn from "../components/btn";
+const API = import.meta.env.VITE_BACKEND_URL;
+
 
 export default function LoginPage() {
   const [username, setusername] = useState("");
@@ -16,7 +18,7 @@ export default function LoginPage() {
   async function handleLogin() {
     try {
       const response = await axios.post(
-        "http://localhost:8081/api/auth/login",
+        `${API}/api/auth/login`,
         {
           email: username,
           password: password,
