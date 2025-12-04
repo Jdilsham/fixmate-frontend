@@ -62,8 +62,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          build-args: |
-            VITE_BACKEND_URL=${{ secrets.FRONTEND_BACKEND_URL }}
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/fixmate-frontend:latest
             ${{ secrets.DOCKER_USERNAME }}/fixmate-frontend:${{ steps.vars.outputs.TAG }}
