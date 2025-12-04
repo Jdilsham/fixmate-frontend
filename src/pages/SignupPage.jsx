@@ -8,6 +8,8 @@ import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import Btn from "../components/btn";
+const API = import.meta.env.VITE_BACKEND_URL;
+
 
 export default function SignupPage() {
   const [firstName, setfirstName] = useState("");
@@ -23,7 +25,7 @@ export default function SignupPage() {
   async function handleSignup() {
     try {
       const response = await axios.post(
-        "http://localhost:8081/api/auth/signup",
+        `${API}/api/auth/signup`,
         {
           firstName: firstName,
           lastName: lastName,
