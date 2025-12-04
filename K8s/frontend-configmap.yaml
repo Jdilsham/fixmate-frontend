@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: fixmate
+data:
+  REACT_APP_BACKEND_URL: "http://fixmate-backend.fixmate.svc.cluster.local"
