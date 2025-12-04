@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import TopWave from "../Components/Login & Signup/TopWave";
-import BottomWave from "../Components/Login & Signup/BottomWave";
+import TopWave from "../components/LoginSignup/TopWave";
+import BottomWave from "../components/LoginSignup/BottomWave";
 import { IoPersonCircleSharp } from "react-icons/io5";
 import { MdAttachEmail } from "react-icons/md";
 import { GiPadlock } from "react-icons/gi";
 import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import Btn from "../Components/Btn";
+import Btn from "../components/btn";
 
 export default function SignupPage() {
   const [firstName, setfirstName] = useState("");
