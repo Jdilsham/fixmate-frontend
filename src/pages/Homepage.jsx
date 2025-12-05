@@ -1,12 +1,14 @@
 import { useState } from "react";
 import Header from "../components/header";
 import ServiceCard from "../components/homepage/serviceCard";
+import QualityCard from "../components/homepage/qualitycard";
 
 export default function Homepage() {
   const [search, getsearch] = useState("");
 
   return (
     <div className="w-full h-full">
+      {/* first quarter */}
       <div className="w-full h-full flex flex-col bg-[url('/background.jpg')] bg-center  bg-no-repeat">
         <Header />
         <div className="pl-[134px]">
@@ -19,7 +21,7 @@ export default function Homepage() {
         <div className="text-[#ffffff] text-[34px] font-semibold leading-[70px] pl-[112px] pt-[510px] absolute">
           Find Skilled Professionals Instantly
         </div>
-        {/* Search bar  */}
+        {/* Search bar   */}
         <div className="w-[773px] h-[62px]   absolute leading-[70px]  pl-[112px] pt-[600px] flex">
           <input
             type="text"
@@ -43,39 +45,95 @@ export default function Homepage() {
           </button>
         </div>
       </div>
-      <div className="w-full h-full flex justify-center items-center flex-col pt-20  ">
-        <span className="text-[64px] font-serif pt-10 ">Our Services</span>
-        <div className="w-full h-[360px]  flex justify-center items-center space-x-8 pl-8 pt-8 pb-8">
+      {/* second quarter */}
+      <div className="w-full h-full  flex  flex-col  ">
+        <span className="text-[64px] font-serif text-center  ">
+          Our Services
+        </span>
+        <div className="w-full h-[300px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
           <ServiceCard
             imgsrc="/serviceIcons/landscaping.png"
             title="Landscaping"
           />
-          <ServiceCard imgsrc="/serviceIcons/electric.png" title="Electrical" />
-          <ServiceCard imgsrc="/serviceIcons/cleaning.png" title="Cleaning" />
+
           <ServiceCard imgsrc="/serviceIcons/plumbing.png" title="Plumbing" />
+          <ServiceCard
+            imgsrc="/serviceIcons/mechanic.png"
+            title="Vehicle Repair"
+          />
+
           <ServiceCard imgsrc="/serviceIcons/carpenter.png" title="Carpentry" />
+          <ServiceCard
+            imgsrc="/serviceIcons/repairing.png"
+            title="Equipment Repairing"
+          />
         </div>
-        <div className="w-full h-[360px]  flex justify-center items-center space-x-8 pl-8 pt-8 pb-8">
-          <ServiceCard
-            imgsrc="/serviceIcons/landscaping.png"
-            title="Landscaping"
-          />
+        <div className="w-full h-[300px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
           <ServiceCard imgsrc="/serviceIcons/electric.png" title="Electrical" />
-          <ServiceCard imgsrc="/serviceIcons/cleaning.png" title="Cleaning" />
-          <ServiceCard imgsrc="/serviceIcons/plumbing.png" title="Plumbing" />
-          <ServiceCard imgsrc="/serviceIcons/carpenter.png" title="Carpentry" />
+          <ServiceCard
+            imgsrc="/serviceIcons/colorwash.png"
+            title="Color Washing"
+          />
+          <ServiceCard imgsrc="/serviceIcons/tile.png" title="Tile work" />
+          <ServiceCard imgsrc="/serviceIcons/welding.png" title="Welding" />
+          <ServiceCard imgsrc="/serviceIcons/roofing.png" title="Roofing" />
         </div>
-        <div className="w-full h-[360px]  flex justify-center items-center space-x-8 pl-8 pt-8 pb-8">
+        <div className="w-full h-[300px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
+          <ServiceCard imgsrc="/serviceIcons/cleaning.png" title="Cleaners" />
+          <ServiceCard imgsrc="/serviceIcons/mason.png" title="Masonry" />
           <ServiceCard
-            imgsrc="/serviceIcons/landscaping.png"
-            title="Landscaping"
+            imgsrc="/serviceIcons/cushioning.png"
+            title="Cushion Works"
           />
-          <ServiceCard imgsrc="/serviceIcons/electric.png" title="Electrical" />
-          <ServiceCard imgsrc="/serviceIcons/cleaning.png" title="Cleaning" />
-          <ServiceCard imgsrc="/serviceIcons/plumbing.png" title="Plumbing" />
-          <ServiceCard imgsrc="/serviceIcons/carpenter.png" title="Carpentry" />
+          <ServiceCard imgsrc="/serviceIcons/Tv.png" title="TV Repair" />
+          <ServiceCard
+            imgsrc="/serviceIcons/construction.png"
+            title="contractors"
+          />
         </div>
       </div>
+      {/* third quarter */}
+      <div className="w-full h-full   flex flex-col ">
+        <span className="text-[48px] font-serif text-center pt-20">
+          Why Choose FixMate?
+        </span>
+        <div className="w-full h-[400px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
+          <QualityCard
+            imgsrc="/qualityIcons/trusted.png"
+            title="Verified & Trusted Technicians"
+            description="We verify every technician to ensure reliability and safety."
+          />
+          <QualityCard
+            imgsrc="/qualityIcons/easy.png"
+            title="Fast & Easy Booking"
+            description="Book any service in minutes with the simple interface."
+          />
+          <QualityCard
+            imgsrc="/qualityIcons/quick.png"
+            title="Affordable Pricing"
+            description="Fair prices designed to fit your budget without compromising quality."
+          />
+        </div>
+        <div className="w-full h-[400px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
+          <QualityCard
+            imgsrc="/qualityIcons/trusted.png"
+            title="Wide Range of Services"
+            description="From plumbing to landscaping, we cover it all."
+          />
+          <QualityCard
+            imgsrc="/qualityIcons/quick.png"
+            title="Ratings & Reviews"
+            description="Choose technicians based on real customer feedback."
+          />
+          <QualityCard
+            imgsrc="/qualityIcons/easy.png"
+            title="Customer Support"
+            description="We help you resolve any issues quickly and efficiently."
+          />
+        </div>
+      </div>
+      {/* fourth quarter */}
+      <div className="w-full h-full bg-gray-800"></div>
     </div>
   );
 }
