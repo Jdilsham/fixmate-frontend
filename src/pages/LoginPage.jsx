@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 import Btn from "../components/btn";
 const API = import.meta.env.VITE_BACKEND_URL;
 
-
 export default function LoginPage() {
   const [username, setusername] = useState("");
   const [password, setpassword] = useState("");
@@ -17,13 +16,10 @@ export default function LoginPage() {
 
   async function handleLogin() {
     try {
-      const response = await axios.post(
-        `${API}/api/auth/login`,
-        {
-          email: username,
-          password: password,
-        }
-      );
+      const response = await axios.post(`${API}/api/auth/login`, {
+        email: username,
+        password: password,
+      });
       localStorage.setItem("token", response.data.token);
       const user = response.data.user;
       console.log("Login successful:", user);
@@ -39,6 +35,16 @@ export default function LoginPage() {
       //   // navigate("/facilitator");
       //   console.log("Facilitator logged in");
       // }
+      if (user.isAdmin) {
+        // navigate("/admin");
+        console.log("Admin logged in");
+      } else if (user.isUser) {
+        // navigate("/customer");
+        console.log("Customer logged in");
+      } else if (user.isFacilitator) {
+        // navigate("/facilitator");
+        console.log("Facilitator logged in");
+      }
     } catch (error) {
       console.error("Login failed:", error);
       toast.error("Login failed. Please check your credentials.");
