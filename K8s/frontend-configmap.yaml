@@ -4,4 +4,4 @@ metadata:
   name: frontend-config
   namespace: fixmate
 data:
-  REACT_APP_BACKEND_URL: "http://fixmate-backend.fixmate.svc.cluster.local"
+  REACT_APP_BACKEND_URL: "http://35.244.15.120"
