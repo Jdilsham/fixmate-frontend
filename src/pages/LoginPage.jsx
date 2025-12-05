@@ -24,6 +24,17 @@ export default function LoginPage() {
       const user = response.data.user;
       console.log("Login successful:", user);
       toast.success("Login successful!");
+      navigate("/");
+      // if (user.isAdmin) {
+      //   // navigate("/admin");
+      //   console.log("Admin logged in");
+      // } else if (user.isUser) {
+      //   // navigate("/customer");
+      //   console.log("Customer logged in");
+      // } else if (user.isFacilitator) {
+      //   // navigate("/facilitator");
+      //   console.log("Facilitator logged in");
+      // }
       if (user.isAdmin) {
         // navigate("/admin");
         console.log("Admin logged in");
