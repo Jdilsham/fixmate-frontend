@@ -1,21 +1,26 @@
-import { href, Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function Header() {
   const navigate = useNavigate();
   return (
-    <div className="w-full h-[100px] flex z-96  ">
-      <div className="w-[calc(60%)] h-[80px]  text-[28px] font-medium text-[#101010] flex justify-center items-center space-x-25 ">
+    <div className="w-full h-[120px] flex z-96  ">
+      <div className="w-[calc(60%)] h-[100px]  text-[28px] font-medium text-[#101010] flex justify-center items-center space-x-25 ">
         <button onClick={() => navigate("/")}>Home</button>
         <button onClick={() => navigate("/services")}>Services</button>
         <button onClick={() => navigate("/wanted")}>Wanted</button>
         <button onClick={() => navigate("/about")}>About</button>
         <button onClick={() => navigate("/contact")}>Contact</button>
       </div>
-      <div className="w-[calc(40%)] h-[80px]  text-[28px] font-medium text-[#101010] flex justify-center items-center space-x-8 ">
-        <button onClick={() => navigate("/login")}>Login</button>
+      <div className="w-[calc(40%)] h-[100px]  text-[28px] font-medium text-[#101010] flex justify-center items-center space-x-8 ">
+        <button
+          onClick={() => navigate("/login")}
+          className="w-[150px] h-[50px]    backdrop-blur-xl rounded-[20px] flex justify-center items-center text-[28px] p-0 font-medium text-[#101010]  hover:bg-[#101010]/60 hover:text-white transition-all duration-300"
+        >
+          Login
+        </button>
         <button
           onClick={() => navigate("/signup")}
-          className="w-[150px] h-[41px]    backdrop-blur-xl rounded-[20px] flex justify-center items-center text-[28px] font-medium text-[#101010]"
+          className="w-[150px] h-[50px]    backdrop-blur-xl rounded-[20px] flex justify-center items-center text-[28px] p-0 font-medium text-[#101010] bg-white/30 hover:bg-[#101010]/60 hover:text-white transition-all duration-300"
         >
           signup
         </button>
