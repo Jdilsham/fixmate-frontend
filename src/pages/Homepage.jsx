@@ -1,18 +1,15 @@
 import Header from "../components/header";
-<<<<<<< Updated upstream
-=======
+
 import ServiceCard from "../components/homepage/serviceCard";
 import QualityCard from "../components/homepage/qualitycard";
 import Footercard from "../components/footer";
->>>>>>> Stashed changes
 
 export default function Homepage() {
   return (
     <div className="w-full h-full">
-<<<<<<< Updated upstream
-=======
+
       {/* first quarter - main components */}
->>>>>>> Stashed changes
+
       <div className="w-full h-full flex flex-col bg-[url('/background.jpg')] bg-center  bg-no-repeat">
         <Header />
         <div className="pl-[134px]">
@@ -40,9 +37,7 @@ export default function Homepage() {
           ></button>
         </div>
       </div>
-<<<<<<< Updated upstream
-      <div className="w-full h-full"></div>
-=======
+
       {/* second quarter - services */}
       <div className="w-full h-full  flex  flex-col  ">
         <span className="text-[64px] font-serif text-center  ">
@@ -134,7 +129,7 @@ export default function Homepage() {
       <div className="w-full h-[800px] bg-[url('/footer.png')] bg-cover bg-bottom flex justify-center items-center">
         <Footercard />
       </div>
->>>>>>> Stashed changes
+
     </div>
   );
 }
