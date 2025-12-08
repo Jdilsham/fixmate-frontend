@@ -7,7 +7,6 @@ import Footercard from "../components/footer";
 export default function Homepage() {
   return (
     <div className="w-full h-full">
-
       {/* first quarter - main components */}
 
       <div className="w-full h-full flex flex-col bg-[url('/background.jpg')] bg-center  bg-no-repeat">
@@ -17,7 +16,7 @@ export default function Homepage() {
         </div>
         <div className="text-[#ffffff] text-[58px] font-semibold leading-[70px] pl-[112px] pt-[327px] absolute">
           Reliable Service,
-          <br />  Right at your Doorstep
+          <br /> Right at your Doorstep
         </div>
         <div className="text-[#ffffff] text-[34px] font-semibold leading-[70px] pl-[112px] pt-[510px] absolute">
           Find Skilled Professionals Instantly
@@ -34,7 +33,13 @@ export default function Homepage() {
           <button
             onClick={() => console.log("search clicked")}
             className="w-[calc(7%)] h-[50px] bg-[#FF5C00] pl-0 absolute  right-10 rounded-[10px] text-[#FFFFFF] text-[24px] font-semibold ml-4"
-          ></button>
+          >
+            <img
+              src="/search.png "
+              className="w-[40px] h-[40px] m-auto "
+              alt="search icon"
+            />
+          </button>
         </div>
       </div>
 
@@ -92,34 +97,34 @@ export default function Homepage() {
         </span>
         <div className="w-full h-[400px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
           <QualityCard
-            imgsrc="/qualityIcons/trusted.png"
+            imgsrc="/qualityIcons/verified.png"
             title="Verified & Trusted Technicians"
             description="We verify every technician to ensure reliability and safety."
           />
           <QualityCard
-            imgsrc="/qualityIcons/easy.png"
+            imgsrc="/qualityIcons/easybooking.png"
             title="Fast & Easy Booking"
             description="Book any service in minutes with the simple interface."
           />
           <QualityCard
-            imgsrc="/qualityIcons/quick.png"
+            imgsrc="/qualityIcons/affordable.png"
             title="Affordable Pricing"
             description="Fair prices designed to fit your budget without compromising quality."
           />
         </div>
         <div className="w-full h-[400px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
           <QualityCard
-            imgsrc="/qualityIcons/trusted.png"
+            imgsrc="/qualityIcons/range.png"
             title="Wide Range of Services"
             description="From plumbing to landscaping, we cover it all."
           />
           <QualityCard
-            imgsrc="/qualityIcons/quick.png"
+            imgsrc="/qualityIcons/rating.png"
             title="Ratings & Reviews"
             description="Choose technicians based on real customer feedback."
           />
           <QualityCard
-            imgsrc="/qualityIcons/easy.png"
+            imgsrc="/qualityIcons/contact.png"
             title="Customer Support"
             description="We help you resolve any issues quickly and efficiently."
           />
@@ -129,7 +134,6 @@ export default function Homepage() {
       <div className="w-full h-[800px] bg-[url('/footer.png')] bg-cover bg-bottom flex justify-center items-center">
         <Footercard />
       </div>
-
     </div>
   );
 }
