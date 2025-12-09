@@ -36,7 +36,7 @@ export default function Homepage() {
           >
             <img
               src="/search.png "
-              className="w-[40px] h-[40px] m-auto "
+              className="w-[30px] h-[30px] m-auto "
               alt="search icon"
             />
           </button>
