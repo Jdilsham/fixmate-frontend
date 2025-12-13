@@ -67,3 +67,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/fixmate-frontend:latest
             ${{ secrets.DOCKER_USERNAME }}/fixmate-frontend:${{ steps.vars.outputs.TAG }}
+
+      - name: Trigger Jenkins CD
+        run: |
+          curl -X POST "http://${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_TOKEN }}@${{ secrets.JENKINS_URL }}:8080/job/fixmate-frontend/build"
