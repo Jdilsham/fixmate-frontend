@@ -1,6 +1,6 @@
 export default function Footercard() {
   return (
-    <footer className="w-full bg-[url('/footer.png')] bg-cover bg-bottom text-white px-10 py-20">
+    <footer className="w-full bg-[url('/footer.png')] bg-cover bg-bottom text-black px-10 py-20">
       {/* Grid */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-20">
         {/* Logo + Description */}
@@ -54,7 +54,7 @@ export default function Footercard() {
         </div>
 
         {/* Contact */}
-        <div >
+        <div>
           <h3 className="text-[28px] underline mb-4">Contact Us</h3>
           <div className="space-y-3 text-[24px] opacity-90">
             <div className="flex items-center space-x-4">
