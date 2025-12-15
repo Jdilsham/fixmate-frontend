@@ -32,7 +32,7 @@ export default function Homepage() {
           />
           <button
             onClick={() => console.log("search clicked")}
-            className="w-[calc(7%)] h-[50px] bg-[#FF5C00] pl-0 absolute  right-10 rounded-[10px] text-[#FFFFFF] text-[24px] font-semibold ml-4"
+            className="w-[calc(7%)] h-[50px] bg-[#2C76A4] pl-0 absolute  right-10 rounded-[10px] text-[#FFFFFF] text-[24px] font-semibold ml-4"
           >
             <img
               src="/search.png "
