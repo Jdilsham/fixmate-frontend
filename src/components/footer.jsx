@@ -1,8 +1,8 @@
 export default function Footercard() {
   return (
-    <footer className="w-full bg-[url('/footer.png')] bg-cover bg-bottom text-black px-10 py-20">
+    <footer className="w-full bg-[url('/footer.png')] bg-cover bg-bottom text-black   ">
       {/* Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-20">
+      <div className="max-w-7xl h-[500px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-40  ">
         {/* Logo + Description */}
         <div className="flex flex-col items-start space-y-6">
           <img
@@ -17,7 +17,7 @@ export default function Footercard() {
         </div>
 
         {/* Quick Links */}
-        <div>
+        <div className="hidden lg:block">
           <h3 className="text-[28px] underline mb-4">Quick Links</h3>
           <ul className="space-y-3">
             {["Home", "Services", "Wanted", "About Us", "Contact Us"].map(
@@ -38,7 +38,7 @@ export default function Footercard() {
         </div>
 
         {/* Popular Links */}
-        <div>
+        <div className="hidden lg:block">
           <h3 className="text-[28px] underline mb-4">Popular Links</h3>
           <ul className="space-y-3 text-[24px] opacity-90">
             {[
@@ -74,7 +74,7 @@ export default function Footercard() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="mt-16 pt-6  border-t-4 border-white/20 text-center ">
+      <div className=" pt-6  border-t-4 border-white/20 text-center ">
         <span className="text-[26px]">
           © 2025 Fixmate. All rights reserved.
         </span>
