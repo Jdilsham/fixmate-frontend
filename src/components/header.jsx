@@ -16,7 +16,7 @@ export default function Header() {
   const navButtonClassLg = "hidden lg:inline-block";
 
   return (
-    <div className="w-full h-[120px] flex z-96">
+    <div className="w-full h-[100px] flex z-96">
       <div className="w-[calc(60%)] h-[100px] text-[28px] font-medium text-[#101010] flex justify-center items-center space-x-25">
         {navLinks.map(({ label, path, display }) => (
           <button

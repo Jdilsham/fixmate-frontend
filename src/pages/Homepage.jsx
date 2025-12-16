@@ -32,7 +32,7 @@ export default function Homepage() {
           />
           <button
             onClick={() => console.log("search clicked")}
-            className="w-[calc(7%)] h-[50px] bg-[#FF5C00] pl-0 absolute  right-10 rounded-[10px] text-[#FFFFFF] text-[24px] font-semibold ml-4"
+            className="w-[calc(7%)] h-[50px] bg-[#2C76A4] pl-0 absolute  right-10 rounded-[10px] text-[#FFFFFF] text-[24px] font-semibold ml-4"
           >
             <img
               src="/search.png "
@@ -44,90 +44,113 @@ export default function Homepage() {
       </div>
 
       {/* second quarter - services */}
-      <div className="w-full h-full  flex  flex-col  ">
-        <span className="text-[64px] font-serif text-center  ">
-          Our Services
-        </span>
-        <div className="w-full h-[300px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
-          <ServiceCard
-            imgsrc="/serviceIcons/landscaping.png"
-            title="Landscaping"
-          />
-
-          <ServiceCard imgsrc="/serviceIcons/plumbing.png" title="Plumbing" />
-          <ServiceCard
-            imgsrc="/serviceIcons/mechanic.png"
-            title="Vehicle Repair"
-          />
-
-          <ServiceCard imgsrc="/serviceIcons/carpenter.png" title="Carpentry" />
-          <ServiceCard
-            imgsrc="/serviceIcons/repairing.png"
-            title="Equipment Repairing"
-          />
-        </div>
-        <div className="w-full h-[300px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
-          <ServiceCard imgsrc="/serviceIcons/electric.png" title="Electrical" />
-          <ServiceCard
-            imgsrc="/serviceIcons/colorwash.png"
-            title="Color Washing"
-          />
-          <ServiceCard imgsrc="/serviceIcons/tile.png" title="Tile work" />
-          <ServiceCard imgsrc="/serviceIcons/welding.png" title="Welding" />
-          <ServiceCard imgsrc="/serviceIcons/roofing.png" title="Roofing" />
-        </div>
-        <div className="w-full h-[300px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
-          <ServiceCard imgsrc="/serviceIcons/cleaning.png" title="Cleaners" />
-          <ServiceCard imgsrc="/serviceIcons/mason.png" title="Masonry" />
-          <ServiceCard
-            imgsrc="/serviceIcons/cushioning.png"
-            title="Cushion Works"
-          />
-          <ServiceCard imgsrc="/serviceIcons/Tv.png" title="TV Repair" />
-          <ServiceCard
-            imgsrc="/serviceIcons/construction.png"
-            title="contractors"
-          />
+      <div className="w-full   flex  flex-col justify-center items-center bg-gradient-to-b from-[#B6E8F0] to-[#FFFFFF]">
+        <p className="text-[64px] font-serif text-center  ">Our Services</p>
+        <div className="w-full flex justify-center items-center ">
+          <div
+            className="w-full  grid grid-cols-1 place-items-center md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-10 pb-20 pl-10
+         pr-10"
+          >
+            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8  ">
+              <ServiceCard
+                imgsrc="/serviceIcons/landscaping.png"
+                title="Landscaping"
+              />
+              <ServiceCard
+                imgsrc="/serviceIcons/electric.png"
+                title="Electrical"
+              />
+              <ServiceCard
+                imgsrc="/serviceIcons/cleaning.png"
+                title="Cleaners"
+              />
+            </div>
+            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8 ">
+              <ServiceCard
+                imgsrc="/serviceIcons/plumbing.png"
+                title="Plumbing"
+              />
+              <ServiceCard
+                imgsrc="/serviceIcons/colorwash.png"
+                title="Color Washing"
+              />
+              <ServiceCard imgsrc="/serviceIcons/mason.png" title="Masonry" />
+            </div>
+            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8">
+              <ServiceCard
+                imgsrc="/serviceIcons/mechanic.png"
+                title="Vehicle Repair"
+              />
+              <ServiceCard imgsrc="/serviceIcons/tile.png" title="Tile work" />
+              <ServiceCard
+                imgsrc="/serviceIcons/cushioning.png"
+                title="Cushion Works"
+              />
+            </div>
+            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8">
+              <ServiceCard
+                imgsrc="/serviceIcons/carpenter.png"
+                title="Carpentry"
+              />
+              <ServiceCard imgsrc="/serviceIcons/welding.png" title="Welding" />
+              <ServiceCard imgsrc="/serviceIcons/Tv.png" title="TV Repair" />
+            </div>
+            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8">
+              <ServiceCard
+                imgsrc="/serviceIcons/repairing.png"
+                title="Equipment Repairing"
+              />
+              <ServiceCard imgsrc="/serviceIcons/roofing.png" title="Roofing" />
+              <ServiceCard
+                imgsrc="/serviceIcons/construction.png"
+                title="contractors"
+              />
+            </div>
+          </div>
         </div>
       </div>
       {/* third quarter - why to choose us */}
-      <div className="w-full h-full   flex flex-col ">
+      <div className="w-full    flex flex-col ">
         <span className="text-[48px] font-serif text-center pt-20">
           Why Choose FixMate?
         </span>
-        <div className="w-full h-[400px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
-          <QualityCard
-            imgsrc="/qualityIcons/verified.png"
-            title="Verified & Trusted Technicians"
-            description="We verify every technician to ensure reliability and safety."
-          />
-          <QualityCard
-            imgsrc="/qualityIcons/easybooking.png"
-            title="Fast & Easy Booking"
-            description="Book any service in minutes with the simple interface."
-          />
-          <QualityCard
-            imgsrc="/qualityIcons/affordable.png"
-            title="Affordable Pricing"
-            description="Fair prices designed to fit your budget without compromising quality."
-          />
-        </div>
-        <div className="w-full h-[400px]   flex justify-center items-center space-x-25  pl-8 pt-8 pb-8">
-          <QualityCard
-            imgsrc="/qualityIcons/range.png"
-            title="Wide Range of Services"
-            description="From plumbing to landscaping, we cover it all."
-          />
-          <QualityCard
-            imgsrc="/qualityIcons/rating.png"
-            title="Ratings & Reviews"
-            description="Choose technicians based on real customer feedback."
-          />
-          <QualityCard
-            imgsrc="/qualityIcons/contact.png"
-            title="Customer Support"
-            description="We help you resolve any issues quickly and efficiently."
-          />
+        <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 place-items-center gap-10 pb-20 pt-10   ">
+          <div className="w-[360px]    flex flex-col justify-center items-center space-y-15 ">
+            <QualityCard
+              imgsrc="/qualityIcons/verified.png"
+              title="Verified & Trusted Technicians"
+              description="We verify every technician to ensure reliability and safety."
+            />
+            <QualityCard
+              imgsrc="/qualityIcons/range.png"
+              title="Wide Range of Services"
+              description="From plumbing to landscaping, we cover it all."
+            />
+          </div>
+          <div className="w-[360px]    flex flex-col justify-center items-center space-y-15">
+            <QualityCard
+              imgsrc="/qualityIcons/easybooking.png"
+              title="Fast & Easy Booking"
+              description="Book any service in minutes with the simple interface."
+            />
+            <QualityCard
+              imgsrc="/qualityIcons/rating.png"
+              title="Ratings & Reviews"
+              description="Choose technicians based on real customer feedback."
+            />
+          </div>
+          <div className="w-[360px]    flex flex-col justify-center items-center space-y-15">
+            <QualityCard
+              imgsrc="/qualityIcons/affordable.png"
+              title="Affordable Pricing"
+              description="Fair prices designed to fit your budget without compromising quality."
+            />
+            <QualityCard
+              imgsrc="/qualityIcons/contact.png"
+              title="Customer Support"
+              description="We help you resolve any issues quickly and efficiently."
+            />
+          </div>
         </div>
       </div>
       {/* fourth quarter - footer */}
