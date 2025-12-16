@@ -154,7 +154,7 @@ export default function Homepage() {
         </div>
       </div>
       {/* fourth quarter - footer */}
-      <div className="w-full h-[800px] bg-[url('/footer.png')] bg-cover bg-bottom flex justify-center items-center">
+      <div className="w-full h-[500px] bg-cover bg-bottom flex justify-center items-center">
         <Footercard />
       </div>
     </div>
