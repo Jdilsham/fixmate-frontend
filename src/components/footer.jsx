@@ -1,8 +1,8 @@
 export default function Footercard() {
   return (
-    <footer className="w-full bg-[url('/footer.png')] bg-cover bg-bottom text-black px-10 py-20">
+    <footer className="w-full bg-[url('/footer.png')] bg-cover bg-bottom text-black   ">
       {/* Grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-20">
+      <div className="max-w-7xl h-[600px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-20">
         {/* Logo + Description */}
         <div className="flex flex-col items-start space-y-6">
           <img
