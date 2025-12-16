@@ -10,7 +10,7 @@ pipeline{
     parameters {
     string(
         name: 'IMAGE_TAG',
-        description: 'Docker image tag to deploy (from GitHub Actions)'
+        description: 'Docker image tag to deploy (From GitHub Actions)'
     )
     }
 
