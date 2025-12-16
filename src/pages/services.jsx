@@ -19,7 +19,7 @@ export default function Services() {
             }}
             className="w-full h-[50px] bg-white rounded-[10px] p-0 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] pl-[20px] text-[24px] font-normal outline-none"
           >
-            <option defaultValue={""}>
+            <option defaultValue={""} disabled>
               Select a service
             </option>
             <option value="electrician">Electrician</option>

@@ -11,7 +11,7 @@ import About from "./pages/about";
 function App() {
   return (
     <BrowserRouter>
-      <div className="w-full h-[100vh] bg-gray-800 \">
+      <div className="w-full h-[100vh] ">
         <Toaster position="top-center" />
         <Routes path="/">
           <Route path="/" element={<Homepage />} />
