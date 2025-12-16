@@ -5,8 +5,9 @@ import EmployerCard from "../components/ServicesPage/employerCard";
 
 export default function Services() {
   const [service, setService] = useState("");
+  const [location, setLocation] = useState("");
   return (
-    <div className="w-full bg-gradient-to-b from-[#A4E5EF] via-[#FCFFFF] to-[#B6E8F0] flex flex-col justify-center items-center">
+    <div className="w-full bg-gradient-to-b from-[#A4E5EF]  to-[#B6E8F0] flex flex-col justify-center items-center">
       <Header />
       <h1 className="text-4xl font-bold mb-8">Our Services</h1>
       <div className="w-full  flex justify-center items-center mb-16 relative gap-20">
@@ -25,12 +26,29 @@ export default function Services() {
             <option value="electrician">Electrician</option>
             <option value="plumber">Plumber</option>
             <option value="carpenter">Carpenter</option>
-            <option value="mechanic">Mechanic</option>
+            <option value="repairman">Equipment Repair</option>
+            <option value="landscaper">Landscaping</option>
+            <option value="mechanic">Vehicle Repair</option>
+            <option value="tile">Tile Installation</option>
+            <option value="cleaner">Cleaning Services</option>
+            <option value="painter">Painting Services</option>
+            <option value="tv">Tv Services</option>
+            <option value="cushioning">Cushion works</option>
+            <option value="mason">Mason work</option>
+            <option value="welder">Welding</option>
+            <option value="roofing">Roofing works</option>
+            <option value="construction">Construction</option>
+
+
           </select>
         </div>
-        {/* Search bar  */}
+        {/* Location Search bar  */}
         <div className="w-[600px] h-[62px]   relative   flex">
           <input
+          onChange={(e)=>{
+            setLocation(e.target.value);
+            console.log(`${e.target.value}`);
+          }}
             type="text"
             name="search"
             placeholder="Search by Location"
