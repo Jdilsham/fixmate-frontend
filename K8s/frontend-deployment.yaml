@@ -17,8 +17,7 @@ spec:
     spec:
       containers:
         - name: fixmate-frontend
-          image: janithad/fixmate-frontend:latest
-          imagePullPolicy: Always
+          image: janithad/fixmate-frontend
           ports:
             - containerPort: 80
           env:
