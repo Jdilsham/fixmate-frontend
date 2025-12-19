@@ -1,110 +1,116 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import TopWave from "../components/LoginSignup/TopWave";
-import BottomWave from "../components/LoginSignup/BottomWave";
-import { IoPersonCircleSharp } from "react-icons/io5";
-import { GiPadlock } from "react-icons/gi";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import toast from "react-hot-toast";
-import Btn from "../components/btn";
+import DarkMode from "../components/darkmodeToggle";
+
 const API = import.meta.env.VITE_BACKEND_URL;
 
 export default function LoginPage() {
-  const [username, setusername] = useState("");
-  const [password, setpassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   async function handleLogin() {
     try {
       const response = await axios.post(`${API}/api/auth/login`, {
         email: username,
-        password: password,
+        password,
       });
+
       localStorage.setItem("token", response.data.token);
-      const user = response.data.user;
-      console.log("Login successful:", user);
       toast.success("Login successful!");
       navigate("/");
-      // if (user.isAdmin) {
-      //   // navigate("/admin");
-      //   console.log("Admin logged in");
-      // } else if (user.isUser) {
-      //   // navigate("/customer");
-      //   console.log("Customer logged in");
-      // } else if (user.isFacilitator) {
-      //   // navigate("/facilitator");
-      //   console.log("Facilitator logged in");
-      // }
-      if (user.isAdmin) {
-        // navigate("/admin");
-        console.log("Admin logged in");
-      } else if (user.isUser) {
-        // navigate("/customer");
-        console.log("Customer logged in");
-      } else if (user.isFacilitator) {
-        // navigate("/facilitator");
-        console.log("Facilitator logged in");
-      }
     } catch (error) {
-      console.error("Login failed:", error);
-      toast.error("Login failed. Please check your credentials.");
+      console.error(error);
+      toast.error("Invalid credentials");
     }
   }
+
   return (
-    <div className="w-full h-full flex justify-center items-center  ">
-      <div className="w-[414px] h-[680px] rounded-[15px] flex flex-col justify-between bg-gradient-to-b from-[#A4E5EF] via-[#FCFFFF] to-[#B6E8F0]">
-        {/*top wave form*/}
-        <TopWave />
-        <div className="w-[414px] h-[680px] absolute  rounded-[15px]  flex flex-col justify-center items-center gap-10 p-10">
-          <span className="text-[48px] text-[#2C566A] font-semibold ">
-            Login
-          </span>
-          <div className="w-full h-[40px] flex flex-row items-center gap-2">
-            <IoPersonCircleSharp size={30} color="#000" />
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <Card
+        className="relative w-105 bg-card max-w-md shadow-xl rounded-2xl text-card-foreground
+          border border-border
+          shadow-xl
+          transition-transform duration-300 ease-out
+          hover:scale-[1.018] "
+      >
+        <DarkMode />
+        <CardHeader className="space-y-2 text-center">
+          <CardTitle className="text-4xl font-semibold">Welcome back</CardTitle>
+          <p className="text-muted-foreground text-sm">
+            Sign in to your FixMate account
+          </p>
+        </CardHeader>
+
+        <CardContent className="space-y-6 mt-6">
+          <div className="relative">
+            
             <input
-              onChange={(e) => {
-                setusername(e.target.value);
-              }}
-              type="text"
-              className="w-full h-[40px] border-0 border-b-2 focus:border-blue-500 focus:outline-none focus:ring-0 border-[#0B6B7E] flex items-center px-3 font-regular backdrop-blur-lg "
-              placeholder={"Username or Email"}
+              id="email"
+              type="email"
+              placeholder=" "
+              className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
-          </div>
-          <div className="w-full h-[40px] flex flex-row items-center gap-2">
-            <GiPadlock size={30} color="#000" />
-            <input
-              onChange={(e) => {
-                setpassword(e.target.value);
-              }}
-              type="password"
-              className="w-full h-[40px] border-0 border-b-2 focus:border-blue-500 focus:outline-none focus:ring-0 border-[#0B6B7E] flex items-center px-3 font-regular backdrop-blur-lg "
-              placeholder="Password"
-            />
-          </div>
-          <div className="w-full h-[40px] flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <input type="checkbox" className="w-5 h-5 " />
-              <span>Remember Me</span>
-            </div>
-            <a href="/">Forget password?</a>
+            <label className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all">
+              Email
+            </label>
           </div>
 
-          <Btn
-            onClick={handleLogin}
-            bg="bg-[#0E9598]"
-            textColor="text-white"
-            label="Login"
-          />
-          <div>
-            <span>Don't have an account? </span>
-            <a href="/signup" className="text-[#0B6B7E]">
-              Sign Up
-            </a>
+          {/* Password */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
-        </div>
-        {/*bottom wave form */}
-        <BottomWave />
-      </div>
+
+          {/* Remember + Forgot */}
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-2">
+              <Checkbox id="remember" />
+              <Label htmlFor="remember">Remember me</Label>
+            </div>
+            <button
+              onClick={() => navigate("/forgot-password")}
+              className="text-accent hover:underline"
+            >
+              Forgot password?
+            </button>
+          </div>
+
+          {/* Login button */}
+          <Button
+            onClick={handleLogin}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Login
+          </Button>
+
+          {/* Footer */}
+          <p className="text-center text-sm text-muted-foreground">
+            Don’t have an account?{" "}
+            <button
+              onClick={() => navigate("/signup")}
+              className="text-accent font-medium hover:underline"
+            >
+              Sign up
+            </button>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
