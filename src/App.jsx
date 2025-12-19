@@ -1,5 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import "./App.css";
+
 import LoginPage from "./pages/LoginPage";
 import { Toaster } from "react-hot-toast";
 import SignupPage from "./pages/SignupPage";
