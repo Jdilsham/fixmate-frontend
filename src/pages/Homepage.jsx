@@ -44,7 +44,7 @@ export default function Homepage() {
       </div>
 
       {/* second quarter - services */}
-      <div className="w-full   flex  flex-col justify-center items-center bg-gradient-to-b from-[#B6E8F0] to-[#FFFFFF]">
+      <div className="w-full   flex  flex-col justify-center items-center ">
         <p className="text-[64px] font-serif text-center  ">Our Services</p>
         <div className="w-full flex justify-center items-center ">
           <div

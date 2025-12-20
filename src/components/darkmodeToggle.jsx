@@ -8,7 +8,7 @@ export default function DarkMode() {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
   return (
-    <div className="absolute top-4 right-4 m-auto">
+    
       <motion.button
         layout
         onClick={() => setDark(!dark)}
@@ -72,6 +72,6 @@ export default function DarkMode() {
           </AnimatePresence>
         </motion.div>
       </motion.button>
-    </div>
+    
   );
 }
