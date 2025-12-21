@@ -1,12 +1,28 @@
 export default function QualityCard({ imgsrc, title, description }) {
   return (
-    <div className="w-[350px] h-[270px] bg-[#FFFFFF]  rounded-[10px] drop-shadow-[0_4px_4px_rgba(10,110,255,0.5)] hover:scale-110 transition-all duration-300  ">
-      <div className="w-full h-[270px] flex flex-col justify-center items-center text-center ">
-        <img className="w-[120px] h-[125px]" src={imgsrc} alt="" />
-        <span className="text-[24px] font-semibold pt-4 text-[#4B9EBE]">
+    <div
+      className="
+        w-full max-w-[360px]
+        mx-auto
+        rounded-2xl
+        bg-white/70 dark:bg-white/5
+        backdrop-blur-md
+        border border-black/10 dark:border-white/10
+        shadow-md
+        transition-all duration-300
+        hover:-translate-y-2 hover:shadow-xl
+      "
+    >
+      <div className="h-full flex flex-col items-center justify-center text-center px-6 py-10 gap-4">
+        <img src={imgsrc} alt="" className="w-20 h-20 sm:w-24 sm:h-24" />
+
+        <h3 className="text-lg sm:text-xl font-semibold">
           {title}
-        </span>
-        <span className="text-[20px] font-serif pt-4">{description}</span>
+        </h3>
+
+        <p className="text-sm sm:text-base opacity-75 leading-relaxed">
+          {description}
+        </p>
       </div>
     </div>
   );
