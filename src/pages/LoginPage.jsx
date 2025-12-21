@@ -2,7 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,9 +47,7 @@ export default function LoginPage() {
         transition-transform duration-300 ease-out
         hover:scale-[1.018] "
       >
-        <div className="flex justify-end  m-auto">
-          <DarkMode />
-        </div>
+        
 
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-4xl font-semibold">Welcome back</CardTitle>
