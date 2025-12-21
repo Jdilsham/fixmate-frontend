@@ -24,16 +24,16 @@ export default function LoginPage() {
       localStorage.setItem("token", response.data.token);
       toast.success("Login successful!");
 
-      if (user.isAdmin) {
-        navigate("/admin");
-        console.log("Admin logged in");
-      } else if (user.isUser) {
-        navigate("/");
-        console.log("Customer logged in");
-      } else if (user.isFacilitator) {
-        navigate("/wanted");
-        console.log("Facilitator logged in");
-      }
+      // if (user.isAdmin) {
+      //   navigate("/admin");
+      //   console.log("Admin logged in");
+      // } else if (user.isUser) {
+      //   navigate("/");
+      //   console.log("Customer logged in");
+      // } else if (user.isFacilitator) {
+      //   navigate("/wanted");
+      //   console.log("Facilitator logged in");
+      // }
     } catch (error) {
       console.error(error);
       toast.error("Invalid credentials");
@@ -63,6 +63,7 @@ export default function LoginPage() {
 
         <CardContent className="space-y-6 mt-6">
           <div className="relative">
+            {/* email */}
             <input
               type="email"
               placeholder=" "
@@ -79,6 +80,7 @@ export default function LoginPage() {
           </div>
 
           <div className="relative">
+            {/* password */}
             <input
               type="password"
               placeholder=" "
@@ -115,6 +117,11 @@ export default function LoginPage() {
           >
             Login
           </Button>
+          
+          <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+          Login with Google
+          </Button>
+        
 
           {/* Footer */}
           <p className="text-center text-sm text-muted-foreground">

@@ -1,5 +1,4 @@
-import {  useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import {
   Card,
   CardHeader,
@@ -9,7 +8,6 @@ import {
 } from "../components/ui/card";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import DarkMode from "../components/darkmodeToggle";
 import toast from "react-hot-toast";
 const API = import.meta.env.VITE_BACKEND_URL;
 
@@ -75,7 +73,6 @@ export default function SignupPage() {
           hover:scale-[1.018]
         "
       >
-        
         {/* HEADER */}
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-3xl font-semibold">

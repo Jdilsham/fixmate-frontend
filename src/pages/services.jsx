@@ -1,28 +1,54 @@
 import { useState } from "react";
-import Footercard from "../components/footer";
 import Header from "../components/header";
+import Footercard from "../components/footer";
 import EmployerCard from "../components/ServicesPage/employerCard";
 
 export default function Services() {
   const [service, setService] = useState("");
   const [location, setLocation] = useState("");
+
   return (
-    <div className="w-full bg-gradient-to-b from-[#A4E5EF]  to-[#B6E8F0] flex flex-col justify-center items-center">
+    <div className="w-full min-h-screen bg-[#EFEFEF] dark:bg-[#0B1E2A] text-[#112B3C] dark:text-[#EFEFEF]">
       <Header />
-      <h1 className="text-4xl font-bold mb-8">Our Services</h1>
-      <div className="w-full  flex justify-center items-center mb-16 relative gap-20">
-        {/* Service selection dropdown  */}
-        <div className="w-[500px] h-[62px]   relative   flex ">
+
+      
+      <section className="max-w-7xl mx-auto px-6 pt-24 pb-16">
+        <h1 className="text-5xl font-semibold mb-4">
+          Find professionals
+        </h1>
+        <p className="text-lg opacity-70 max-w-xl">
+          Choose a service and location to discover verified experts near you.
+        </p>
+      </section>
+
+      {/* ================= FILTER BAR ================= */}
+      <section className="max-w-7xl mx-auto px-6 pb-20">
+        <div
+          className="
+            bg-white/70 dark:bg-white/5
+            backdrop-blur-md
+            border border-black/10 dark:border-white/10
+            rounded-2xl
+            p-6
+            flex flex-col lg:flex-row
+            gap-6
+          "
+        >
+          {/* Service dropdown */}
           <select
-            onChange={(e) => {
-              setService(e.target.value);
-              console.log(`${e.target.value}`);
-            }}
-            className="w-full h-[50px] bg-white rounded-[10px] p-0 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] pl-[20px] text-[24px] font-normal outline-none"
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+            className="
+              w-full lg:w-[280px]
+              bg-transparent
+              border border-black/10 dark:border-white/10
+              rounded-xl
+              px-4 py-3
+              text-foreground
+              outline-none
+            "
           >
-            <option defaultValue={""} disabled>
-              Select a service
-            </option>
+            <option value="" defaultChecked disabled>Select service</option>
             <option value="electrician">Electrician</option>
             <option value="plumber">Plumber</option>
             <option value="carpenter">Carpenter</option>
@@ -30,161 +56,74 @@ export default function Services() {
             <option value="landscaper">Landscaping</option>
             <option value="mechanic">Vehicle Repair</option>
             <option value="tile">Tile Installation</option>
-            <option value="cleaner">Cleaning Services</option>
-            <option value="painter">Painting Services</option>
-            <option value="tv">Tv Services</option>
-            <option value="cushioning">Cushion works</option>
-            <option value="mason">Mason work</option>
+            <option value="cleaner">Cleaning</option>
+            <option value="painter">Painting</option>
+            <option value="tv">TV Repair</option>
+            <option value="cushioning">Cushion Works</option>
+            <option value="mason">Masonry</option>
             <option value="welder">Welding</option>
-            <option value="roofing">Roofing works</option>
+            <option value="roofing">Roofing</option>
             <option value="construction">Construction</option>
-
-
           </select>
-        </div>
-        {/* Location Search bar  */}
-        <div className="w-[600px] h-[62px]   relative   flex">
-          <input
-          onChange={(e)=>{
-            setLocation(e.target.value);
-            console.log(`${e.target.value}`);
-          }}
-            type="text"
-            name="search"
-            placeholder="Search by Location"
-            className="w-[calc(93%)] h-[50px] bg-white rounded-[10px] p-0 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] pl-[20px] text-[24px] font-normal outline-none"
-            id=""
-          />
-          <button
-            onClick={() => console.log("search clicked")}
-            className="w-[calc(10%)] h-[50px] bg-[#2C76A4] pl-0 absolute  right-10 rounded-[10px] text-[#FFFFFF] text-[24px] font-semibold ml-4"
-          >
-            <img
-              src="/search.png "
-              className="w-[30px] h-[30px] m-auto "
-              alt="search icon"
+
+          {/* Location input */}
+          <div className="flex flex-1 items-center gap-4 border border-black/10 dark:border-white/10 rounded-xl px-4">
+            <img src="/search.png" className="w-5 h-5 opacity-50" alt="" />
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Search by location"
+              className="
+                w-full
+                bg-transparent
+                py-3
+                outline-none
+              "
             />
+          </div>
+
+          {/* CTA */}
+          <button
+            className="
+              px-8 py-3
+              rounded-xl
+              bg-[#F66B0E]
+              text-white
+              font-medium
+              hover:brightness-110
+              transition
+            "
+          >
+            Search
           </button>
         </div>
-      </div>
-      <div className="w-full  grid grid-cols-4 place-items-center gap-10  ">
-        <EmployerCard
-          employer={{
-            name: "John Doe",
-            description:
-              "Experienced electrician specializing in residential and commercial projects.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Jane Smith",
-            description:
-              "Professional plumber with expertise in leak repairs and installations.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Mike Johnson",
-            description:
-              "Skilled carpenter offering custom furniture and home improvement services.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Sara Lee",
-            description:
-              "Expert mechanic providing reliable vehicle maintenance and repair.",
-          }}
-        />
+      </section>
 
-        <EmployerCard
-          employer={{
-            name: "John Doe",
-            description:
-              "Experienced electrician specializing in residential and commercial projects.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Jane Smith",
-            description:
-              "Professional plumber with expertise in leak repairs and installations.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Mike Johnson",
-            description:
-              "Skilled carpenter offering custom furniture and home improvement services.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Sara Lee",
-            description:
-              "Expert mechanic providing reliable vehicle maintenance and repair.",
-          }}
-        />
+      {/* ================= RESULTS ================= */}
+      <section className="max-w-7xl mx-auto px-6 pb-40">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 place-items-center">
+          {Array.from({ length: 16 }).map((_, i) => (
+            <EmployerCard
+              key={i}
+              employer={{
+                name: ["John Doe", "Jane Smith", "Mike Johnson", "Sara Lee"][i % 4],
+                description:
+                  [
+                    "Experienced electrician specializing in residential and commercial projects.",
+                    "Professional plumber with expertise in leak repairs and installations.",
+                    "Skilled carpenter offering custom furniture and home improvement services.",
+                    "Expert mechanic providing reliable vehicle maintenance and repair.",
+                  ][i % 4],
+              }}
+            />
+          ))}
+        </div>
+      </section>
 
-        <EmployerCard
-          employer={{
-            name: "John Doe",
-            description:
-              "Experienced electrician specializing in residential and commercial projects.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Jane Smith",
-            description:
-              "Professional plumber with expertise in leak repairs and installations.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Mike Johnson",
-            description:
-              "Skilled carpenter offering custom furniture and home improvement services.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Sara Lee",
-            description:
-              "Expert mechanic providing reliable vehicle maintenance and repair.",
-          }}
-        />
-
-        <EmployerCard
-          employer={{
-            name: "John Doe",
-            description:
-              "Experienced electrician specializing in residential and commercial projects.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Jane Smith",
-            description:
-              "Professional plumber with expertise in leak repairs and installations.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Mike Johnson",
-            description:
-              "Skilled carpenter offering custom furniture and home improvement services.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Sara Lee",
-            description:
-              "Expert mechanic providing reliable vehicle maintenance and repair.",
-          }}
-        />
-      </div>
-      <Footercard />
+      {/* ================= FOOTER HOST ================= */}
+      <section className="bg-[#112B3C] pt-32 pb-24">
+        <Footercard />
+      </section>
     </div>
   );
 }
