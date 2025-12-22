@@ -11,11 +11,8 @@ export default function Services() {
     <div className="w-full min-h-screen bg-[#EFEFEF] dark:bg-[#0B1E2A] text-[#112B3C] dark:text-[#EFEFEF]">
       <Header />
 
-      
       <section className="max-w-7xl mx-auto px-6 pt-24 pb-16">
-        <h1 className="text-5xl font-semibold mb-4">
-          Find professionals
-        </h1>
+        <h1 className="text-5xl font-semibold mb-4">Find professionals</h1>
         <p className="text-lg opacity-70 max-w-xl">
           Choose a service and location to discover verified experts near you.
         </p>
@@ -48,7 +45,9 @@ export default function Services() {
               outline-none
             "
           >
-            <option value="" defaultChecked disabled>Select service</option>
+            <option value="" defaultChecked disabled>
+              Select service
+            </option>
             <option value="electrician">Electrician</option>
             <option value="plumber">Plumber</option>
             <option value="carpenter">Carpenter</option>
@@ -106,14 +105,21 @@ export default function Services() {
             <EmployerCard
               key={i}
               employer={{
-                name: ["John Doe", "Jane Smith", "Mike Johnson", "Sara Lee"][i % 4],
-                description:
-                  [
-                    "Experienced electrician specializing in residential and commercial projects.",
-                    "Professional plumber with expertise in leak repairs and installations.",
-                    "Skilled carpenter offering custom furniture and home improvement services.",
-                    "Expert mechanic providing reliable vehicle maintenance and repair.",
-                  ][i % 4],
+                name: ["John Doe", "Jane Smith", "Mike Johnson", "Sara Lee"][
+                  i % 4
+                ],
+                description: [
+                  "Experienced electrician specializing in residential and commercial projects.",
+                  "Professional plumber with expertise in leak repairs and installations.",
+                  "Skilled carpenter offering custom furniture and home improvement services.",
+                  "Expert mechanic providing reliable vehicle maintenance and repair.",
+                ][i % 4],
+                location: [
+                  "New York, NY",
+                  "Los Angeles, CA",
+                  "Chicago, IL",
+                  "Houston, TX",
+                ][i % 4],
               }}
             />
           ))}

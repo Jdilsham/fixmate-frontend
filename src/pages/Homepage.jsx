@@ -1,8 +1,8 @@
+import { useState } from "react";
 import Header from "../components/header";
 import ServiceCard from "../components/homepage/serviceCard";
 import QualityCard from "../components/homepage/qualitycard";
 import Footercard from "../components/footer";
-import { useState } from "react";
 
 export default function Homepage() {
   const SERVICES = [
@@ -22,42 +22,48 @@ export default function Homepage() {
     { title: "Roofing", icon: "/serviceIcons/roofing.png" },
     { title: "Contractors", icon: "/serviceIcons/construction.png" },
   ];
-  const [query, setquery] = useState("");
+
+  const [query, setQuery] = useState("");
+
   const filteredServices = SERVICES.filter((service) =>
     service.title.toLowerCase().includes(query.toLowerCase())
   );
 
   return (
-    <div className="w-full min-h-screen bg-foreground dark:bg-background text-background dark:text-foreground transition-colors">
+    <div className="w-full min-h-screen bg-background text-foreground transition-colors">
       <Header />
 
+      {/* ================= HERO ================= */}
       <section className="relative max-w-7xl mx-auto px-6 pt-28 pb-36">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background to-transparent rounded-[40px]" />
 
-        <img src="/fixmate logo.png" alt="FixMate" className="w-56 mb-20" />
+        <img
+          src="/fixmate logo.png"
+          alt="FixMate"
+          className="w-56 mb-20"
+        />
 
-        <h1 className="text-6xl md:text-7xl font-semibold leading-tight max-w-4xl text-foreground">
+        <h1 className="text-6xl md:text-7xl font-semibold leading-tight max-w-4xl">
           Reliable services,
           <br />
           <span className="text-accent">zero friction.</span>
         </h1>
 
-        <p className="mt-8 text-xl text-foreground/80 max-w-xl">
+        <p className="mt-8 text-xl text-muted-foreground max-w-xl">
           Find verified professionals for every job — instantly.
         </p>
 
+        {/* ================= SEARCH ================= */}
         <div className="mt-16 w-full max-w-4xl mx-auto px-4">
-          <div
-            className="
-      flex flex-col sm:flex-row
-      items-stretch sm:items-center
-      gap-3
-      bg-white dark:bg-background
-      rounded-full
-      border border-black/10 dark:border-white/10
-      px-5 py-3
-    "
-          >
+          <div className="
+            flex flex-col sm:flex-row
+            items-stretch sm:items-center
+            gap-3
+            bg-card
+            rounded-full
+            border border-border
+            px-5 py-3
+          ">
             <div className="flex items-center flex-1 gap-4">
               <img
                 src="/search.png"
@@ -67,33 +73,31 @@ export default function Homepage() {
 
               <input
                 value={query}
-                onChange={(e) => setquery(e.target.value)}
+                onChange={(e) => setQuery(e.target.value)}
                 type="text"
                 placeholder="Search electricians, plumbers, mechanics..."
                 className="
-          w-full
-          bg-transparent
-          outline-none
-          text-base sm:text-lg
-          placeholder:text-background/50
-          dark:placeholder:text-foreground/50
-        "
+                  w-full
+                  bg-transparent
+                  outline-none
+                  text-base sm:text-lg
+                  placeholder:text-muted-foreground
+                "
               />
             </div>
 
             <button
-              onClick={() => console.log("search clicked")}
               className="
-        w-full sm:w-auto
-        px-8 py-3
-        rounded-full
-        bg-accent
-        text-white
-        font-medium
-        hover:brightness-110
-        active:scale-95
-        transition
-      "
+                w-full sm:w-auto
+                px-8 py-3
+                rounded-full
+                bg-accent
+                text-accent-foreground
+                font-medium
+                hover:brightness-110
+                active:scale-95
+                transition
+              "
             >
               Find services
             </button>
@@ -101,6 +105,7 @@ export default function Homepage() {
         </div>
       </section>
 
+      {/* ================= SERVICES ================= */}
       <section className="max-w-7xl mx-auto px-6 pb-36">
         <h2 className="text-5xl font-serif mb-20">Services</h2>
 
@@ -114,56 +119,31 @@ export default function Homepage() {
               />
             ))
           ) : (
-            <p className="col-span-full text-center opacity-60">
+            <p className="col-span-full text-center text-muted-foreground">
               No services found
             </p>
           )}
         </div>
       </section>
 
-      <section
-        className="
+      {/* ================= WHY FIXMATE ================= */}
+      <section className="
         max-w-7xl mx-auto px-6 pb-40
-        bg-card/10 dark:bg-card/20
+        bg-card/10
         rounded-[48px]
-      "
-      >
+      ">
         <h2 className="text-4xl font-serif text-center pt-24 mb-20">
           Why FixMate works
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 pb-24 place-items-center">
           {[
-            [
-              "/qualityIcons/verified.png",
-              "Verified Experts",
-              "Every professional is vetted.",
-            ],
-            [
-              "/qualityIcons/range.png",
-              "All-in-One",
-              "One platform. Every service.",
-            ],
-            [
-              "/qualityIcons/easybooking.png",
-              "Fast Booking",
-              "No friction. No waiting.",
-            ],
-            [
-              "/qualityIcons/rating.png",
-              "Real Reviews",
-              "Trusted by real customers.",
-            ],
-            [
-              "/qualityIcons/affordable.png",
-              "Fair Pricing",
-              "Transparent & competitive.",
-            ],
-            [
-              "/qualityIcons/contact.png",
-              "Always Available",
-              "Support when you need it.",
-            ],
+            ["/qualityIcons/verified.png", "Verified Experts", "Every professional is vetted."],
+            ["/qualityIcons/range.png", "All-in-One", "One platform. Every service."],
+            ["/qualityIcons/easybooking.png", "Fast Booking", "No friction. No waiting."],
+            ["/qualityIcons/rating.png", "Real Reviews", "Trusted by real customers."],
+            ["/qualityIcons/affordable.png", "Fair Pricing", "Transparent & competitive."],
+            ["/qualityIcons/contact.png", "Always Available", "Support when you need it."],
           ].map(([img, title, desc]) => (
             <QualityCard
               key={title}
@@ -175,17 +155,9 @@ export default function Homepage() {
         </div>
       </section>
 
-      <section
-        className="relative  mt-32   bg-background pt-32 pb-24
-"
-      >
-        <div
-          className="
-    absolute top-0 left-0 right-0 h-32
-    bg-gradient-to-b from-transparent to-background
-  "
-        />
-
+      {/* ================= FOOTER ================= */}
+      <section className="relative mt-32 bg-background pt-32 pb-24">
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-background" />
         <Footercard />
       </section>
     </div>
