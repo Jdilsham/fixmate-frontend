@@ -1,14 +1,24 @@
 export default function ServiceCard({ imgsrc, title }) {
   return (
-    <div className="w-[200px] h-[200px] bg-[#FFFFFF] rounded-[20px] drop-shadow-[0_4px_4px_rgba(0,0,0,0.35)] flex flex-col items-center pt-[30px]">
-      <img
-        src={imgsrc}
-        alt="service image not found"
-        className="w-[90px] h-[90px]"
-      />
-      <div className="text-[#000000] text-[24px] font-semibold leading-[29px] pt-[15px] text-center">
+    <div
+      className="
+        w-full max-w-[220px]
+        mx-auto
+        rounded-2xl
+        bg-white/70 dark:bg-white/5
+        backdrop-blur-md
+        border border-black/10 dark:border-white/10
+        shadow-sm
+        flex flex-col items-center justify-center gap-5
+        py-8
+        transition-all duration-300
+        hover:-translate-y-2 hover:shadow-xl
+      "
+    >
+      <img src={imgsrc} alt={title} className="w-16 h-16 sm:w-20 sm:h-20" />
+      <span className="text-base sm:text-lg font-medium text-center">
         {title}
-      </div>
+      </span>
     </div>
   );
 }

@@ -1,162 +1,193 @@
 import Header from "../components/header";
-
 import ServiceCard from "../components/homepage/serviceCard";
 import QualityCard from "../components/homepage/qualitycard";
 import Footercard from "../components/footer";
+import { useState } from "react";
 
 export default function Homepage() {
+  const SERVICES = [
+    { title: "Landscaping", icon: "/serviceIcons/landscaping.png" },
+    { title: "Electrical", icon: "/serviceIcons/electric.png" },
+    { title: "Cleaners", icon: "/serviceIcons/cleaning.png" },
+    { title: "Plumbing", icon: "/serviceIcons/plumbing.png" },
+    { title: "Color Washing", icon: "/serviceIcons/colorwash.png" },
+    { title: "Masonry", icon: "/serviceIcons/mason.png" },
+    { title: "Vehicle Repair", icon: "/serviceIcons/mechanic.png" },
+    { title: "Tile Work", icon: "/serviceIcons/tile.png" },
+    { title: "Cushion Works", icon: "/serviceIcons/cushioning.png" },
+    { title: "Carpentry", icon: "/serviceIcons/carpenter.png" },
+    { title: "Welding", icon: "/serviceIcons/welding.png" },
+    { title: "TV Repair", icon: "/serviceIcons/Tv.png" },
+    { title: "Equipment Repairing", icon: "/serviceIcons/repairing.png" },
+    { title: "Roofing", icon: "/serviceIcons/roofing.png" },
+    { title: "Contractors", icon: "/serviceIcons/construction.png" },
+  ];
+  const [query, setquery] = useState("");
+  const filteredServices = SERVICES.filter((service) =>
+    service.title.toLowerCase().includes(query.toLowerCase())
+  );
+
   return (
-    <div className="w-full h-full">
-      {/* first quarter - main components */}
+    <div className="w-full min-h-screen bg-foreground dark:bg-background text-background dark:text-foreground transition-colors">
+      <Header />
 
-      <div className="w-full h-full flex flex-col bg-[url('/background.jpg')] bg-center  bg-no-repeat">
-        <Header />
-        <div className="pl-[134px]">
-          <img src="/fixmate logo.png" alt="fixmate logo not available" />
-        </div>
-        <div className="text-[#ffffff] text-[58px] font-semibold leading-[70px] pl-[112px] pt-[327px] absolute">
-          Reliable Service,
-          <br /> Right at your Doorstep
-        </div>
-        <div className="text-[#ffffff] text-[34px] font-semibold leading-[70px] pl-[112px] pt-[510px] absolute">
-          Find Skilled Professionals Instantly
-        </div>
-        {/* Search bar  */}
-        <div className="w-[773px] h-[62px]   absolute leading-[70px]  pl-[112px] pt-[600px] flex">
-          <input
-            type="text"
-            name="search"
-            placeholder="Search For Services"
-            className="w-[calc(93%)] h-[50px] bg-amber-50 rounded-[10px] p-0 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] pl-[20px] text-[24px] font-normal outline-none"
-            id=""
-          />
-          <button
-            onClick={() => console.log("search clicked")}
-            className="w-[calc(7%)] h-[50px] bg-[#2C76A4] pl-0 absolute  right-10 rounded-[10px] text-[#FFFFFF] text-[24px] font-semibold ml-4"
-          >
-            <img
-              src="/search.png "
-              className="w-[30px] h-[30px] m-auto "
-              alt="search icon"
-            />
-          </button>
-        </div>
-      </div>
+      <section className="relative max-w-7xl mx-auto px-6 pt-28 pb-36">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background to-transparent rounded-[40px]" />
 
-      {/* second quarter - services */}
-      <div className="w-full   flex  flex-col justify-center items-center bg-gradient-to-b from-[#B6E8F0] to-[#FFFFFF]">
-        <p className="text-[64px] font-serif text-center  ">Our Services</p>
-        <div className="w-full flex justify-center items-center ">
+        <img src="/fixmate logo.png" alt="FixMate" className="w-56 mb-20" />
+
+        <h1 className="text-6xl md:text-7xl font-semibold leading-tight max-w-4xl text-foreground">
+          Reliable services,
+          <br />
+          <span className="text-accent">zero friction.</span>
+        </h1>
+
+        <p className="mt-8 text-xl text-foreground/80 max-w-xl">
+          Find verified professionals for every job — instantly.
+        </p>
+
+        <div className="mt-16 w-full max-w-4xl mx-auto px-4">
           <div
-            className="w-full  grid grid-cols-1 place-items-center md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-10 pb-20 pl-10
-         pr-10"
+            className="
+      flex flex-col sm:flex-row
+      items-stretch sm:items-center
+      gap-3
+      bg-white dark:bg-background
+      rounded-full
+      border border-black/10 dark:border-white/10
+      px-5 py-3
+    "
           >
-            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8  ">
-              <ServiceCard
-                imgsrc="/serviceIcons/landscaping.png"
-                title="Landscaping"
+            <div className="flex items-center flex-1 gap-4">
+              <img
+                src="/search.png"
+                alt="search"
+                className="w-5 h-5 opacity-50"
               />
-              <ServiceCard
-                imgsrc="/serviceIcons/electric.png"
-                title="Electrical"
-              />
-              <ServiceCard
-                imgsrc="/serviceIcons/cleaning.png"
-                title="Cleaners"
-              />
-            </div>
-            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8 ">
-              <ServiceCard
-                imgsrc="/serviceIcons/plumbing.png"
-                title="Plumbing"
-              />
-              <ServiceCard
-                imgsrc="/serviceIcons/colorwash.png"
-                title="Color Washing"
-              />
-              <ServiceCard imgsrc="/serviceIcons/mason.png" title="Masonry" />
-            </div>
-            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8">
-              <ServiceCard
-                imgsrc="/serviceIcons/mechanic.png"
-                title="Vehicle Repair"
-              />
-              <ServiceCard imgsrc="/serviceIcons/tile.png" title="Tile work" />
-              <ServiceCard
-                imgsrc="/serviceIcons/cushioning.png"
-                title="Cushion Works"
+
+              <input
+                value={query}
+                onChange={(e) => setquery(e.target.value)}
+                type="text"
+                placeholder="Search electricians, plumbers, mechanics..."
+                className="
+          w-full
+          bg-transparent
+          outline-none
+          text-base sm:text-lg
+          placeholder:text-background/50
+          dark:placeholder:text-foreground/50
+        "
               />
             </div>
-            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8">
-              <ServiceCard
-                imgsrc="/serviceIcons/carpenter.png"
-                title="Carpentry"
-              />
-              <ServiceCard imgsrc="/serviceIcons/welding.png" title="Welding" />
-              <ServiceCard imgsrc="/serviceIcons/Tv.png" title="TV Repair" />
-            </div>
-            <div className="w-[220px] h-full   flex flex-col justify-center items-center space-y-8">
-              <ServiceCard
-                imgsrc="/serviceIcons/repairing.png"
-                title="Equipment Repairing"
-              />
-              <ServiceCard imgsrc="/serviceIcons/roofing.png" title="Roofing" />
-              <ServiceCard
-                imgsrc="/serviceIcons/construction.png"
-                title="contractors"
-              />
-            </div>
+
+            <button
+              onClick={() => console.log("search clicked")}
+              className="
+        w-full sm:w-auto
+        px-8 py-3
+        rounded-full
+        bg-accent
+        text-white
+        font-medium
+        hover:brightness-110
+        active:scale-95
+        transition
+      "
+            >
+              Find services
+            </button>
           </div>
         </div>
-      </div>
-      {/* third quarter - why to choose us */}
-      <div className="w-full    flex flex-col ">
-        <span className="text-[48px] font-serif text-center pt-20">
-          Why Choose FixMate?
-        </span>
-        <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 place-items-center gap-10 pb-20 pt-10   ">
-          <div className="w-[360px]    flex flex-col justify-center items-center space-y-15 ">
-            <QualityCard
-              imgsrc="/qualityIcons/verified.png"
-              title="Verified & Trusted Technicians"
-              description="We verify every technician to ensure reliability and safety."
-            />
-            <QualityCard
-              imgsrc="/qualityIcons/range.png"
-              title="Wide Range of Services"
-              description="From plumbing to landscaping, we cover it all."
-            />
-          </div>
-          <div className="w-[360px]    flex flex-col justify-center items-center space-y-15">
-            <QualityCard
-              imgsrc="/qualityIcons/easybooking.png"
-              title="Fast & Easy Booking"
-              description="Book any service in minutes with the simple interface."
-            />
-            <QualityCard
-              imgsrc="/qualityIcons/rating.png"
-              title="Ratings & Reviews"
-              description="Choose technicians based on real customer feedback."
-            />
-          </div>
-          <div className="w-[360px]    flex flex-col justify-center items-center space-y-15">
-            <QualityCard
-              imgsrc="/qualityIcons/affordable.png"
-              title="Affordable Pricing"
-              description="Fair prices designed to fit your budget without compromising quality."
-            />
-            <QualityCard
-              imgsrc="/qualityIcons/contact.png"
-              title="Customer Support"
-              description="We help you resolve any issues quickly and efficiently."
-            />
-          </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-6 pb-36">
+        <h2 className="text-5xl font-serif mb-20">Services</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 place-items-center">
+          {filteredServices.length > 0 ? (
+            filteredServices.map((service) => (
+              <ServiceCard
+                key={service.title}
+                imgsrc={service.icon}
+                title={service.title}
+              />
+            ))
+          ) : (
+            <p className="col-span-full text-center opacity-60">
+              No services found
+            </p>
+          )}
         </div>
-      </div>
-      {/* fourth quarter - footer */}
-      <div className="w-full h-[500px] bg-cover bg-bottom flex justify-center items-center">
+      </section>
+
+      <section
+        className="
+        max-w-7xl mx-auto px-6 pb-40
+        bg-card/10 dark:bg-card/20
+        rounded-[48px]
+      "
+      >
+        <h2 className="text-4xl font-serif text-center pt-24 mb-20">
+          Why FixMate works
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 pb-24 place-items-center">
+          {[
+            [
+              "/qualityIcons/verified.png",
+              "Verified Experts",
+              "Every professional is vetted.",
+            ],
+            [
+              "/qualityIcons/range.png",
+              "All-in-One",
+              "One platform. Every service.",
+            ],
+            [
+              "/qualityIcons/easybooking.png",
+              "Fast Booking",
+              "No friction. No waiting.",
+            ],
+            [
+              "/qualityIcons/rating.png",
+              "Real Reviews",
+              "Trusted by real customers.",
+            ],
+            [
+              "/qualityIcons/affordable.png",
+              "Fair Pricing",
+              "Transparent & competitive.",
+            ],
+            [
+              "/qualityIcons/contact.png",
+              "Always Available",
+              "Support when you need it.",
+            ],
+          ].map(([img, title, desc]) => (
+            <QualityCard
+              key={title}
+              imgsrc={img}
+              title={title}
+              description={desc}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section
+        className="relative  mt-32   bg-background pt-32 pb-24
+"
+      >
+        <div
+          className="
+    absolute top-0 left-0 right-0 h-32
+    bg-gradient-to-b from-transparent to-background
+  "
+        />
+
         <Footercard />
-      </div>
+      </section>
     </div>
   );
 }

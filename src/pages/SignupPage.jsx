@@ -1,15 +1,15 @@
-import { useNavigate } from "react-router-dom";
-import TopWave from "../components/LoginSignup/TopWave";
-import BottomWave from "../components/LoginSignup/BottomWave";
-import { IoPersonCircleSharp } from "react-icons/io5";
-import { MdAttachEmail } from "react-icons/md";
-import { GiPadlock } from "react-icons/gi";
 import { useState } from "react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "../components/ui/card";
 import axios from "axios";
-import { toast } from "react-hot-toast";
-import Btn from "../components/btn";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 const API = import.meta.env.VITE_BACKEND_URL;
-
 
 export default function SignupPage() {
   const [firstName, setfirstName] = useState("");
@@ -24,17 +24,14 @@ export default function SignupPage() {
 
   async function handleSignup() {
     try {
-      const response = await axios.post(
-        `${API}/api/auth/signup`,
-        {
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
-          phone: phone,
-          password: password,
-          role: role,
-        }
-      );
+      const response = await axios.post(`${API}/api/auth/signup`, {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: phone,
+        password: password,
+        role: role,
+      });
       console.log("Signup successful:", response.data);
       toast.success("Signup successful! Please login.");
       navigate("/login");
@@ -59,126 +56,173 @@ export default function SignupPage() {
       toast.error(`Signup failed. please try again.`);
     }
   }
+
   return (
-    <div className="w-full h-full flex justify-center items-center">
-      <div className="w-[480px] h-[780px] rounded-[15px] flex flex-col justify-between bg-gradient-to-b from-[#A4E5EF] via-[#FCFFFF] to-[#B6E8F0]">
-        {/*top wave form*/}
-        <TopWave />
+    <div className="min-h-screen w-full flex items-center justify-center bg-background">
+      <Card
+        className="
+          relative
+          w-105
+          rounded-2xl
+          bg-card
+          
+          text-card-foreground
+          border border-border
+          shadow-xl
+          transition-transform duration-300 ease-out
+          hover:scale-[1.018]
+        "
+      >
+        {/* HEADER */}
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-3xl font-semibold">
+            Welcome to Fixmate
+          </CardTitle>
+          <p className="text-muted-foreground text-sm">
+            Sign up to get the Best Experience
+          </p>
+        </CardHeader>
 
-        <div className="w-[480px] h-[780px] absolute  rounded-[15px]  flex flex-col justify-center items-center gap-7 p-10">
-          <span className="text-[48px] text-[#2C566A] font-semibold ">
-            Sign up
-          </span>
-
-          {/* {name fields} */}
-          <div className="w-full h-[40px] flex flex-row items-center gap-4 p-3 ">
-            <IoPersonCircleSharp size={30} color="#000" />
+        {/* FORM */}
+        <CardContent className="space-y-6 mt-6">
+          <div className="relative">
             <input
               onChange={(e) => {
                 setfirstName(e.target.value);
               }}
               type="text"
-              className="w-[calc(48%)] h-[40px]  border-[#0B6B7E] flex items-center px-3 font-regular border-0 border-b-2 focus:border-blue-500 focus:outline-none focus:ring-0 "
-              placeholder={"First Name"}
+              placeholder=" "
+              className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
             />
+            <label
+              className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all peer-not-placeholder-shown:-top-3
+      peer-not-placeholder-shown:text-xs"
+            >
+              First Name
+            </label>
+          </div>
+          <div className="relative">
             <input
               onChange={(e) => {
                 setlastName(e.target.value);
               }}
               type="text"
-              className="w-[calc(48%)] h-[40px]  border-[#0B6B7E] flex items-center px-3 font-regular border-0 border-b-2 focus:border-blue-500 focus:outline-none focus:ring-0 "
-              placeholder={"Last Name"}
+              placeholder=" "
+              className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
             />
+            <label
+              className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all peer-not-placeholder-shown:-top-3
+      peer-not-placeholder-shown:text-xs"
+            >
+              Last Name
+            </label>
           </div>
-
-          {/* {email field} */}
-          <div className="w-full h-[40px] flex flex-row items-center gap-2 p-2 ">
-            <MdAttachEmail size={30} color="#000" />
+          <div className="relative">
             <input
               onChange={(e) => {
                 setemail(e.target.value);
               }}
-              type="text"
-              className="w-full h-[40px] border-0 border-b-2 border-[#0B6B7E] flex items-center px-3 font-regular focus:border-blue-500 focus:outline-none focus:ring-0 "
-              placeholder={"Email"}
+              type="email"
+              placeholder=" "
+              className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
             />
+            <label
+              className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all peer-not-placeholder-shown:-top-3
+      peer-not-placeholder-shown:text-xs"
+            >
+              Email
+            </label>
           </div>
-
-          {/* {phone number field} */}
-          <div className="w-full h-[40px] flex flex-row items-center gap-2 p-2 ">
-            <MdAttachEmail size={30} color="#000" />
+          <div className="relative">
             <input
               onChange={(e) => {
                 setphone(e.target.value);
               }}
               type="tel"
-              className="w-full h-[40px] border-0 border-b-2 border-[#0B6B7E] flex items-center px-3 font-regular focus:border-blue-500 focus:outline-none focus:ring-0 "
-              placeholder={"Phone Number"}
+              placeholder=" "
+              className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
             />
+            <label
+              className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all peer-not-placeholder-shown:-top-3
+      peer-not-placeholder-shown:text-xs"
+            >
+              Phone Number
+            </label>
           </div>
-
-          {/* {password field} */}
-          <div className="w-full h-[40px] flex flex-row items-center gap-2 p-2 ">
-            <GiPadlock size={30} color="#000" />
+          <div className="relative">
             <input
               onChange={(e) => {
                 setpassword(e.target.value);
               }}
               type="password"
-              className="w-full h-[40px] border-0 border-b-2 border-[#0B6B7E] flex items-center px-3 font-regular focus:border-blue-500 focus:outline-none focus:ring-0 "
-              placeholder="Password"
+              placeholder=" "
+              className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
             />
+            <label
+              className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all peer-not-placeholder-shown:-top-3
+      peer-not-placeholder-shown:text-xs"
+            >
+              Password
+            </label>
           </div>
 
-          {/* {confirm password field} */}
-          <div className="w-full h-[40px] flex flex-row items-center gap-2 p-2 ">
-            <GiPadlock size={30} color="#000" />
+          <div className="relative">
             <input
               onChange={(e) => {
                 setconfirmpassword(e.target.value);
               }}
               type="password"
-              className="w-full h-[40px] border-0 border-b-2 border-[#0B6B7E] flex items-center px-3 font-regular focus:border-blue-500 focus:outline-none focus:ring-0"
-              placeholder="Confirm Password"
+              placeholder=" "
+              className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
             />
+            <label
+              className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all peer-not-placeholder-shown:-top-3
+      peer-not-placeholder-shown:text-xs"
+            >
+              Confirm Password
+            </label>
           </div>
 
-          {/* {role selection field} */}
-          <div className="w-full h-[40px]  flex flex-row items-center gap-2 p-2 ">
-            <div className="w-[calc(30%)] h-[40px] text-[16px] flex items-center justify-center ">
-              <span>I want to : </span>
+          <div className="relative flex items-center justify-between ">
+            <div>
+              <p className="text-foreground">I want to: </p>
             </div>
-            <div className="w-[calc(70%)] h-[40px] border-0 border-b-2 border-[#0B6B7E] flex items-center justify-center ">
-              <select
-                onChange={(e) => {
-                  setrole(e.target.value);
-                }}
-                className="w-[calc(100%-100px)] h-[40px] flex flex-row items-center gap-2 p-2 "
-              >
-                <option value="" hidden defaultChecked>
-                  Select an option
-                </option>
-                <option value="User">Hire Services</option>
-                <option value="Facilitator">Provide Services</option>
-              </select>
-            </div>
+            <select
+              onChange={(e) => {
+                setrole(e.target.value);
+              }}
+              className="flex items-center gap-2 p-2 focus:accent"
+            >
+              <option value="" hidden defaultChecked>
+                Select an Option
+              </option>
+              <option value="user" className="text-accent-foreground">
+                Hire Services
+              </option>
+              <option value="facilitator" className="text-accent-foreground">
+                Provide Services
+              </option>
+            </select>
           </div>
+        </CardContent>
 
-          <Btn
+        {/* FOOTER */}
+        <CardFooter className="flex flex-col gap-6 mt-6">
+          <button
             onClick={handleSignup}
-            bg="bg-[#0E9598]"
-            textColor="text-white"
-            label="Sign Up"
-          />
-          <div>
-            <span>Already have an account? </span>
-            <a href="/login" className="text-[#0B6B7E]">
+            className="w-full h-12 rounded-xl bg-accent text-accent-foreground font-medium hover:brightness-110 transition"
+          >
+            Sign In
+          </button>
+
+          <p className="text-muted-foreground text-sm">
+            Already have an account?{" "}
+            <a href="/login" className="text-accent hover:underline">
               Login
             </a>
-          </div>
-        </div>
-        <BottomWave />
-      </div>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -15,6 +15,7 @@ function App() {
         <Toaster position="top-center" />
         <Routes path="/">
           <Route path="/" element={<Homepage />} />
+          <Route path="/*" element={<h1>404 not found</h1>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/services" element={<Services />} />

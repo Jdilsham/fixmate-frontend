@@ -2,30 +2,38 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import toast from "react-hot-toast";
-import DarkMode from "../components/darkmodeToggle";
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   async function handleLogin() {
     try {
       const response = await axios.post(`${API}/api/auth/login`, {
-        email: username,
-        password,
+        email: email,
+        password: password,
       });
 
       localStorage.setItem("token", response.data.token);
       toast.success("Login successful!");
-      navigate("/");
+
+      // if (user.isAdmin) {
+      //   navigate("/admin");
+      //   console.log("Admin logged in");
+      // } else if (user.isUser) {
+      //   navigate("/");
+      //   console.log("Customer logged in");
+      // } else if (user.isFacilitator) {
+      //   navigate("/wanted");
+      //   console.log("Facilitator logged in");
+      // }
     } catch (error) {
       console.error(error);
       toast.error("Invalid credentials");
@@ -33,15 +41,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background px-4">
       <Card
-        className="relative w-105 bg-card max-w-md shadow-xl rounded-2xl text-card-foreground
-          border border-border
-          shadow-xl
-          transition-transform duration-300 ease-out
-          hover:scale-[1.018] "
+        className="relative 
+        w-105 
+        bg-card 
+        max-w-md 
+        rounded-2xl 
+        text-card-foreground
+        border border-border
+        shadow-xl
+        transition-transform duration-300 ease-out
+        hover:scale-[1.018] "
       >
-        <DarkMode />
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-4xl font-semibold">Welcome back</CardTitle>
           <p className="text-muted-foreground text-sm">
@@ -51,30 +63,37 @@ export default function LoginPage() {
 
         <CardContent className="space-y-6 mt-6">
           <div className="relative">
-            
+            {/* email */}
             <input
-              id="email"
               type="email"
               placeholder=" "
               className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
-            <label className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all">
+            <label
+              className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all peer-not-placeholder-shown:-top-3
+      peer-not-placeholder-shown:text-xs"
+            >
               Email
             </label>
           </div>
 
-          {/* Password */}
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
+          <div className="relative">
+            {/* password */}
+            <input
               type="password"
-              placeholder="••••••••"
+              placeholder=" "
+              className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <label
+              className="absolute left-0 top-3 text-muted-foreground text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-accent transition-all peer-not-placeholder-shown:-top-3
+      peer-not-placeholder-shown:text-xs"
+            >
+              Password
+            </label>
           </div>
 
           {/* Remember + Forgot */}
@@ -98,6 +117,11 @@ export default function LoginPage() {
           >
             Login
           </Button>
+          
+          <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+          Login with Google
+          </Button>
+        
 
           {/* Footer */}
           <p className="text-center text-sm text-muted-foreground">
