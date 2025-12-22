@@ -118,7 +118,7 @@ export default function LoginPage() {
             Login
           </Button>
           
-          <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button className="w-full bg-accent dark:bg-foreground text-primary-foreground hover:bg-primary/90">
           Login with Google
           </Button>
         
