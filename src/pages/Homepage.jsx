@@ -33,7 +33,7 @@ export default function Homepage() {
     <div className="w-full min-h-screen bg-background text-foreground transition-colors">
       <Header />
 
-      {/* ================= HERO ================= */}
+      
       <section className="relative max-w-7xl mx-auto px-6 pt-28 pb-36">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background to-transparent rounded-[40px]" />
 

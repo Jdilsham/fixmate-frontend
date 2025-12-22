@@ -13,7 +13,7 @@ export default function EmployerCard({ employer }) {
         hover:shadow-xl
       "
     >
-      {/* HEADER (LOCKED HEIGHT) */}
+     
       <div className="flex items-center gap-4 h-[72px]">
         <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-lg font-semibold">
           {employer?.name?.charAt(0) || "?"}
@@ -29,15 +29,14 @@ export default function EmployerCard({ employer }) {
         </div>
       </div>
 
-      {/* DESCRIPTION (LOCKED HEIGHT) */}
+      
       <p className="mt-4 text-sm text-muted-foreground leading-relaxed h-[72px] line-clamp-3">
         {employer.description}
       </p>
 
-      {/* FLEX SPACER */}
       <div className="flex-1" />
 
-      {/* BOTTOM (LOCKED HEIGHT) */}
+      
       <div className="h-[96px] flex flex-col justify-between">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>⭐ 4.8</span>

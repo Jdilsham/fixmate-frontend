@@ -81,7 +81,7 @@ export default function Services() {
             />
           </div>
 
-          {/* CTA */}
+          
           <button
             className="
               px-8 py-3
@@ -126,7 +126,7 @@ export default function Services() {
         </div>
       </section>
 
-      {/* ================= FOOTER HOST ================= */}
+     
       <section className="bg-[#112B3C] pt-32 pb-24">
         <Footercard />
       </section>
