@@ -7,6 +7,7 @@ import Homepage from "./pages/Homepage";
 import Services from "./pages/services";
 import Wanted from "./pages/wanted";
 import About from "./pages/about";
+import Contact from "./pages/contact";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/wanted" element={<Wanted />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />}/>
         </Routes>
       </div>
     </BrowserRouter>
