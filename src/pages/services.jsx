@@ -8,16 +8,49 @@ export default function Services() {
   const [location, setLocation] = useState("");
 
   const EMPLOYEES = [
-    { name: "John Doe", description: "Experienced electrician specializing in residential and commercial projects.", location: "Galle" },
-    { name: "Jane Smith", description: "Experienced electrician specializing in residential and commercial projects.", location: "Matara" },
-    { name: "Mike Johnson", description: "Experienced electrician specializing in residential and commercial projects.", location: "Hambantota" },
-    { name: "Sara Lee", description: "Experienced electrician specializing in residential and commercial projects.", location: "Gampaha" },
-    { name: "Jason Borne", description: "Experienced electrician specializing in residential and commercial projects.", location: "Colombo" },
+    {
+      name: "John Doe",
+      service: "electrician",
+      description:
+        "Experienced electrician specializing in residential and commercial projects.",
+      location: "Galle",
+    },
+    {
+      name: "Jane Smith",
+      service: "plumber",
+      description:
+        "Experienced plumber specializing in residential and commercial projects.",
+      location: "Matara",
+    },
+    {
+      name: "Mike Johnson",
+      service: "carpenter",
+      description:
+        "Experienced carpenter specializing in residential and commercial projects.",
+      location: "Hambantota",
+    },
+    {
+      name: "Sara Lee",
+      service: "mechanic",
+      description: "Experienced mechanic specializing in vehicle repair.",
+      location: "Gampaha",
+    },
+    {
+      name: "Jason Borne",
+      service: "electrician",
+      description:
+        "Experienced electrician specializing in residential and commercial projects.",
+      location: "Colombo",
+    },
   ];
 
-  const filteredEmployees = EMPLOYEES.filter((employee) =>
-    employee.location.toLowerCase().includes(location.toLowerCase())
-  );
+  const filteredEmployees = EMPLOYEES.filter((employee) => {
+    const matchService = service === "" || employee.service === service;
+    const matchLocation =
+      location === "" ||
+      employee.location.toLowerCase().includes(location.toLowerCase());
+    return matchService && matchLocation;
+  });
 
   return (
     <div className="w-full min-h-screen bg-background text-foreground">
@@ -32,22 +65,26 @@ export default function Services() {
       </section>
 
       {/* ================= FILTER BAR ================= */}
-      <section className="max-w-7xl mx-auto px-6 pb-20">
-        <div className="
-          bg-card
-          border border-border
-          rounded-2xl
-          p-6
-          flex flex-col lg:flex-row
-          gap-6
-        ">
+      <section className="max-w-5xl mx-auto px-6 pb-20">
+        <div
+          className="
+            bg-white/70 dark:bg-white/5
+            backdrop-blur-md
+            border border-black/10 dark:border-white/10
+            rounded-2xl
+            p-6
+            flex flex-col lg:flex-row
+            gap-6
+          "
+        >
           {/* Service dropdown */}
           <select
             value={service}
             onChange={(e) => setService(e.target.value)}
             className="
               w-full lg:w-[280px]
-              bg-transparent
+              bg-background
+              text-foreground
               border border-border
               rounded-xl
               px-4 py-3
@@ -62,15 +99,19 @@ export default function Services() {
           </select>
 
           {/* Location input */}
-          <div className="flex flex-1 items-center gap-4 border border-border rounded-xl px-4">
+          <div
+            className=" flex flex-1 items-center bg-background
+                text-foreground gap-4 border border-border rounded-xl px-4"
+          >
             <img src="/search.png" className="w-5 h-5 opacity-50" alt="" />
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Search by location"
+              placeholder="Filter by location"
               className="
-                w-full
-                bg-transparent
+                w-full 
+                bg-background
+                text-foreground
                 py-3
                 outline-none
                 placeholder:text-muted-foreground
@@ -78,7 +119,7 @@ export default function Services() {
             />
           </div>
 
-          <button
+          {/* <button
             className="
               px-8 py-3
               rounded-xl
@@ -90,7 +131,7 @@ export default function Services() {
             "
           >
             Search
-          </button>
+          </button> */}
         </div>
       </section>
 
@@ -99,10 +140,7 @@ export default function Services() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 place-items-center">
           {filteredEmployees.length > 0 ? (
             filteredEmployees.map((employee) => (
-              <EmployerCard
-                key={employee.name}
-                employer={employee}
-              />
+              <EmployerCard key={employee.name} employer={employee} />
             ))
           ) : (
             <p className="col-span-full text-center text-muted-foreground">
