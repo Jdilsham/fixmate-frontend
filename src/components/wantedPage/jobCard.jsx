@@ -1,3 +1,4 @@
+import { Button } from "../ui/button";
 import {
   Card,
   CardContent,
@@ -31,9 +32,11 @@ export default function JobCard({
         </div>
       </CardContent>
       <CardFooter>
-        <button className="min-w-40 flex justify-end items-center">
+        <div className=" w-full flex justify-end">
+        <Button className="min-w-fit ">
           {contact}
-        </button>
+        </Button>
+        </div>
       </CardFooter>
     </Card>
   );

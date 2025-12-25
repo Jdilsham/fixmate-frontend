@@ -25,28 +25,28 @@ export default function Wanted() {
             profession="Electrician"
             description="Experienced electrician specializing in residential and commercial projects."
             location="New York, NY"
-            contact="Contact Number: 123-456-7890"
+            contact="Contact Number"
           />
 
           <JobCard
             profession="Plumber"
             description="Skilled plumber with expertise in pipe repairs and installations."
             location="Los Angeles, CA"
-            contact="Contact Number: 987-654-3210"
+            contact="Contact Number"
           />
 
           <JobCard
             profession="Carpenter"
             description="Professional carpenter offering custom furniture and home improvement services."
             location="Chicago, IL"
-            contact="Contact Number: 555-123-4567"
+            contact="Contact Number"
           />
 
           <JobCard
             profession="Mechanic"
             description="Expert mechanic providing reliable vehicle maintenance and repair."
             location="Houston, TX"
-            contact="Contact Number: 444-987-6543"
+            contact="Contact Number"
           />
         </div>
       </section>
