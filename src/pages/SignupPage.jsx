@@ -19,7 +19,7 @@ export default function SignupPage() {
   const [role, setrole] = useState("User");
 
   const [password, setpassword] = useState("");
-  const [confirmpassword, setconfirmpassword] = useState("");
+  
   const navigate = useNavigate();
 
   async function handleSignup() {
@@ -168,9 +168,9 @@ export default function SignupPage() {
 
           <div className="relative">
             <input
-              onChange={(e) => {
-                setconfirmpassword(e.target.value);
-              }}
+              // onChange={(e) => {
+              //   setconfirmpassword(e.target.value);
+              // }}
               type="password"
               placeholder=" "
               className="peer w-full h-12 bg-transparent border-b border-border text-foreground outline-none focus:border-accent transition"
