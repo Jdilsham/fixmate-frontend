@@ -22,7 +22,7 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/wanted" element={<Wanted />} />
           <Route path="/about" element={<About />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/:id" element={<ProfilePage />} />
         </Routes>
       </div>
     </BrowserRouter>
