@@ -40,7 +40,7 @@ export default function EmployerCard({ employer }) {
       <div className="h-[96px] flex flex-col justify-between">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>⭐ 4.8</span>
-          <span>{employer.location || "Nearby"}</span>
+          <span> 📍 {employer.location || "Nearby"}</span>
         </div>
 
         <button
