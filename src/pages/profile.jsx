@@ -1,9 +1,54 @@
 import { useState } from "react";
 import Header from "../components/header";
+import { useParams } from "react-router-dom";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const { id } = useParams();
 
+  const EMPLOYEES = [
+  {
+    id: "john-doe",
+    name: "John Doe",
+    service: "electrician",
+    description: "Experienced electrician specializing in residential and commercial projects.",
+    location: "Galle",
+  },
+  {
+    id: "jane-smith",
+    name: "Jane Smith",
+    service: "plumber",
+    description: "Experienced plumber specializing in residential and commercial projects.",
+    location: "Matara",
+  },
+  {
+    id: "mike-johnson",
+    name: "Mike Johnson",
+    service: "carpenter",
+    description: "Experienced carpenter specializing in residential and commercial projects.",
+    location: "Hambantota",
+  },
+  {
+    id: "sara-lee",
+    name: "Sara Lee",
+    service: "mechanic",
+    description: "Experienced mechanic specializing in vehicle repair.",
+    location: "Gampaha",
+  },
+  {
+    id: "jason-borne",
+    name: "Jason Borne",
+    service: "electrician",
+    description: "Experienced electrician specializing in residential and commercial projects.",
+    location: "Colombo",
+  },
+];
+  const profile = EMPLOYEES.find((emp) => emp.id === id) || EMPLOYEES[0];
+  if(!profile) {
+    return <div className="w-full min-h-screen flex items-center justify-center">
+      <h2 className="text-2xl font-semibold">Profile not found</h2>
+    </div>
+  }
   return (
     <div className="w-full min-h-screen bg-background text-foreground">
       <Header />
@@ -19,8 +64,9 @@ export default function ProfilePage() {
                   J
                 </div>
                 <div>
-                  <h3 className="font-semibold">John Doe</h3>
-                  <p className="text-sm text-muted-foreground">Electrician</p>
+                  <h3 className="font-semibold">{profile.name}</h3>
+                  <p className="text-sm text-muted-foreground">{profile.service}</p>
+                  <p className="text-sm text-muted-foreground">{profile.location}</p>
                 </div>
               </div>
 
@@ -73,7 +119,7 @@ export default function ProfilePage() {
                     Services Offered
                   </h2>
                   <p className="text-muted-foreground">
-                    List of services provided by this professional.
+                    {profile.description}
                   </p>
                 </section>
               )}

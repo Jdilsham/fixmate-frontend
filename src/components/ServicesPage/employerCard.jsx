@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
+
 export default function EmployerCard({ employer }) {
+  const navigate = useNavigate();
   return (
     <div
       className="
@@ -13,7 +16,6 @@ export default function EmployerCard({ employer }) {
         hover:shadow-xl
       "
     >
-     
       <div className="flex items-center gap-4 h-[72px]">
         <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-lg font-semibold">
           {employer?.name?.charAt(0) || "?"}
@@ -29,14 +31,12 @@ export default function EmployerCard({ employer }) {
         </div>
       </div>
 
-      
       <p className="mt-4 text-sm text-muted-foreground leading-relaxed h-[72px] line-clamp-3">
         {employer.description}
       </p>
 
       <div className="flex-1" />
 
-      
       <div className="h-[96px] flex flex-col justify-between">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>⭐ 4.8</span>
@@ -44,6 +44,11 @@ export default function EmployerCard({ employer }) {
         </div>
 
         <button
+          onClick={
+            () => {
+              navigate(`/profile/${employer.id}`);
+            }
+          }
           className="
             w-full
             py-2.5
