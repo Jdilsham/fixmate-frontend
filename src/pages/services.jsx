@@ -1,190 +1,161 @@
 import { useState } from "react";
-import Footercard from "../components/footer";
 import Header from "../components/header";
+import Footercard from "../components/footer";
 import EmployerCard from "../components/ServicesPage/employerCard";
 
 export default function Services() {
   const [service, setService] = useState("");
   const [location, setLocation] = useState("");
+
+  const EMPLOYEES = [
+  {
+    id: "john-doe",
+    name: "John Doe",
+    service: "electrician",
+    description: "Experienced electrician specializing in residential and commercial projects.",
+    location: "Galle",
+  },
+  {
+    id: "jane-smith",
+    name: "Jane Smith",
+    service: "plumber",
+    description: "Experienced plumber specializing in residential and commercial projects.",
+    location: "Matara",
+  },
+  {
+    id: "mike-johnson",
+    name: "Mike Johnson",
+    service: "carpenter",
+    description: "Experienced carpenter specializing in residential and commercial projects.",
+    location: "Hambantota",
+  },
+  {
+    id: "sara-lee",
+    name: "Sara Lee",
+    service: "mechanic",
+    description: "Experienced mechanic specializing in vehicle repair.",
+    location: "Gampaha",
+  },
+  {
+    id: "jason-borne",
+    name: "Jason Borne",
+    service: "electrician",
+    description: "Experienced electrician specializing in residential and commercial projects.",
+    location: "Colombo",
+  },
+];
+
+
+  const filteredEmployees = EMPLOYEES.filter((employee) => {
+    const matchService = service === "" || employee.service === service;
+    const matchLocation =
+      location === "" ||
+      employee.location.toLowerCase().includes(location.toLowerCase());
+    return matchService && matchLocation;
+  });
+
   return (
-    <div className="w-full bg-gradient-to-b from-[#A4E5EF]  to-[#B6E8F0] flex flex-col justify-center items-center">
+    <div className="w-full min-h-screen bg-background text-foreground">
       <Header />
-      <h1 className="text-4xl font-bold mb-8">Our Services</h1>
-      <div className="w-full  flex justify-center items-center mb-16 relative gap-20">
-        {/* Service selection dropdown  */}
-        <div className="w-[500px] h-[62px]   relative   flex ">
+
+      {/* ================= PAGE HEADER ================= */}
+      <section className="max-w-7xl mx-auto px-6 pt-24 pb-16">
+        <h1 className="text-5xl font-semibold mb-4">Find professionals</h1>
+        <p className="text-lg text-muted-foreground max-w-xl">
+          Choose a service and location to discover verified experts near you.
+        </p>
+      </section>
+
+      {/* ================= FILTER BAR ================= */}
+      <section className="max-w-5xl mx-auto px-6 pb-20">
+        <div
+          className="
+            bg-white/70 dark:bg-white/5
+            backdrop-blur-md
+            border border-black/10 dark:border-white/10
+            rounded-2xl
+            p-6
+            flex flex-col lg:flex-row
+            gap-6
+          "
+        >
+          {/* Service dropdown */}
           <select
-            onChange={(e) => {
-              setService(e.target.value);
-              console.log(`${e.target.value}`);
-            }}
-            className="w-full h-[50px] bg-white rounded-[10px] p-0 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] pl-[20px] text-[24px] font-normal outline-none"
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+            className="
+              w-full lg:w-[280px]
+              bg-background
+              text-foreground
+              border border-border
+              rounded-xl
+              px-4 py-3
+              outline-none
+            "
           >
-            <option defaultValue={""} disabled>
-              Select a service
-            </option>
+            <option value="">Select service</option>
             <option value="electrician">Electrician</option>
             <option value="plumber">Plumber</option>
             <option value="carpenter">Carpenter</option>
-            <option value="repairman">Equipment Repair</option>
-            <option value="landscaper">Landscaping</option>
             <option value="mechanic">Vehicle Repair</option>
-            <option value="tile">Tile Installation</option>
-            <option value="cleaner">Cleaning Services</option>
-            <option value="painter">Painting Services</option>
-            <option value="tv">Tv Services</option>
-            <option value="cushioning">Cushion works</option>
-            <option value="mason">Mason work</option>
-            <option value="welder">Welding</option>
-            <option value="roofing">Roofing works</option>
-            <option value="construction">Construction</option>
-
-
           </select>
-        </div>
-        {/* Location Search bar  */}
-        <div className="w-[600px] h-[62px]   relative   flex">
-          <input
-          onChange={(e)=>{
-            setLocation(e.target.value);
-            console.log(`${e.target.value}`);
-          }}
-            type="text"
-            name="search"
-            placeholder="Search by Location"
-            className="w-[calc(93%)] h-[50px] bg-white rounded-[10px] p-0 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] pl-[20px] text-[24px] font-normal outline-none"
-            id=""
-          />
-          <button
-            onClick={() => console.log("search clicked")}
-            className="w-[calc(10%)] h-[50px] bg-[#2C76A4] pl-0 absolute  right-10 rounded-[10px] text-[#FFFFFF] text-[24px] font-semibold ml-4"
+
+          {/* Location input */}
+          <div
+            className=" flex flex-1 items-center bg-background
+                text-foreground gap-4 border border-border rounded-xl px-4"
           >
-            <img
-              src="/search.png "
-              className="w-[30px] h-[30px] m-auto "
-              alt="search icon"
+            <img src="/search.png" className="w-5 h-5 opacity-50" alt="" />
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Filter by location"
+              className="
+                w-full 
+                bg-background
+                text-foreground
+                py-3
+                outline-none
+                placeholder:text-muted-foreground
+              "
             />
-          </button>
+          </div>
+
+          {/* <button
+            className="
+              px-8 py-3
+              rounded-xl
+              bg-accent
+              text-accent-foreground
+              font-medium
+              hover:brightness-110
+              transition
+            "
+          >
+            Search
+          </button> */}
         </div>
-      </div>
-      <div className="w-full  grid grid-cols-4 place-items-center gap-10  ">
-        <EmployerCard
-          employer={{
-            name: "John Doe",
-            description:
-              "Experienced electrician specializing in residential and commercial projects.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Jane Smith",
-            description:
-              "Professional plumber with expertise in leak repairs and installations.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Mike Johnson",
-            description:
-              "Skilled carpenter offering custom furniture and home improvement services.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Sara Lee",
-            description:
-              "Expert mechanic providing reliable vehicle maintenance and repair.",
-          }}
-        />
+      </section>
 
-        <EmployerCard
-          employer={{
-            name: "John Doe",
-            description:
-              "Experienced electrician specializing in residential and commercial projects.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Jane Smith",
-            description:
-              "Professional plumber with expertise in leak repairs and installations.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Mike Johnson",
-            description:
-              "Skilled carpenter offering custom furniture and home improvement services.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Sara Lee",
-            description:
-              "Expert mechanic providing reliable vehicle maintenance and repair.",
-          }}
-        />
+      {/* ================= RESULTS ================= */}
+      <section className="max-w-7xl mx-auto px-6 pb-40">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 place-items-center">
+          {filteredEmployees.length > 0 ? (
+            filteredEmployees.map((employee) => (
+              <EmployerCard key={employee.name} employer={employee} />
+            ))
+          ) : (
+            <p className="col-span-full text-center text-muted-foreground">
+              No results found
+            </p>
+          )}
+        </div>
+      </section>
 
-        <EmployerCard
-          employer={{
-            name: "John Doe",
-            description:
-              "Experienced electrician specializing in residential and commercial projects.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Jane Smith",
-            description:
-              "Professional plumber with expertise in leak repairs and installations.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Mike Johnson",
-            description:
-              "Skilled carpenter offering custom furniture and home improvement services.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Sara Lee",
-            description:
-              "Expert mechanic providing reliable vehicle maintenance and repair.",
-          }}
-        />
-
-        <EmployerCard
-          employer={{
-            name: "John Doe",
-            description:
-              "Experienced electrician specializing in residential and commercial projects.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Jane Smith",
-            description:
-              "Professional plumber with expertise in leak repairs and installations.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Mike Johnson",
-            description:
-              "Skilled carpenter offering custom furniture and home improvement services.",
-          }}
-        />
-        <EmployerCard
-          employer={{
-            name: "Sara Lee",
-            description:
-              "Expert mechanic providing reliable vehicle maintenance and repair.",
-          }}
-        />
-      </div>
-      <Footercard />
+      {/* ================= FOOTER ================= */}
+      <section className="bg-background pt-32 pb-24">
+        <Footercard />
+      </section>
     </div>
   );
 }

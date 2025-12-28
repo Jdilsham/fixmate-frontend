@@ -2,12 +2,10 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import toast from "react-hot-toast";
-import DarkMode from "../components/darkmodeToggle";
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
@@ -26,7 +24,16 @@ export default function LoginPage() {
       localStorage.setItem("token", response.data.token);
       toast.success("Login successful!");
 
-      navigate("/");
+      // if (user.isAdmin) {
+      //   navigate("/admin");
+      //   console.log("Admin logged in");
+      // } else if (user.isUser) {
+      //   navigate("/");
+      //   console.log("Customer logged in");
+      // } else if (user.isFacilitator) {
+      //   navigate("/wanted");
+      //   console.log("Facilitator logged in");
+      // }
     } catch (error) {
       console.error(error);
       toast.error("Invalid credentials");
@@ -47,10 +54,6 @@ export default function LoginPage() {
         transition-transform duration-300 ease-out
         hover:scale-[1.018] "
       >
-        <div className="flex justify-end  m-auto">
-          <DarkMode />
-        </div>
-
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-4xl font-semibold">Welcome back</CardTitle>
           <p className="text-muted-foreground text-sm">
@@ -60,6 +63,7 @@ export default function LoginPage() {
 
         <CardContent className="space-y-6 mt-6">
           <div className="relative">
+            {/* email */}
             <input
               type="email"
               placeholder=" "
@@ -76,6 +80,7 @@ export default function LoginPage() {
           </div>
 
           <div className="relative">
+            {/* password */}
             <input
               type="password"
               placeholder=" "
@@ -112,6 +117,11 @@ export default function LoginPage() {
           >
             Login
           </Button>
+          
+          <Button className="w-full bg-accent dark:bg-foreground text-primary-foreground hover:bg-primary/90">
+          Login with Google
+          </Button>
+        
 
           {/* Footer */}
           <p className="text-center text-sm text-muted-foreground">
