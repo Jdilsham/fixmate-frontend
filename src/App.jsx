@@ -1,7 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
-import { Toaster } from "react-hot-toast";
 import SignupPage from "./pages/SignupPage";
 import Homepage from "./pages/Homepage";
 import Services from "./pages/services";
@@ -10,6 +9,8 @@ import About from "./pages/about";
 import Contact from "./pages/contact";
 
 import ProfilePage from "./pages/profile";
+import ProviderDashboard from "./pages/provider/Dashboard";
+import { Toaster } from "react-hot-toast";
 
 
 function App() {
@@ -17,13 +18,11 @@ function App() {
     <BrowserRouter>
       <div className="w-full h-[100vh] ">
         <Toaster position="top-center" />
-        <Routes path="/">
+
+        <Routes>
+          {/* CUSTOMER */}
           <Route path="/" element={<Homepage />} />
-          <Route path="/*" element={<h1>404 not found</h1>} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
           <Route path="/services" element={<Services />} />
-          <Route path="/wanted" element={<Wanted />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
 

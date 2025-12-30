@@ -6,39 +6,51 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import toast from "react-hot-toast";
+import GoogleLoginButton from "@/components/LoginSignup/GoogleLoginButton";
+import { jwtDecode } from "jwt-decode";
+
 
 const API = import.meta.env.VITE_BACKEND_URL;
+
+//Fix for ROLE_ prefix in roles
+// const normalizedRole = role.replace("ROLE_", "");
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  async function handleLogin() {
-    try {
-      const response = await axios.post(`${API}/api/auth/login`, {
-        email: email,
-        password: password,
-      });
+async function handleLogin() {
+  try {
+    const response = await axios.post(`${API}/api/auth/login`, {
+      email,
+      password,
+    });
 
-      localStorage.setItem("token", response.data.token);
-      toast.success("Login successful!");
+    const { token } = response.data;
 
-      // if (user.isAdmin) {
-      //   navigate("/admin");
-      //   console.log("Admin logged in");
-      // } else if (user.isUser) {
-      //   navigate("/");
-      //   console.log("Customer logged in");
-      // } else if (user.isFacilitator) {
-      //   navigate("/wanted");
-      //   console.log("Facilitator logged in");
-      // }
-    } catch (error) {
-      console.error(error);
-      toast.error("Invalid credentials");
+    // 🔐 Decode JWT safely
+    const decoded = jwtDecode(token);
+    const role = decoded.role; // SERVICE_PROVIDER or CUSTOMER
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+
+    toast.success("Login successful!");
+
+    if (role === "SERVICE_PROVIDER") {
+      navigate("/provider/dashboard");
+    } else {
+      navigate("/");
     }
+
+  } catch (error) {
+    console.error(error);
+    toast.error("Invalid credentials");
   }
+}
+
+
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background px-4">
@@ -117,10 +129,9 @@ export default function LoginPage() {
           >
             Login
           </Button>
-          
-          <Button className="w-full bg-accent dark:bg-foreground text-primary-foreground hover:bg-primary/90">
-          Login with Google
-          </Button>
+
+          {/* Google Login Button */}
+          <GoogleLoginButton />
         
 
           {/* Footer */}
