@@ -196,10 +196,10 @@ export default function SignupPage() {
               <option value="" hidden defaultChecked>
                 Select an Option
               </option>
-              <option value="user" className="text-accent-foreground">
+              <option value="CUSTOMER" className="text-accent-foreground">
                 Hire Services
               </option>
-              <option value="facilitator" className="text-accent-foreground">
+              <option value="SERVICE_PROVIDER" className="text-accent-foreground">
                 Provide Services
               </option>
             </select>
