@@ -219,8 +219,8 @@ export default function SignupPage() {
           </button>
 
           
-          {/* Google Login Button */}
-          <GoogleLoginButton />
+          {/* TEMPORARILY DISABLED FOR DEPLOYMENT */}
+          {/* <GoogleLoginButton /> */}
 
 
           <p className="text-muted-foreground text-sm">
