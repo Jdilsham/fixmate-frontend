@@ -4,4 +4,4 @@ metadata:
   name: frontend-config
   namespace: fixmate
 data:
-  REACT_APP_BACKEND_URL: "http://35.244.15.120"
+  REACT_APP_BACKEND_URL: "http://34.93.187.3"
