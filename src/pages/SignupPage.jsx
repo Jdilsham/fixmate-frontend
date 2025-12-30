@@ -9,6 +9,9 @@ import {
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import GoogleLoginButton from "@/components/LoginSignup/GoogleLoginButton";
+import { jwtDecode } from "jwt-decode";
+
 const API = import.meta.env.VITE_BACKEND_URL;
 
 export default function SignupPage() {
@@ -214,6 +217,11 @@ export default function SignupPage() {
           >
             Sign In
           </button>
+
+          
+          {/* Google Login Button */}
+          <GoogleLoginButton />
+
 
           <p className="text-muted-foreground text-sm">
             Already have an account?{" "}
