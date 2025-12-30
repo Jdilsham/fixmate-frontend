@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import toast from "react-hot-toast";
+import GoogleLoginButton from "@/components/LoginSignup/GoogleLoginButton";
+
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
@@ -117,10 +119,9 @@ export default function LoginPage() {
           >
             Login
           </Button>
-          
-          <Button className="w-full bg-accent dark:bg-foreground text-primary-foreground hover:bg-primary/90">
-          Login with Google
-          </Button>
+
+          {/* Google Login Button */}
+          <GoogleLoginButton />
         
 
           {/* Footer */}
