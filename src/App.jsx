@@ -24,10 +24,22 @@ function App() {
           <Route path="/" element={<Homepage />} />
           <Route path="/services" element={<Services />} />
           <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-
           <Route path="/profile/:id" element={<ProfilePage />} />
 
+          {/* SERVICE PROVIDER */}
+          <Route
+            path="/provider/dashboard"element={<ProviderDashboard />}
+          />
+
+          {/* AUTH */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+
+          {/* OPTIONAL */}
+          <Route path="/wanted" element={<Wanted />} />
+
+          {/* 404 */}
+          <Route path="*" element={<h1>404 not found</h1>} />
         </Routes>
       </div>
     </BrowserRouter>

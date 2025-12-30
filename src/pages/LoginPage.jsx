@@ -130,9 +130,10 @@ async function handleLogin() {
             Login
           </Button>
 
-          {/* Google Login Button */}
-          <GoogleLoginButton />
-        
+          {/* TEMPORARILY DISABLED FOR DEPLOYMENT */}
+          {/* <GoogleLoginButton /> */}
+
+                  
 
           {/* Footer */}
           <p className="text-center text-sm text-muted-foreground">
