@@ -3,6 +3,7 @@ import Footercard from "../components/footer";
 import ContactCard from "../components/contactpage/contactCard";
 import ContactForm from "../components/contactpage/contactForm";
 
+
 export default function About() {
   return (
     <div className="w-full min-h-screen bg-background text-foreground transition-colors">
