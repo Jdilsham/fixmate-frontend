@@ -24,11 +24,12 @@ function App() {
           <Route path="/" element={<Homepage />} />
           <Route path="/services" element={<Services />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/profile/:id" element={<ProfilePage />} />
 
           {/* SERVICE PROVIDER */}
           <Route
-            path="/provider/dashboard"element={<ProviderDashboard />}
+            path="/provider/dashboard" element={<ProviderDashboard />}
           />
 
           {/* AUTH */}

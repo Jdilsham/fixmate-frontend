@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import {
   NavigationMenu,
@@ -15,15 +17,53 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import DarkmodeToggle from "./darkmodeToggle";
-import { Menu  } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-
 
 export default function Header() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
   const isLoggedIn = !!token;
+
+  const [initials, setInitials] = useState("U");
+
+  // 🔥 Fetch user using token
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        if (!token) return;
+
+        const res = await axios.get(`${API}/api/auth/user`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const user = res.data;
+
+        // handle different backend casing styles
+        const first =
+          user.firstName ||
+          user.firstname ||
+          user.first_name ||
+          "";
+
+        const last =
+          user.lastName ||
+          user.lastname ||
+          user.last_name ||
+          "";
+
+        const i = ((first[0] || "") + (last[0] || "")).toUpperCase();
+
+        setInitials(i || "U");
+      } catch (err) {
+        console.error("Could not fetch user", err);
+      }
+    };
+
+    fetchUser();
+  }, [token]);
 
   const navLinks = [
     { label: "Home", path: "/" },
@@ -35,16 +75,9 @@ export default function Header() {
 
   function handleLogout() {
     localStorage.removeItem("token");
-    localStorage.removeItem("user")
+    localStorage.removeItem("user");
     navigate("/login");
   }
-
-  const initials =
-    user?.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "U";
 
   return (
     <motion.header
@@ -91,9 +124,7 @@ export default function Header() {
                 {navLinks.map((link) => (
                   <Button
                     key={link.label}
-                    onClick={() => {
-                      navigate(link.path);
-                    }}
+                    onClick={() => navigate(link.path)}
                     className="text-lg font-medium text-left"
                   >
                     {link.label}
