@@ -1,7 +1,8 @@
 import Header from "../components/header";
 import Footercard from "../components/footer";
 import ContactCard from "../components/contactpage/contactCard";
-import ContactForm from "../components/contactpage/contactForm";
+import ContactForm from "@/components/contactpage/ContactForm";
+
 
 
 export default function About() {
@@ -58,7 +59,7 @@ export default function About() {
           className="w-full max-w-md rounded-xl"
         />
 
-      <ContactForm/>
+      <ContactForm />
       </section>
       
 
