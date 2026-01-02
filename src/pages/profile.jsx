@@ -1,11 +1,41 @@
-import { useState } from "react";
+import { useState , useEffect } from "react";
 import Header from "../components/header";
 import { useParams } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
 
+
+
 export default function ProfilePage() {
+  
   const [activeTab, setActiveTab] = useState("overview");
   const { id } = useParams();
+  const isPublicProfile = Boolean(id);
+
+  const providerTabs = [
+    { id: "overview", label: "Overview" },
+    { id: "services", label: "Services" },
+    { id: "reviews", label: "Reviews" },
+    {id: "availability", label: "Availability" },
+    { id: "settings", label: "Settings" },
+    { id: "calendar", label: "Calendar" },
+  ];
+
+  const customerTabs = [
+    { id: "overview", label: "Overview" },
+    { id: "requests", label: "Requests" },
+    { id: "saved", label: "Saved" },
+    { id: "settings", label: "Settings" },
+  ];  
+
+  const publicTabs = [
+    { id: "overview", label: "Overview" },
+    { id: "services", label: "Services" },
+    { id: "reviews", label: "Reviews" },
+  ];
+
+  const role = localStorage.getItem("role");
+  const tabs = isPublicProfile ? publicTabs : role === "PROVIDER" ? providerTabs : customerTabs;
+
 
   const EMPLOYEES = [
     {
@@ -49,10 +79,23 @@ export default function ProfilePage() {
     },
   ];
 
-  const profile = EMPLOYEES.find((emp) => emp.id === id) || EMPLOYEES[0];
+  const username = localStorage.getItem("username") || "Logged In User";
+  const loggedInProfile = {
+    name: localStorage.getItem("name") || username,
+    service: role === "PROVIDER" ? "Service Provider" : "Customer",
+    description: "This is your personal profile.",
+    location: "N/A",
+  };
+  const profile = isPublicProfile ? EMPLOYEES.find((emp) => emp.id === id) : loggedInProfile;
 
-  // FIXED CALENDAR STATE
   const [date, setDate] = useState(new Date());
+  
+  useEffect(() => {
+  if (isPublicProfile && !publicTabs.some(t => t.id === activeTab)) {
+    setActiveTab("overview");
+  }
+}, [isPublicProfile, activeTab]);
+
 
   if (!profile) {
     return (
@@ -74,7 +117,7 @@ export default function ProfilePage() {
               {/* Profile summary */}
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-lg font-semibold">
-                  {profile.name[0]}
+                  {profile?.name?.charAt(0) || "?"}
                 </div>
                 <div>
                   <h3 className="font-semibold">{profile.name}</h3>
@@ -89,26 +132,20 @@ export default function ProfilePage() {
 
               {/* Navigation */}
               <nav className="flex lg:flex-col gap-2 overflow-x-auto">
-                {[
-                  { id: "overview", label: "Overview" },
-                  { id: "services", label: "Services" },
-                  { id: "reviews", label: "Reviews" },
-                  { id: "settings", label: "Settings" },
-                  { id: "calendar", label: "Calendar" },
-                ].map((item) => (
+                {tabs.map((tab) => (
                   <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
                     className={`
                       shrink-0 text-left px-4 py-3 rounded-xl transition
                       ${
-                        activeTab === item.id
+                        activeTab === tab.id
                           ? "bg-accent text-accent-foreground"
                           : "hover:bg-muted text-foreground"
                       }
                     `}
                   >
-                    {item.label}
+                    {tab.label}
                   </button>
                 ))}
               </nav>
@@ -151,7 +188,7 @@ export default function ProfilePage() {
                 </section>
               )}
 
-              {activeTab === "settings" && (
+              {!isPublicProfile && role === "PROVIDER" && activeTab === "settings" && (
                 <section>
                   <h2 className="text-3xl font-semibold mb-4">
                     Account Settings
@@ -162,7 +199,7 @@ export default function ProfilePage() {
                 </section>
               )}
 
-              {activeTab === "calendar" && (
+              {!isPublicProfile && role === "PROVIDER" && activeTab === "calendar" && (
                 <section>
                   <div className="flex justify-around">
                     <div>
