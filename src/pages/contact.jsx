@@ -1,6 +1,9 @@
 import Header from "../components/header";
 import Footercard from "../components/footer";
 import ContactCard from "../components/contactpage/contactCard";
+import ContactForm from "@/components/contactpage/ContactForm";
+
+
 
 export default function About() {
   return (
@@ -49,6 +52,15 @@ export default function About() {
         </div>
       </div>
 
+     <section className="max-w-7xl mx-auto px-6 pt-20p b-24 flex flex-col lg:flex-row gap-16 items-center">
+        <img
+          src="/contact.jpg"
+          alt="Support"
+          className="w-full max-w-md rounded-xl"
+        />
+
+      <ContactForm />
+      </section>
       
 
 
