@@ -225,9 +225,9 @@ export default function SignupPage() {
 
           <p className="text-muted-foreground text-sm">
             Already have an account?{" "}
-            <a href="/login" className="text-accent hover:underline">
-              Login
-            </a>
+            <span onClick={() => navigate("/login")} className="text-accent hover:underline">
+              Log in
+            </span>
           </p>
         </CardFooter>
       </Card>
