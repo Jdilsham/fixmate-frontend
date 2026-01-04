@@ -52,7 +52,7 @@ export default function About() {
         </div>
       </div>
 
-     <section className="max-w-7xl mx-auto px-6 pt-20p b-24 flex flex-col lg:flex-row gap-16 items-center">
+     <section className="max-w-7xl mx-auto px-6 pt-20p b-24 flex flex-col lg:flex-row gap-16 justify-center items-center">
         <img
           src="/contact.jpg"
           alt="Support"

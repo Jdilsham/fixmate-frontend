@@ -33,7 +33,7 @@ export default function Header() {
       try {
         if (!token) return;
 
-        const res = await axios.get(`${API}/api/auth/user`, {
+        const res = await axios.get(`${API}/api/auth/login`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -42,17 +42,9 @@ export default function Header() {
         const user = res.data;
 
         // handle different backend casing styles
-        const first =
-          user.firstName ||
-          user.firstname ||
-          user.first_name ||
-          "";
+        const first = user.firstName || user.firstname || user.first_name || "";
 
-        const last =
-          user.lastName ||
-          user.lastname ||
-          user.last_name ||
-          "";
+        const last = user.lastName || user.lastname || user.last_name || "";
 
         const i = ((first[0] || "") + (last[0] || "")).toUpperCase();
 

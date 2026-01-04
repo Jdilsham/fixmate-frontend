@@ -29,7 +29,7 @@ async function handleLogin() {
 
     const { token } = response.data;
 
-    // 🔐 Decode JWT safely
+    //  Decode JWT safely
     const decoded = jwtDecode(token);
     const role = decoded.role; // SERVICE_PROVIDER or CUSTOMER
 
