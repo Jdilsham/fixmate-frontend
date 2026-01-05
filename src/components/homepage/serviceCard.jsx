@@ -1,4 +1,4 @@
-export default function ServiceCard({ imgsrc, title }) {
+export default function ServiceCard({ imgsrc, title, onClick }) {
   return (
     <div
       className="
@@ -14,6 +14,7 @@ export default function ServiceCard({ imgsrc, title }) {
         transition-all duration-300
         hover:-translate-y-2 hover:shadow-xl
       "
+      onClick={onClick}
     >
       <img src={imgsrc} alt={title} className="w-16 h-16 sm:w-20 sm:h-20" />
       <span className="text-base sm:text-lg font-medium text-center">
