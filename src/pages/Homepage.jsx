@@ -3,12 +3,19 @@ import Header from "../components/header";
 import ServiceCard from "../components/homepage/serviceCard";
 import QualityCard from "../components/homepage/qualitycard";
 import Footercard from "../components/footer";
+import { useNavigate } from "react-router-dom";
+
+
+
 
 export default function Homepage() {
+
+  const navigate = useNavigate();
   const SERVICES = [
-    { title: "Landscaping", icon: "/serviceIcons/landscaping.png" },
+    { title: "Landscaping", icon: "/serviceIcons/landscaping.png"},
     { title: "Electrical", icon: "/serviceIcons/electric.png" },
     { title: "Cleaners", icon: "/serviceIcons/cleaning.png" },
+    { title: "Painting", icon: "/serviceIcons/painting.png" },
     { title: "Plumbing", icon: "/serviceIcons/plumbing.png" },
     { title: "Color Washing", icon: "/serviceIcons/colorwash.png" },
     { title: "Masonry", icon: "/serviceIcons/mason.png" },
@@ -116,6 +123,7 @@ export default function Homepage() {
                 key={service.title}
                 imgsrc={service.icon}
                 title={service.title}
+                onClick={() => navigate(`/services?category=${service.title.toLowerCase()}`)}
               />
             ))
           ) : (

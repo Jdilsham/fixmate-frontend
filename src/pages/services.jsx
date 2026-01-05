@@ -1,20 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../components/header";
 import Footercard from "../components/footer";
 import EmployerCard from "../components/ServicesPage/employerCard";
 import { EMPLOYEES } from "../data/EMPLOYEES";
+import { useLocation } from "react-router-dom";
 
 export default function Services() {
+  const locationHook = useLocation();
+
   const [service, setService] = useState("");
   const [location, setLocation] = useState("");
+  const SERVICE_MAP = {
+    landscaping: "landscaping",
+    electrical: "electrician",
+    cleaners: "cleaner",
+    painting: "painter",
+    plumbing: "plumber",
+    masonry: "mason",
+    "vehicle repair": "mechanic",
+    carpentry: "carpenter",
+    welding: "welder",
+    roofing: "roofer",
+    contractors: "contractor",
+  };
 
-  
+  useEffect(() => {
+    const params = new URLSearchParams(locationHook.search);
+    const categoryFromUrl = params.get("category");
+
+    if (categoryFromUrl) {
+      const normalized = SERVICE_MAP[categoryFromUrl.toLowerCase()];
+      if (normalized) {
+        setService(normalized);
+      }
+    }
+  }, [locationHook.search]);
 
   const filteredEmployees = EMPLOYEES.filter((employee) => {
     const matchService = service === "" || employee.service === service;
     const matchLocation =
       location === "" ||
       employee.location.toLowerCase().includes(location.toLowerCase());
+
     return matchService && matchLocation;
   });
 
@@ -38,7 +65,7 @@ export default function Services() {
             backdrop-blur-md
             border border-black/10 dark:border-white/10
             rounded-2xl
-            p-6
+            p-6 
             flex flex-col lg:flex-row
             gap-6
           "
@@ -53,7 +80,7 @@ export default function Services() {
               text-foreground
               border border-border
               rounded-xl
-              px-4 py-3
+              px-4 py-3 
               outline-none
             "
           >
@@ -62,6 +89,8 @@ export default function Services() {
             <option value="plumber">Plumber</option>
             <option value="carpenter">Carpenter</option>
             <option value="mechanic">Vehicle Repair</option>
+            <option value="mason">Masonry</option>
+            <option value="painter">Painting</option>
           </select>
 
           {/* Location input */}
