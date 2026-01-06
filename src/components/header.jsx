@@ -27,7 +27,7 @@ export default function Header() {
 
   const [initials, setInitials] = useState("U");
 
-  // 🔥 Fetch user using token
+  //Fetch user using token
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -163,8 +163,8 @@ export default function Header() {
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  Profile
+                <DropdownMenuItem onClick={() => navigate("/provider/dashboard")}>
+                  Dashboard
                 </DropdownMenuItem>
 
                 <DropdownMenuItem onClick={() => navigate("/settings")}>

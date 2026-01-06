@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import Header from "../components/header";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
 import { getAuthUser } from "../../utils/auth";
 import { EMPLOYEES } from "../data/EMPLOYEES";
+import { Button } from "../components/ui/button";
 
 export default function ProfilePage() {
   const { id } = useParams();
   const authUser = getAuthUser();
+  const navigate = useNavigate();
 
 
 
@@ -69,7 +71,7 @@ export default function ProfilePage() {
     { id: "overview", label: "Overview" },
     { id: "requests", label: "Requests" },
     { id: "saved", label: "Saved" },
-    { id: "settings", label: "Settings" },
+    
   ];
 
   const tabs = isProviderProfile ? providerTabs : customerTabs;
@@ -127,13 +129,16 @@ export default function ProfilePage() {
         </aside>
 
         {/* ================= CONTENT ================= */}
-        <main className="flex-1 bg-card border rounded-3xl p-8">
+        <main className="flex-1 relative bg-card border rounded-3xl p-8">
           {activeTab === "overview" && (
             <p>{profile.description}</p>
           )}
 
           {activeTab === "services" && (
-            <p>{profile.service}</p>
+            <>
+              <p>{profile.service}</p>
+              <Button className=" absolute bottom-4 right-4"  onClick={() => navigate("/customer/bookings")}>Book services</Button>
+            </>
           )}
 
           {isProviderProfile && activeTab === "availability" && (
