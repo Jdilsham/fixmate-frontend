@@ -5,17 +5,12 @@ import QualityCard from "../components/homepage/qualitycard";
 import Footercard from "../components/footer";
 import { useNavigate } from "react-router-dom";
 
-
-
-
 export default function Homepage() {
-
   const navigate = useNavigate();
   const SERVICES = [
-    { title: "Landscaping", icon: "/serviceIcons/landscaping.png"},
+    { title: "Landscaping", icon: "/serviceIcons/landscaping.png" },
     { title: "Electrical", icon: "/serviceIcons/electric.png" },
     { title: "Cleaners", icon: "/serviceIcons/cleaning.png" },
-    { title: "Painting", icon: "/serviceIcons/painting.png" },
     { title: "Plumbing", icon: "/serviceIcons/plumbing.png" },
     { title: "Color Washing", icon: "/serviceIcons/colorwash.png" },
     { title: "Masonry", icon: "/serviceIcons/mason.png" },
@@ -40,15 +35,10 @@ export default function Homepage() {
     <div className="w-full min-h-screen bg-background text-foreground transition-colors">
       <Header />
 
-      
       <section className="relative max-w-7xl mx-auto px-6 pt-28 pb-36">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background to-transparent rounded-[40px]" />
 
-        <img
-          src="/fixmate logo.png"
-          alt="FixMate"
-          className="w-56 mb-20"
-        />
+        <img src="/fixmate logo.png" alt="FixMate" className="w-56 mb-20" />
 
         <h1 className="text-6xl md:text-7xl font-semibold leading-tight max-w-4xl">
           Reliable services,
@@ -62,7 +52,8 @@ export default function Homepage() {
 
         {/* ================= SEARCH ================= */}
         <div className="mt-16 w-full max-w-4xl mx-auto px-4">
-          <div className="
+          <div
+            className="
             flex flex-col sm:flex-row
             items-stretch sm:items-center
             gap-3
@@ -70,7 +61,8 @@ export default function Homepage() {
             rounded-full
             border border-border
             px-5 py-3
-          ">
+          "
+          >
             <div className="flex items-center flex-1 gap-4">
               <img
                 src="/search.png"
@@ -123,7 +115,9 @@ export default function Homepage() {
                 key={service.title}
                 imgsrc={service.icon}
                 title={service.title}
-                onClick={() => navigate(`/services?category=${service.title.toLowerCase()}`)}
+                onClick={() =>
+                  navigate(`/services?category=${service.title.toLowerCase()}`)
+                }
               />
             ))
           ) : (
@@ -135,23 +129,49 @@ export default function Homepage() {
       </section>
 
       {/* ================= WHY FIXMATE ================= */}
-      <section className="
+      <section
+        className="
         max-w-7xl mx-auto px-6 pb-40
         bg-card/10
         rounded-[48px]
-      ">
+      "
+      >
         <h2 className="text-4xl font-serif text-center pt-24 mb-20">
           Why FixMate works
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 pb-24 place-items-center">
           {[
-            ["/qualityIcons/verified.png", "Verified Experts", "Every professional is vetted."],
-            ["/qualityIcons/range.png", "All-in-One", "One platform. Every service."],
-            ["/qualityIcons/easybooking.png", "Fast Booking", "No friction. No waiting."],
-            ["/qualityIcons/rating.png", "Real Reviews", "Trusted by real customers."],
-            ["/qualityIcons/affordable.png", "Fair Pricing", "Transparent & competitive."],
-            ["/qualityIcons/contact.png", "Always Available", "Support when you need it."],
+            [
+              "/qualityIcons/verified.png",
+              "Verified Experts",
+              "Every professional is vetted.",
+            ],
+            [
+              "/qualityIcons/range.png",
+              "All-in-One",
+              "One platform. Every service.",
+            ],
+            [
+              "/qualityIcons/easybooking.png",
+              "Fast Booking",
+              "No friction. No waiting.",
+            ],
+            [
+              "/qualityIcons/rating.png",
+              "Real Reviews",
+              "Trusted by real customers.",
+            ],
+            [
+              "/qualityIcons/affordable.png",
+              "Fair Pricing",
+              "Transparent & competitive.",
+            ],
+            [
+              "/qualityIcons/contact.png",
+              "Always Available",
+              "Support when you need it.",
+            ],
           ].map(([img, title, desc]) => (
             <QualityCard
               key={title}

@@ -11,6 +11,8 @@ import Contact from "./pages/contact";
 import ProfilePage from "./pages/profile";
 import ProviderDashboard from "./pages/provider/Dashboard";
 import { Toaster } from "react-hot-toast";
+import BookProfessional from "./pages/BookProfessional";
+
 
 
 function App() {
@@ -27,6 +29,7 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/:id" element={<ProfilePage />} />
+          <Route path="/customer/bookings" element={<h1>Customer Bookings</h1>} />
 
           {/* SERVICE PROVIDER */}
           <Route
@@ -39,6 +42,9 @@ function App() {
 
           {/* OPTIONAL */}
           <Route path="/wanted" element={<Wanted />} />
+
+           {/* BOOKING */}
+          <Route path="/book/:id" element={<BookProfessional />} />
 
           {/* 404 */}
           <Route path="*" element={<h1>404 not found</h1>} />
