@@ -18,15 +18,28 @@ export default function EmployerCard({ employer }) {
     >
       <div className="flex items-center gap-4 h-[72px]">
         <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-lg font-semibold">
-          {employer?.name?.charAt(0) || "?"}
+          {employer.imageUrl ? (
+            <img
+              src={employer.imageUrl}
+              alt={employer.fullname}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-lg font-semibold">
+              {employer.fullname?.charAt(0)}
+            </span>
+          )}
         </div>
 
         <div className="overflow-hidden">
           <h3 className="text-lg font-semibold leading-tight line-clamp-2">
-            {employer.name}
+            {employer.fullname}
+            {employer.isVerified && (
+              <span className="text-xs text-primary">✔</span>
+            )}
           </h3>
           <span className="text-sm text-muted-foreground">
-            Verified Professional
+            {employer.skill}
           </span>
         </div>
       </div>
@@ -39,16 +52,14 @@ export default function EmployerCard({ employer }) {
 
       <div className="h-[96px] flex flex-col justify-between">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>⭐ 4.8</span>
-          <span> 📍 {employer.location || "Nearby"}</span>
+          <span> ⭐ {employer.rating || "N/A"}</span>
+          <span> 📍 {employer.location || "N/A"}</span>
         </div>
 
         <button
-          onClick={
-            () => {
-              navigate(`/profile/${employer.id}`);
-            }
-          }
+          onClick={() => {
+            navigate(`/profile/${employer.id}`);
+          }}
           className="
             w-full
             py-2.5
