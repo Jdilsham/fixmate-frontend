@@ -1,10 +1,29 @@
+import { useEffect, useRef, useState } from "react";
 import Header from "../components/header";
 import Footercard from "../components/footer";
 import JobCard from "../components/wantedPage/jobCard";
 
 export default function Wanted() {
+  const footerRef = useRef(null);
+  const [hideFab, setHideFab] = useState(false);
+
+  useEffect(() => {
+    if (!footerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setHideFab(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(footerRef.current);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="w-full min-h-screen bg-background text-foreground">
+    <div className="w-full min-h-screen bg-background text-foreground relative">
       <Header />
 
       {/* ================= PAGE HEADER ================= */}
@@ -13,8 +32,8 @@ export default function Wanted() {
           Wanted Professionals
         </h1>
         <p className="text-lg text-muted-foreground">
-          Job requests posted by individuals and businesses looking
-          for skilled professionals.
+          Job requests posted by individuals and businesses looking for
+          skilled professionals.
         </p>
       </section>
 
@@ -51,8 +70,32 @@ export default function Wanted() {
         </div>
       </section>
 
+      {/* ================= FLOATING ACTION BUTTON ================= */}
+      <button
+        className={`
+          fixed bottom-6 right-6 z-50
+          w-14 h-14 rounded-full
+          bg-primary text-primary-foreground
+          text-3xl font-light
+          flex items-center justify-center
+          shadow-lg
+          transition-opacity duration-300
+          ${hideFab ? "opacity-0 pointer-events-none" : "opacity-100"}
+        `}
+        onClick={() => {
+          // TODO: open modal or navigate to create wanted notice
+          console.log("Add wanted notice");
+        }}
+        aria-label="Add wanted notice"
+      >
+       <span className="leading-none -translate-y-[2px] font-bold">+</span>
+      </button>
+
       {/* ================= FOOTER ================= */}
-      <section className="bg-background pt-32 pb-24">
+      <section
+        ref={footerRef}
+        className="bg-background pt-32 pb-24"
+      >
         <Footercard />
       </section>
     </div>

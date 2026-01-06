@@ -18,7 +18,7 @@ import BookProfessional from "./pages/BookProfessional";
 function App() {
   return (
     <BrowserRouter>
-      <div className="w-full h-[100vh] ">
+      <div className="w-full h-screen ">
         <Toaster position="top-center" />
 
         <Routes>
