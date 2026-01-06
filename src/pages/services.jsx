@@ -2,14 +2,51 @@ import { useState, useEffect } from "react";
 import Header from "../components/header";
 import Footercard from "../components/footer";
 import EmployerCard from "../components/ServicesPage/employerCard";
-import { EMPLOYEES } from "../data/EMPLOYEES";
+
 import { useLocation } from "react-router-dom";
+
+
+const API = import.meta.env.VITE_BACKEND_URL;
 
 export default function Services() {
   const locationHook = useLocation();
 
   const [service, setService] = useState("");
   const [location, setLocation] = useState("");
+  const [employees, setEmployees] = useState([]);
+  const [loading , setLoading] = useState(false);
+  const [error , setError] = useState(null);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try{
+        setLoading(true);
+        setError(null);
+
+        const params = new URLSearchParams();
+        if (service) params.append("service", service);
+        if (location) params.append("location", location);
+
+        const response = await fetch(`${API}/api/employees?${params.toString()}`);
+
+        if(!response.ok){
+          throw new Error("Failed to fetch service providers");
+        }
+
+        const data = await response.json();
+        setEmployees(data);
+
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEmployees();
+  } , [service, location]);
+
+  
   const SERVICE_MAP = {
     landscaping: "landscaping",
     electrical: "electrician",
@@ -36,15 +73,7 @@ export default function Services() {
     }
   }, [locationHook.search]);
 
-  const filteredEmployees = EMPLOYEES.filter((employee) => {
-    const matchService = service === "" || employee.service === service;
-    const matchLocation =
-      location === "" ||
-      employee.location.toLowerCase().includes(location.toLowerCase());
-
-    return matchService && matchLocation;
-  });
-
+  
   return (
     <div className="w-full min-h-screen bg-background text-foreground">
       <Header />
@@ -133,15 +162,19 @@ export default function Services() {
       {/* ================= RESULTS ================= */}
       <section className="max-w-7xl mx-auto px-6 pb-40">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 place-items-center">
-          {filteredEmployees.length > 0 ? (
-            filteredEmployees.map((employee) => (
-              <EmployerCard key={employee.name} employer={employee} />
+         {
+          loading ? (
+            <p className="col-span-full text-center text-muted-foreground">Loading...</p>
+          ) : error ? (
+            <p className="col-span-full text-center text-destructive">{error}</p>
+          ) : employees.length > 0 ? (
+            employees.map((employee) => (
+              <EmployerCard key={employee.id} employer={employee} />
             ))
           ) : (
-            <p className="col-span-full text-center text-muted-foreground">
-              No results found
-            </p>
-          )}
+            <p className="col-span-full text-center text-muted-foreground">No service providers found.</p>
+          )
+         }
         </div>
       </section>
 
