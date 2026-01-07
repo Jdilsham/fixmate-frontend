@@ -21,19 +21,19 @@ export default function EmployerCard({ employer }) {
           {employer.imageUrl ? (
             <img
               src={employer.imageUrl}
-              alt={employer.fullname}
+              alt={employer.fullName}
               className="w-full h-full object-cover"
             />
           ) : (
             <span className="text-lg font-semibold">
-              {employer.fullname?.charAt(0)}
+              {employer.fullName?.charAt(0)}
             </span>
           )}
         </div>
 
         <div className="overflow-hidden">
           <h3 className="text-lg font-semibold leading-tight line-clamp-2">
-            {employer.fullname}
+            {employer.fullName}
             {employer.isVerified && (
               <span className="text-xs text-primary">✔</span>
             )}
