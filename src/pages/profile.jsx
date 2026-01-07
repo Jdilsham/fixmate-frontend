@@ -90,11 +90,11 @@ export default function ProfilePage() {
           <div className="bg-card border rounded-3xl p-6 sticky top-24">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center font-semibold">
-                {profile.fullname?.charAt(0)}
+                {profile.fullName?.charAt(0)}
               </div>
 
               <div>
-                <h3 className="font-semibold">{profile.fullname}</h3>
+                <h3 className="font-semibold">{profile.fullName}</h3>
                 <p className="text-sm text-muted-foreground">
                   {profile.skill}
                 </p>
@@ -134,7 +134,12 @@ export default function ProfilePage() {
           )}
 
           {activeTab === "services" && (
-            <p className="mb-6">{profile.skill}</p>
+           <>
+           <p className="mb-6">{profile.description}</p>
+           <Button onClick={() => navigate(`/book/${profile.id}`)}>
+            Book Services
+           </Button>
+           </> 
           )}
 
           {activeTab === "availability" && (
