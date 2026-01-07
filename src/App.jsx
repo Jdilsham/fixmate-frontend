@@ -29,7 +29,7 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/:id" element={<ProfilePage />} />
-          <Route path="/customer/bookings" element={<h1>Customer Bookings</h1>} />
+          
 
           {/* SERVICE PROVIDER */}
           <Route

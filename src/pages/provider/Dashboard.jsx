@@ -60,6 +60,16 @@ export default function Dashboard() {
         },
       ];
 
+  const employerProfile = isProvider
+    ? {
+        id: authUser.id,
+        name: authUser.username,
+        service: authUser.service,
+        description: authUser.description || "No description provided.",
+        location: authUser.location || "Not specified",
+      }
+    : null;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -135,10 +145,9 @@ export default function Dashboard() {
               <>
                 <h2 className="text-lg font-semibold mb-4">My Services</h2>
                 <div className="gap-4 grid grid-cols-1 md:grid-cols-2  ">
-                  <EmployerCard employer={authUser} />
-                  <EmployerCard employer={authUser} />
-                  <EmployerCard employer={authUser} />
-                  <EmployerCard employer={authUser} />
+                  {employerProfile && (
+                    <EmployerCard employer={employerProfile} />
+                  )}
                 </div>
               </>
             )}
@@ -156,7 +165,85 @@ export default function Dashboard() {
             )}
 
             {activeTab === "settings" && (
-              <h2 className="text-lg font-semibold">Settings</h2>
+              <>
+                <h2 className="text-lg font-semibold mb-6">Update Profile</h2>
+
+                <form className="space-y-6 max-w-xl">
+                  {/* Skill */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Skill</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Electrician, Plumber"
+                      className="w-full rounded-lg border px-3 py-2 bg-background"
+                    />
+                  </div>
+
+                  {/* Experience */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Experience (Years)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 5"
+                      className="w-full rounded-lg border px-3 py-2 bg-background"
+                    />
+                  </div>
+
+                  {/* Address */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Address</label>
+                    <input
+                      type="text"
+                      placeholder="Street / Area"
+                      className="w-full rounded-lg border px-3 py-2 bg-background"
+                    />
+                  </div>
+
+                  {/* City */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">City</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Colombo"
+                      className="w-full rounded-lg border px-3 py-2 bg-background"
+                    />
+                  </div>
+
+                  {/* Profile Picture */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Profile Picture
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="w-full rounded-lg border px-3 py-2 bg-background"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      JPG or PNG, max 5MB
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      className="rounded-lg bg-primary px-5 py-2 text-sm text-primary-foreground"
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg border px-5 py-2 text-sm hover:bg-muted"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </>
             )}
           </div>
         </main>
