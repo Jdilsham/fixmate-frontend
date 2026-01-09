@@ -11,18 +11,17 @@ export default function ProfessionalCard() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <h2 className="text-3xl font-semibold">John Perera</h2>
+            <h2 className="text-3xl font-semibold">Kavindu Jayashan</h2>
             <p className="text-lg text-muted-foreground">
-              Professional Electrician
+              Professional Plumber
             </p>
-            <span className="text-sm opacity-70">  Colombo, Sri Lanka</span>
+            <span className="text-sm opacity-70">  Galle, Sri Lanka</span>
           </div>
         </div>
 
         <div className="bg-muted rounded-xl p-4">
           <p className="text-base leading-relaxed opacity-80">
-            Experienced electrician with over 8 years of residential and
-            commercial work. Specializes in wiring, repairs, and maintenance.
+            Certified plumber specializing in home repairs, water line repairs, and fault diagnosis.
           </p>
         </div>
 

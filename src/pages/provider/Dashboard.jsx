@@ -11,6 +11,7 @@ import {
   Settings,
   Briefcase,
 } from "lucide-react";
+import * as Avatar from "@radix-ui/react-avatar";
 
 /* =======================
    ROLE CONFIG
@@ -21,13 +22,13 @@ const ROLE_CONFIG = {
       { id: "dashboard", label: "Dashboard", icon: Home },
       { id: "services", label: "Services", icon: Briefcase },
       { id: "calendar", label: "Calendar", icon: CalendarIcon },
-      { id: "settings", label: "Settings", icon: Settings },
+      { id: "settings", label: "Update Profile", icon: Settings },
     ],
   },
-  USER: {
+  CUSTOMER: {
     tabs: [
       { id: "dashboard", label: "Dashboard", icon: Home },
-      { id: "settings", label: "Settings", icon: Settings },
+      { id: "settings", label: "Update Profile", icon: Settings },
     ],
   },
 };
@@ -35,22 +36,22 @@ const ROLE_CONFIG = {
 export default function Dashboard() {
   const authUser = getAuthUser();
 
-  /* =======================
-     NORMALIZE ROLE (CRITICAL)
-  ======================= */
   const role = (() => {
     const r = authUser?.role;
-    if (!r) return "USER";
+    if (!r) return "CUSTOMER";
     if (r === "SERVICE_PROVIDER" || r === "PROVIDER")
       return "SERVICE_PROVIDER";
-    return "USER";
+    return "CUSTOMER";
   })();
 
-  const roleConfig = ROLE_CONFIG[role];
-  const tabs = roleConfig.tabs;
+  const tabs = ROLE_CONFIG[role].tabs;
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [date, setDate] = useState(new Date());
+  const [isAvailable, setIsAvailable] = useState(true);
+
+  const [openSection, setOpenSection] = useState("basic");
+  const [editingSection, setEditingSection] = useState(null);
 
   useEffect(() => {
     if (!tabs.some((t) => t.id === activeTab)) {
@@ -97,7 +98,6 @@ export default function Dashboard() {
       <Header />
 
       <div className="flex max-w-9xl mx-auto px-6 pt-8 gap-6">
-        {/* SIDEBAR */}
         <aside className="w-64 shrink-0">
           <div className="bg-card border rounded-2xl p-4 sticky top-24 h-[calc(100vh-140px)] overflow-auto">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
@@ -123,20 +123,70 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        {/* CONTENT */}
         <main className="flex-1 min-w-0">
           <div className="bg-card border rounded-2xl p-6">
             {/* DASHBOARD */}
             {activeTab === "dashboard" && (
               <>
-                <header className="mb-6">
-                  <h1 className="text-xl font-semibold">Dashboard</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Welcome back, {authUser?.username}
-                  </p>
-                </header>
+                <div className="flex items-center gap-10 border-b pb-6 mb-6">
+                  <div className="relative w-40 h-40 shrink-0">
+                    <div className="absolute inset-0 rounded-full bg-accent" />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Avatar.Root className="relative w-full h-full rounded-full overflow-hidden">
+                      <Avatar.Image
+                        src={authUser?.profilePicture || ""}
+                        alt={authUser?.username || "Profile Picture"}
+                        className="w-full h-full object-cover"
+                      />
+                      <Avatar.Fallback className="flex items-center justify-center w-full h-full text-2xl font-semibold">
+                        {authUser?.username?.[0]?.toUpperCase() || "U"}
+                      </Avatar.Fallback>
+                    </Avatar.Root>
+
+                    <span
+                      className={`w-5 h-5 rounded-full absolute bottom-1 right-1 border-2 border-background ${
+                        isAvailable ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xl font-semibold">
+                      {authUser?.username}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{role}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {authUser?.location || "Location not set"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {authUser?.phone || "Phone not set"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium">Verified:</span>{" "}
+                      {authUser?.verified ? "Yes" : "No"}
+                    </p>
+
+                    {role === "SERVICE_PROVIDER" && (
+                      <div className="flex items-center gap-3 pt-2">
+                        <span className="text-sm font-medium">
+                          Availability:
+                        </span>
+                        <button
+                          onClick={() => setIsAvailable((v) => !v)}
+                          className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                            isAvailable
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {isAvailable ? "Yes" : "No"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                   <Card className="p-4">
                     <p className="text-sm text-muted-foreground">Revenue</p>
                     <p className="text-2xl font-semibold">Rs. 0</p>
@@ -157,15 +207,7 @@ export default function Dashboard() {
                   </Card>
                 </div>
 
-                <section className="space-y-4 mt-8">
-                  <h3 className="text-lg font-semibold">
-                    {role === "SERVICE_PROVIDER"
-                      ? "Completed Jobs"
-                      : "Your Past Bookings"}
-                  </h3>
-
-                  <BookingsTable role={role} bookings={bookings} />
-                </section>
+                <BookingsTable role={role} bookings={bookings} />
               </>
             )}
 
@@ -198,33 +240,81 @@ export default function Dashboard() {
             {activeTab === "settings" && (
               <>
                 <h2 className="text-lg font-semibold mb-6">
-                  Update Profile ({role})
+                  Update Profile
                 </h2>
 
-                {role === "USER" && (
-                  <form className="space-y-4 max-w-xl">
-                    <Input label="Full Name" defaultValue={authUser?.username} />
-                    <Input label="Phone Number" />
-                    <Input label="Address" />
-                    <Input label="City" />
-                    <Input label="Profile Picture" type="file" />
-                    <SaveActions />
-                  </form>
-                )}
-
-                {role === "SERVICE_PROVIDER" && (
-                  <form className="space-y-4 max-w-xl">
+                <div className="space-y-4 max-w-xl">
+                  <CollapsibleSection
+                    title="Basic Information"
+                    section="basic"
+                    openSection={openSection}
+                    setOpenSection={setOpenSection}
+                    isEditing={editingSection === "basic"}
+                    onEdit={() => setEditingSection("basic")}
+                    onCancel={() => setEditingSection(null)}
+                  >
                     <Input
-                      label="Skill"
-                      defaultValue={authUser?.service}
+                      label="Full Name"
+                      defaultValue={authUser?.username || ""}
+                      disabled={editingSection !== "basic"}
                     />
-                    <Input label="Experience (Years)" type="number" />
-                    <Input label="Address" />
-                    <Input label="City" />
-                    <Input label="Profile Picture" type="file" />
-                    <SaveActions />
-                  </form>
-                )}
+                    <Input
+                      label="Address"
+                      defaultValue={authUser?.address || ""}
+                      disabled={editingSection !== "basic"}
+                    />
+                    <Input
+                      label="City"
+                      defaultValue={authUser?.city || ""}
+                      disabled={editingSection !== "basic"}
+                    />
+                  </CollapsibleSection>
+
+                  <CollapsibleSection
+                    title="Contact Information"
+                    section="contact"
+                    openSection={openSection}
+                    setOpenSection={setOpenSection}
+                    isEditing={editingSection === "contact"}
+                    onEdit={() => setEditingSection("contact")}
+                    onCancel={() => setEditingSection(null)}
+                  >
+                    <Input
+                      label="Phone Number"
+                      defaultValue={authUser?.phone || ""}
+                      disabled={editingSection !== "contact"}
+                    />
+                    <Input
+                      label="Email"
+                      defaultValue={authUser?.email || ""}
+                      disabled={editingSection !== "contact"}
+                    />
+                  </CollapsibleSection>
+
+                  {role === "SERVICE_PROVIDER" && (
+                    <CollapsibleSection
+                      title="Service Information"
+                      section="service"
+                      openSection={openSection}
+                      setOpenSection={setOpenSection}
+                      isEditing={editingSection === "service"}
+                      onEdit={() => setEditingSection("service")}
+                      onCancel={() => setEditingSection(null)}
+                    >
+                      <Input
+                        label="Service"
+                        defaultValue={authUser?.service || ""}
+                        disabled={editingSection !== "service"}
+                      />
+                      <Input
+                        label="Experience (Years)"
+                        type="number"
+                        defaultValue={authUser?.experience || ""}
+                        disabled={editingSection !== "service"}
+                      />
+                    </CollapsibleSection>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -235,36 +325,87 @@ export default function Dashboard() {
 }
 
 /* =======================
+   COLLAPSIBLE SECTION
+======================= */
+function CollapsibleSection({
+  title,
+  section,
+  openSection,
+  setOpenSection,
+  isEditing,
+  onEdit,
+  onCancel,
+  children,
+}) {
+  const isOpen = openSection === section;
+
+  return (
+    <div className="border rounded-xl">
+      <div className="flex items-center justify-between px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setOpenSection(isOpen ? null : section)}
+          className="flex items-center gap-2"
+        >
+          <span className="font-medium">{title}</span>
+          <span className={`transition-transform ${isOpen ? "rotate-180" : ""}`}>
+            ▼
+          </span>
+        </button>
+
+        {isOpen && !isEditing && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="text-sm text-primary hover:underline"
+          >
+            Edit
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="px-4 pb-4 space-y-3">
+          {children}
+
+          {isEditing && (
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                className="rounded-lg bg-primary px-5 py-2 text-sm text-primary-foreground"
+              >
+                Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="rounded-lg border px-5 py-2 text-sm hover:bg-muted"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =======================
    REUSABLE UI
 ======================= */
-function Input({ label, type = "text", defaultValue }) {
+function Input({ label, type = "text", defaultValue, disabled }) {
   return (
     <div className="space-y-1">
       <label className="text-sm font-medium">{label}</label>
       <input
         type={type}
         defaultValue={defaultValue}
-        className="w-full rounded-lg border px-3 py-2 bg-background"
+        disabled={disabled}
+        className={`w-full rounded-lg border px-3 py-2 bg-background ${
+          disabled ? "opacity-60 cursor-not-allowed" : ""
+        }`}
       />
-    </div>
-  );
-}
-
-function SaveActions() {
-  return (
-    <div className="flex gap-3 pt-4">
-      <button
-        type="submit"
-        className="rounded-lg bg-primary px-5 py-2 text-sm text-primary-foreground"
-      >
-        Save Changes
-      </button>
-      <button
-        type="button"
-        className="rounded-lg border px-5 py-2 text-sm hover:bg-muted"
-      >
-        Cancel
-      </button>
     </div>
   );
 }
