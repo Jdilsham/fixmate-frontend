@@ -1,20 +1,14 @@
-import axios from "@/lib/axios";
+import { jwtDecode } from "jwt-decode";
 
-export async function getAuthUser() {
-  const token = localStorage.getItem("token");
-  if (!token) return null;
+export function getAuthUser(){
+    const token = localStorage.getItem("token");
+    if(!token) return null;
 
-  try {
-    const res = await axios.get("/api/provider/profile", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const payload = jwtDecode(token);
+    if(!payload ) return null;
 
-    return res.data; // real profile data
-  } catch (err) {
-    console.error("Failed to load provider profile", err);
-    localStorage.removeItem("token");
-    return null;
-  }
+    return{
+        username: payload.sub,
+        role: payload.role,
+    }
 }
