@@ -3,6 +3,7 @@ import Header from "../../components/header";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { getAuthUser } from "../../../utils/auth";
+import { getUserProfile } from "../../../utils/profile";
 import EmployerCard from "../../components/ServicesPage/employerCard";
 import BookingsTable from "../../components/dashboard/bookingTable";
 import {
@@ -22,42 +23,80 @@ const ROLE_CONFIG = {
       { id: "dashboard", label: "Dashboard", icon: Home },
       { id: "services", label: "Services", icon: Briefcase },
       { id: "calendar", label: "Calendar", icon: CalendarIcon },
-      { id: "settings", label: "Update Profile", icon: Settings },
+      { id: "profile", label: "Profile", icon: Settings },
     ],
   },
   CUSTOMER: {
     tabs: [
       { id: "dashboard", label: "Dashboard", icon: Home },
-      { id: "settings", label: "Update Profile", icon: Settings },
+      { id: "profile", label: "Profile", icon: Settings },
     ],
   },
 };
 
 export default function Dashboard() {
-  const authUser = getAuthUser();
-
-  const role = (() => {
-    const r = authUser?.role;
-    if (!r) return "CUSTOMER";
-    if (r === "SERVICE_PROVIDER" || r === "PROVIDER")
-      return "SERVICE_PROVIDER";
-    return "CUSTOMER";
-  })();
-
-  const tabs = ROLE_CONFIG[role].tabs;
+  const [authUser, setAuthUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [date, setDate] = useState(new Date());
-  const [isAvailable, setIsAvailable] = useState(true);
+  const [isAvailable, setIsAvailable] = useState(false);
 
-  const [openSection, setOpenSection] = useState("basic");
-  const [editingSection, setEditingSection] = useState(null);
+  const user = authUser && profile ? { ...authUser, ...profile } : authUser;
 
   useEffect(() => {
+    if (user?.available !== undefined) {
+      setIsAvailable(user.available);
+    }
+  }, [user]);
+
+  /* LOAD PROFILE */
+  useEffect(() => {
+    async function loadProfile() {
+      const auth = getAuthUser();
+      if (!auth) {
+        setLoading(false);
+        return;
+      }
+
+      setAuthUser(auth);
+      const profileData = await getUserProfile(auth.role);
+      setProfile(profileData);
+      setLoading(false);
+    }
+
+    loadProfile();
+  }, []);
+
+  const role = user?.role;
+  const tabs = ROLE_CONFIG[role]?.tabs || [];
+
+  /* TAB VALIDATION */
+  useEffect(() => {
+    if (tabs.length === 0) return;
+
     if (!tabs.some((t) => t.id === activeTab)) {
       setActiveTab("dashboard");
     }
   }, [activeTab, tabs]);
+
+  /* SAFE RETURNS */
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Session expired. Please login again.</p>
+      </div>
+    );
+  }
 
   const bookings =
     role === "SERVICE_PROVIDER"
@@ -85,11 +124,11 @@ export default function Dashboard() {
   const providerProfile =
     role === "SERVICE_PROVIDER"
       ? {
-          id: authUser?.id,
-          name: authUser?.username,
-          service: authUser?.service,
-          description: authUser?.description || "No description provided.",
-          location: authUser?.location || "Not specified",
+          id: user?.id,
+          name: user?.fullName,
+          service: user?.service,
+          description: user?.description || "No description provided.",
+          location: user?.city || "Not specified",
         }
       : null;
 
@@ -128,64 +167,6 @@ export default function Dashboard() {
             {/* DASHBOARD */}
             {activeTab === "dashboard" && (
               <>
-                <div className="flex items-center gap-10 border-b pb-6 mb-6">
-                  <div className="relative w-40 h-40 shrink-0">
-                    <div className="absolute inset-0 rounded-full bg-accent" />
-
-                    <Avatar.Root className="relative w-full h-full rounded-full overflow-hidden">
-                      <Avatar.Image
-                        src={authUser?.profilePicture || ""}
-                        alt={authUser?.username || "Profile Picture"}
-                        className="w-full h-full object-cover"
-                      />
-                      <Avatar.Fallback className="flex items-center justify-center w-full h-full text-2xl font-semibold">
-                        {authUser?.username?.[0]?.toUpperCase() || "U"}
-                      </Avatar.Fallback>
-                    </Avatar.Root>
-
-                    <span
-                      className={`w-5 h-5 rounded-full absolute bottom-1 right-1 border-2 border-background ${
-                        isAvailable ? "bg-green-500" : "bg-red-500"
-                      }`}
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-xl font-semibold">
-                      {authUser?.username}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{role}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {authUser?.location || "Location not set"}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {authUser?.phone || "Phone not set"}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      <span className="font-medium">Verified:</span>{" "}
-                      {authUser?.verified ? "Yes" : "No"}
-                    </p>
-
-                    {role === "SERVICE_PROVIDER" && (
-                      <div className="flex items-center gap-3 pt-2">
-                        <span className="text-sm font-medium">
-                          Availability:
-                        </span>
-                        <button
-                          onClick={() => setIsAvailable((v) => !v)}
-                          className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                            isAvailable
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {isAvailable ? "Yes" : "No"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                   <Card className="p-4">
                     <p className="text-sm text-muted-foreground">Revenue</p>
@@ -236,176 +217,83 @@ export default function Dashboard() {
               </>
             )}
 
-            {/* SETTINGS */}
-            {activeTab === "settings" && (
+            {/* PROFILE */}
+            {activeTab === "profile" && (
               <>
-                <h2 className="text-lg font-semibold mb-6">
-                  Update Profile
-                </h2>
+                <div className="flex items-center gap-10 border-b pb-6 mb-6">
+                  <div className="relative w-40 h-40 shrink-0">
+                    <div className="absolute inset-0 rounded-full bg-accent" />
 
-                <div className="space-y-4 max-w-xl">
-                  <CollapsibleSection
-                    title="Basic Information"
-                    section="basic"
-                    openSection={openSection}
-                    setOpenSection={setOpenSection}
-                    isEditing={editingSection === "basic"}
-                    onEdit={() => setEditingSection("basic")}
-                    onCancel={() => setEditingSection(null)}
-                  >
-                    <Input
-                      label="Full Name"
-                      defaultValue={authUser?.username || ""}
-                      disabled={editingSection !== "basic"}
-                    />
-                    <Input
-                      label="Address"
-                      defaultValue={authUser?.address || ""}
-                      disabled={editingSection !== "basic"}
-                    />
-                    <Input
-                      label="City"
-                      defaultValue={authUser?.city || ""}
-                      disabled={editingSection !== "basic"}
-                    />
-                  </CollapsibleSection>
-
-                  <CollapsibleSection
-                    title="Contact Information"
-                    section="contact"
-                    openSection={openSection}
-                    setOpenSection={setOpenSection}
-                    isEditing={editingSection === "contact"}
-                    onEdit={() => setEditingSection("contact")}
-                    onCancel={() => setEditingSection(null)}
-                  >
-                    <Input
-                      label="Phone Number"
-                      defaultValue={authUser?.phone || ""}
-                      disabled={editingSection !== "contact"}
-                    />
-                    <Input
-                      label="Email"
-                      defaultValue={authUser?.email || ""}
-                      disabled={editingSection !== "contact"}
-                    />
-                  </CollapsibleSection>
-
-                  {role === "SERVICE_PROVIDER" && (
-                    <CollapsibleSection
-                      title="Service Information"
-                      section="service"
-                      openSection={openSection}
-                      setOpenSection={setOpenSection}
-                      isEditing={editingSection === "service"}
-                      onEdit={() => setEditingSection("service")}
-                      onCancel={() => setEditingSection(null)}
-                    >
-                      <Input
-                        label="Service"
-                        defaultValue={authUser?.service || ""}
-                        disabled={editingSection !== "service"}
+                    <Avatar.Root className="relative w-full h-full rounded-full overflow-hidden">
+                      <Avatar.Image
+                        src={user?.profilePicture || ""}
+                        alt={user?.username || "Profile Picture"}
+                        className="w-full h-full object-cover"
                       />
-                      <Input
-                        label="Experience (Years)"
-                        type="number"
-                        defaultValue={authUser?.experience || ""}
-                        disabled={editingSection !== "service"}
-                      />
-                    </CollapsibleSection>
-                  )}
+                      <Avatar.Fallback className="flex items-center justify-center w-full h-full text-2xl font-semibold">
+                        {user?.username?.[0]?.toUpperCase() || "U"}
+                      </Avatar.Fallback>
+                    </Avatar.Root>
+
+                    <span
+                      className={`w-5 h-5 rounded-full absolute bottom-2 right-4 border-2 border-background ${
+                        isAvailable ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xl font-semibold">{user?.username}</p>
+
+                    <p className="text-sm text-muted-foreground">{role}</p>
+
+                    {role === "SERVICE_PROVIDER" && (
+                      <p className="text-sm text-muted-foreground">
+                        Skill:{" "}
+                        <span className="font-medium">
+                          {user?.service || "Not set"}
+                        </span>
+                      </p>
+                    )}
+
+                    {role === "SERVICE_PROVIDER" && (
+                      <p className="text-sm text-muted-foreground">
+                        {user?.city || "Location not set"}
+                      </p>
+                    )}
+
+                    <p className="text-sm text-muted-foreground">
+                      {user?.phone || "Phone number not set"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium">Verified:</span>{" "}
+                      {user?.verified ? "Yes" : "No"}
+                    </p>
+
+                    {role === "SERVICE_PROVIDER" && (
+                      <div className="flex items-center gap-3 pt-2">
+                        <span className="text-sm font-medium">
+                          Availability:
+                        </span>
+                        <button
+                          onClick={() => setIsAvailable((v) => !v)}
+                          className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                            isAvailable
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {isAvailable ? "Yes" : "No"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </>
             )}
           </div>
         </main>
       </div>
-    </div>
-  );
-}
-
-/* =======================
-   COLLAPSIBLE SECTION
-======================= */
-function CollapsibleSection({
-  title,
-  section,
-  openSection,
-  setOpenSection,
-  isEditing,
-  onEdit,
-  onCancel,
-  children,
-}) {
-  const isOpen = openSection === section;
-
-  return (
-    <div className="border rounded-xl">
-      <div className="flex items-center justify-between px-4 py-3">
-        <button
-          type="button"
-          onClick={() => setOpenSection(isOpen ? null : section)}
-          className="flex items-center gap-2"
-        >
-          <span className="font-medium">{title}</span>
-          <span className={`transition-transform ${isOpen ? "rotate-180" : ""}`}>
-            ▼
-          </span>
-        </button>
-
-        {isOpen && !isEditing && (
-          <button
-            type="button"
-            onClick={onEdit}
-            className="text-sm text-primary hover:underline"
-          >
-            Edit
-          </button>
-        )}
-      </div>
-
-      {isOpen && (
-        <div className="px-4 pb-4 space-y-3">
-          {children}
-
-          {isEditing && (
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                className="rounded-lg bg-primary px-5 py-2 text-sm text-primary-foreground"
-              >
-                Save Changes
-              </button>
-              <button
-                type="button"
-                onClick={onCancel}
-                className="rounded-lg border px-5 py-2 text-sm hover:bg-muted"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* =======================
-   REUSABLE UI
-======================= */
-function Input({ label, type = "text", defaultValue, disabled }) {
-  return (
-    <div className="space-y-1">
-      <label className="text-sm font-medium">{label}</label>
-      <input
-        type={type}
-        defaultValue={defaultValue}
-        disabled={disabled}
-        className={`w-full rounded-lg border px-3 py-2 bg-background ${
-          disabled ? "opacity-60 cursor-not-allowed" : ""
-        }`}
-      />
     </div>
   );
 }
