@@ -43,6 +43,9 @@ export default function Dashboard() {
   const [date, setDate] = useState(new Date());
   const [isAvailable, setIsAvailable] = useState(false);
 
+  const [openSection, setOpenSection] = useState("basic");
+  const [editingSection, setEditingSection] = useState(null);
+
   const user = authUser && profile ? { ...authUser, ...profile } : authUser;
 
   useEffect(() => {
@@ -51,7 +54,6 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  /* LOAD PROFILE */
   useEffect(() => {
     async function loadProfile() {
       const auth = getAuthUser();
@@ -72,20 +74,17 @@ export default function Dashboard() {
   const role = user?.role;
   const tabs = ROLE_CONFIG[role]?.tabs || [];
 
-  /* TAB VALIDATION */
   useEffect(() => {
     if (tabs.length === 0) return;
-
     if (!tabs.some((t) => t.id === activeTab)) {
       setActiveTab("dashboard");
     }
   }, [activeTab, tabs]);
 
-  /* SAFE RETURNS */
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+        Loading...
       </div>
     );
   }
@@ -93,7 +92,7 @@ export default function Dashboard() {
   if (!authUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Session expired. Please login again.</p>
+        Session expired. Please login again.
       </div>
     );
   }
@@ -220,6 +219,7 @@ export default function Dashboard() {
             {/* PROFILE */}
             {activeTab === "profile" && (
               <>
+                {/* PROFILE HEADER */}
                 <div className="flex items-center gap-10 border-b pb-6 mb-6">
                   <div className="relative w-40 h-40 shrink-0">
                     <div className="absolute inset-0 rounded-full bg-accent" />
@@ -244,7 +244,6 @@ export default function Dashboard() {
 
                   <div className="space-y-1">
                     <p className="text-xl font-semibold">{user?.username}</p>
-
                     <p className="text-sm text-muted-foreground">{role}</p>
 
                     {role === "SERVICE_PROVIDER" && (
@@ -265,6 +264,7 @@ export default function Dashboard() {
                     <p className="text-sm text-muted-foreground">
                       {user?.phone || "Phone number not set"}
                     </p>
+
                     <p className="text-sm text-muted-foreground">
                       <span className="font-medium">Verified:</span>{" "}
                       {user?.verified ? "Yes" : "No"}
@@ -289,11 +289,169 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
+
+                {/* EDIT PROFILE */}
+                <h2 className="text-lg font-semibold mb-6">Update Profile</h2>
+
+                <div className="space-y-4 max-w-xl">
+                  <CollapsibleSection
+                    title="Basic Information"
+                    section="basic"
+                    openSection={openSection}
+                    setOpenSection={setOpenSection}
+                    isEditing={editingSection === "basic"}
+                    onEdit={() => setEditingSection("basic")}
+                    onCancel={() => setEditingSection(null)}
+                  >
+                    <Input
+                      label="Full Name"
+                      defaultValue={user?.username || ""}
+                      disabled={editingSection !== "basic"}
+                    />
+                    <Input
+                      label="City"
+                      defaultValue={user?.city || ""}
+                      disabled={editingSection !== "basic"}
+                    />
+                  </CollapsibleSection>
+
+                  <CollapsibleSection
+                    title="Contact Information"
+                    section="contact"
+                    openSection={openSection}
+                    setOpenSection={setOpenSection}
+                    isEditing={editingSection === "contact"}
+                    onEdit={() => setEditingSection("contact")}
+                    onCancel={() => setEditingSection(null)}
+                  >
+                    <Input
+                      label="Phone"
+                      defaultValue={user?.phone || ""}
+                      disabled={editingSection !== "contact"}
+                    />
+                    <Input
+                      label="Email"
+                      defaultValue={user?.email || ""}
+                      disabled={editingSection !== "contact"}
+                    />
+                  </CollapsibleSection>
+
+                  {role === "SERVICE_PROVIDER" && (
+                    <CollapsibleSection
+                      title="Service Information"
+                      section="service"
+                      openSection={openSection}
+                      setOpenSection={setOpenSection}
+                      isEditing={editingSection === "service"}
+                      onEdit={() => setEditingSection("service")}
+                      onCancel={() => setEditingSection(null)}
+                    >
+                      <Input
+                        label="Skill"
+                        defaultValue={user?.service || ""}
+                        disabled={editingSection !== "service"}
+                      />
+                      <Input
+                        label="Description"
+                        defaultValue={user?.description || ""}
+                        disabled={editingSection !== "service"}
+                      />
+                    </CollapsibleSection>
+                  )}
+                </div>
               </>
             )}
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+/* =======================
+   COLLAPSIBLE SECTION
+======================= */
+function CollapsibleSection({
+  title,
+  section,
+  openSection,
+  setOpenSection,
+  isEditing,
+  onEdit,
+  onCancel,
+  children,
+}) {
+  const isOpen = openSection === section;
+
+  return (
+    <div className="border rounded-xl">
+      <div className="flex items-center justify-between px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setOpenSection(isOpen ? null : section)}
+          className="flex items-center gap-2 "
+        >
+          <span className="font-medium">{title}</span>
+          <span
+            className={`transition-transform ${isOpen ? "rotate-180" : ""} `}
+          >
+            ▼
+          </span>
+        </button>
+
+        {isOpen && !isEditing && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="text-sm text-primary hover:underline"
+          >
+            Edit
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="px-4 pb-4 space-y-3">
+          {children}
+
+          {isEditing && (
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                className="rounded-lg bg-primary px-5 py-2 text-sm text-primary-foreground"
+              >
+                Save Changes
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="rounded-lg border px-5 py-2 text-sm hover:bg-muted"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =======================
+   REUSABLE INPUT
+======================= */
+function Input({ label, type = "text", defaultValue, disabled }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-sm font-medium">{label}</label>
+      <input
+        type={type}
+        defaultValue={defaultValue}
+        disabled={disabled}
+        className={`w-full rounded-lg border px-3 py-2 bg-background ${
+          disabled ? "opacity-60 cursor-not-allowed" : ""
+        }`}
+      />
     </div>
   );
 }
