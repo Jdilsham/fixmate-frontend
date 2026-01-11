@@ -57,14 +57,18 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadProfile() {
       const auth = getAuthUser();
+
       if (!auth) {
         setLoading(false);
         return;
       }
 
       setAuthUser(auth);
-      const profileData = await getUserProfile(auth.role);
+
+      const profileData = await getUserProfile();
+
       setProfile(profileData);
+
       setLoading(false);
     }
 
@@ -243,7 +247,9 @@ export default function Dashboard() {
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-xl font-semibold">{user?.username}</p>
+                    <p className="text-xl font-semibold">
+                      {user?.fullName || user?.username}
+                    </p>
                     <p className="text-sm text-muted-foreground">{role}</p>
 
                     {role === "SERVICE_PROVIDER" && (
@@ -305,7 +311,7 @@ export default function Dashboard() {
                   >
                     <Input
                       label="Full Name"
-                      defaultValue={user?.username || ""}
+                      defaultValue={user?.fullName || user?.username || ""}
                       disabled={editingSection !== "basic"}
                     />
                     <Input
