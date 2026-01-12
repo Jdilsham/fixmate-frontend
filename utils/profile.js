@@ -68,3 +68,40 @@ export async function getUserProfile() {
     return null;
   }
 }
+
+export async function updateAvailability(isAvailable) {
+  const auth = getAuthUser();
+  if(!auth) return null;
+
+  try{
+    const res =await axios.patch(`${API}/api/provider/availability`, 
+    { isAvailable },
+    {
+      headers: { Authorization: `Bearer ${auth.token}`,},
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error("Failed to update availability", err);
+    throw err;
+  }
+}
+
+export async function updateProviderProfile(formData) {
+  const auth = getAuthUser();
+  if(!auth) throw new Error("Not Authenticated");
+
+  try{
+    const res = await axios.put(`${API}/api/provider/profile`, formData, {
+      headers: { Authorization: `Bearer ${auth.token}`,
+      "Content-Type": "multipart/form-data", },
+    });
+
+    return res.data;
+  } catch (err) {
+    console.log("Failed to update profile", err);
+    throw err;  
+    
+  }
+
+}
