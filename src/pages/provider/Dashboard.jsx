@@ -15,6 +15,7 @@ import {
 import * as Avatar from "@radix-ui/react-avatar";
 import { updateAvailability } from "../../../utils/profile";
 import { updateProviderProfile } from "../../../utils/profile";
+import toast from "react-hot-toast";
 
 /* =======================
    ROLE CONFIG
@@ -59,6 +60,38 @@ export default function Dashboard() {
     workPdf: null,
   });
 
+  const reloadProfile = async () => {
+  const auth = getAuthUser();
+  if (!auth) {
+    setAuthUser(null);
+    setLoading(false);
+    return;
+  }
+
+ 
+  setAuthUser(auth);
+
+  setLoading(true);
+
+  const profileData = await getUserProfile();
+
+  setProfile(profileData);
+  setIsAvailable(profileData?.available ?? false);
+
+  setProfileForm({
+    skill: profileData?.service || "",
+    experience: profileData?.experience || "",
+    address: profileData?.address || "",
+    city: profileData?.city || "",
+    description: profileData?.description || "",
+    workPdf: null,
+  });
+
+  setActiveTab("profile"); // stay on profile
+  setLoading(false);
+};
+
+
   const handleSaveProfile = async () => {
     try {
       const formData = new FormData();
@@ -90,6 +123,10 @@ export default function Dashboard() {
       );
 
       setEditingSection(null);
+
+      await reloadProfile();
+      toast.success("Profile updated successfully");
+
     } catch (err) {
       console.error(err);
       alert("Failed to update profile");
@@ -97,35 +134,9 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    async function loadProfile() {
-      const auth = getAuthUser();
+  reloadProfile();
+}, []);
 
-      if (!auth) {
-        setLoading(false);
-        return;
-      }
-
-      setAuthUser(auth);
-
-      const profileData = await getUserProfile();
-
-      setProfile(profileData);
-      setIsAvailable(profileData?.available ?? false);
-
-      setProfileForm({
-        skill: profileData?.skill || "",
-        experience: profileData?.experience || "",
-        address: profileData?.address || "",
-        city: profileData?.city || "",
-        description: profileData?.description || "",
-        workPdf: null,
-      });
-
-      setLoading(false);
-    }
-
-    loadProfile();
-  }, []);
 
   const role = user?.role;
   const tabs = ROLE_CONFIG[role]?.tabs || [];
@@ -382,17 +393,22 @@ export default function Dashboard() {
                     <Input
                       label="City"
                       defaultValue={user?.city || ""}
+                      value={profileForm.city}
+                      onChange={(e) =>
+                        setProfileForm((p) => ({ ...p, city: e.target.value }))
+                      }
                       disabled={editingSection !== "basic"}
                     />
-                    <Input
+                    {role === "SERVICE_PROVIDER" && <Input
                       label="Skill"
                       value={profileForm.skill}
+                      defaultValue={user?.service || ""}
                       onChange={(e) =>
                         setProfileForm((p) => ({ ...p, skill: e.target.value }))
                       }
                       disabled={editingSection !== "basic"}
-                    />
-                    <Input
+                    />}
+                    {role === "SERVICE_PROVIDER" && <Input
                       label="Experience"
                       value={profileForm.experience}
                       onChange={(e) =>
@@ -402,7 +418,7 @@ export default function Dashboard() {
                         }))
                       }
                       disabled={editingSection !== "basic"}
-                    />
+                    />}
 
                     <Input
                       label="Address"
@@ -415,7 +431,7 @@ export default function Dashboard() {
                       }
                       disabled={editingSection !== "basic"}
                     />
-                    <Input
+                    {role === "SERVICE_PROVIDER" && <Input
                       label="Description"
                       value={profileForm.description}
                       onChange={(e) =>
@@ -425,8 +441,8 @@ export default function Dashboard() {
                         }))
                       }
                       disabled={editingSection !== "basic"}
-                    />
-                    <Input
+                    />}
+                    {role === "SERVICE_PROVIDER" && <Input
                       label="Work PDF"
                       type="file"
                       onChange={(e) =>
@@ -436,52 +452,8 @@ export default function Dashboard() {
                         }))
                       }
                       disabled={editingSection !== "basic"}
-                    />
+                    />}
                   </CollapsibleSection>
-                  {/* 
-                  <CollapsibleSection
-                    title="Contact Information"
-                    section="contact"
-                    openSection={openSection}
-                    setOpenSection={setOpenSection}
-                    isEditing={editingSection === "contact"}
-                    onEdit={() => setEditingSection("contact")}
-                    onCancel={() => setEditingSection(null)}
-                  >
-                    <Input
-                      label="Phone"
-                      defaultValue={user?.phone || ""}
-                      disabled={editingSection !== "contact"}
-                    />
-                    <Input
-                      label="Email"
-                      defaultValue={user?.email || ""}
-                      disabled={editingSection !== "contact"}
-                    />
-                  </CollapsibleSection>
-
-                  {role === "SERVICE_PROVIDER" && (
-                    <CollapsibleSection
-                      title="Service Information"
-                      section="service"
-                      openSection={openSection}
-                      setOpenSection={setOpenSection}
-                      isEditing={editingSection === "service"}
-                      onEdit={() => setEditingSection("service")}
-                      onCancel={() => setEditingSection(null)}
-                    >
-                      <Input
-                        label="Skill"
-                        defaultValue={user?.service || ""}
-                        disabled={editingSection !== "service"}
-                      />
-                      <Input
-                        label="Description"
-                        defaultValue={user?.description || ""}
-                        disabled={editingSection !== "service"}
-                      />
-                    </CollapsibleSection>
-                  )} */}
                 </div>
               </>
             )}
