@@ -18,6 +18,10 @@ import { updateProviderProfile } from "../../../utils/profile";
 import { addCustomerAddress } from "../../../utils/profile";
 import toast from "react-hot-toast";
 import { Button } from "../../components/ui/button";
+import { useNavigate } from "react-router-dom";
+import EditImageModal from "../../components/dashboard/editProfilePic";
+
+
 
 /* =======================
    ROLE CONFIG
@@ -40,6 +44,7 @@ const ROLE_CONFIG = {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [authUser, setAuthUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -47,6 +52,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [date, setDate] = useState(new Date());
   const [isAvailable, setIsAvailable] = useState(false);
+  const [editImageOpen, setEditImageOpen] = useState(false);
 
   const [openSection, setOpenSection] = useState("basic");
   const [editingSection, setEditingSection] = useState(null);
@@ -217,7 +223,7 @@ export default function Dashboard() {
     role === "SERVICE_PROVIDER"
       ? {
           id: user?.id,
-          name: user?.fullName,
+          fullName: user?.fullName,
           service: user?.service,
           description: user?.description || "No description provided.",
           location: user?.city || "Not specified",
@@ -314,29 +320,36 @@ export default function Dashboard() {
               <>
                 {/* PROFILE HEADER */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6 border-b pb-6 mb-8">
-                  <div className="relative w-28 h-28 md:w-36 md:h-36 shrink-0">
-                    <div className="absolute inset-0 rounded-full bg-accent" />
+                  <div className=" flex flex-col relative w-28 h-28 md:w-36 md:h-36 shrink-0 justify-end">
+                    <div className="  absolute flex flex-col items-center inset-0 rounded-full bg-accent">
+                      <Avatar.Root className=" relative w-full h-full rounded-full overflow-hidden">
+                        <Avatar.Image
+                          src={user?.profilePicture || ""}
+                          alt={user?.username || "Profile Picture"}
+                          className="w-full h-full object-cover"
+                        />
+                        <Avatar.Fallback className="flex items-center justify-center w-full h-full text-2xl font-semibold">
+                          {user?.username?.[0]?.toUpperCase() || "U"}
+                        </Avatar.Fallback>
+                      </Avatar.Root>
 
-                    <Avatar.Root className="relative w-full h-full rounded-full overflow-hidden">
-                      <Avatar.Image
-                        src={user?.profilePicture || ""}
-                        alt={user?.username || "Profile Picture"}
-                        className="w-full h-full object-cover"
+                      <span
+                        className={`w-5 h-5 rounded-full absolute top-4 right-2 border-2 border-background ${
+                          isAvailable ? "bg-green-500" : "bg-red-500"
+                        }`}
                       />
-                      <Avatar.Fallback className="flex items-center justify-center w-full h-full text-2xl font-semibold">
-                        {user?.username?.[0]?.toUpperCase() || "U"}
-                      </Avatar.Fallback>
-                    </Avatar.Root>
 
-                    <span
-                      className={`w-5 h-5 rounded-full absolute bottom-2 right-4 border-2 border-background ${
-                        isAvailable ? "bg-green-500" : "bg-red-500"
-                      }`}
-                    />
-                    <Button
-                      className=" text center">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setEditImageOpen(true);
+                        }}
+                        className=" text center p-4  "
+                      >
                         edit picture
                       </Button>
+                    </div>
                   </div>
 
                   <div className="space-y-2 text-center md:text-left">
@@ -404,7 +417,7 @@ export default function Dashboard() {
                 {/* EDIT PROFILE */}
                 <h2 className="text-lg font-semibold mb-6">Update Profile</h2>
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1  gap-6">
                   <CollapsibleSection
                     title="Basic Information"
                     section="basic"
@@ -416,67 +429,86 @@ export default function Dashboard() {
                     onSave={handleSaveProfile}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
-                    <Input
-                      label="Full Name"
-                      defaultValue={user?.fullName || user?.username || ""}
-                      disabled={editingSection !== "basic"}
-                    />
+                      <Input
+                        label="First Name"
+                        defaultValue={user?.fullName || user?.username || ""}
+                        //must change to first name
+                        disabled={editingSection !== "basic"}
+                      />
+                      <Input
+                        label="Last Name"
+                        defaultValue={user?.fullName || user?.username || ""}
+                        // must change to last name
+                        disabled={editingSection !== "basic"}
+                      />
 
-                    {role === "SERVICE_PROVIDER" && (
+                      {/* check the logic later  */}
                       <Input
-                        label="Skill"
-                        value={profileForm.skill}
-                        defaultValue={user?.service || ""}
+                        label="Phone Number"
+                        value={profileForm.phone}
+                        // defaultValue={user?.service || ""}
                         onChange={(e) =>
                           setProfileForm((p) => ({
                             ...p,
-                            skill: e.target.value,
+                            phone: e.target.value,
                           }))
                         }
                         disabled={editingSection !== "basic"}
                       />
-                    )}
-                    {role === "SERVICE_PROVIDER" && (
-                      <Input
-                        label="Experience"
-                        value={profileForm.experience}
-                        onChange={(e) =>
-                          setProfileForm((p) => ({
-                            ...p,
-                            experience: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "basic"}
-                      />
-                    )}
 
-                    {role === "SERVICE_PROVIDER" && (
+                      {/* check the logic later  */}
                       <Input
-                        label="Description"
-                        value={profileForm.description}
+                        label="Email"
+                        value={profileForm.email}
+                        defaultValue={user?.username || ""}
                         onChange={(e) =>
                           setProfileForm((p) => ({
                             ...p,
-                            description: e.target.value,
+                            email: e.target.value,
                           }))
                         }
                         disabled={editingSection !== "basic"}
                       />
-                    )}
-                    {role === "SERVICE_PROVIDER" && (
-                      <Input
-                        label="Work PDF"
-                        type="file"
-                        onChange={(e) =>
-                          setProfileForm((p) => ({
-                            ...p,
-                            workPdf: e.target.files?.[0] || null,
-                          }))
-                        }
-                        disabled={editingSection !== "basic"}
-                      />
-                      
-                    )}
+                      {/* {role === "SERVICE_PROVIDER" && (
+                        <Input
+                          label="Experience"
+                          value={profileForm.experience}
+                          onChange={(e) =>
+                            setProfileForm((p) => ({
+                              ...p,
+                              experience: e.target.value,
+                            }))
+                          }
+                          disabled={editingSection !== "basic"}
+                        />
+                      )} */}
+
+                      {/* {role === "SERVICE_PROVIDER" && (
+                        <Input
+                          label="Description"
+                          value={profileForm.description}
+                          onChange={(e) =>
+                            setProfileForm((p) => ({
+                              ...p,
+                              description: e.target.value,
+                            }))
+                          }
+                          disabled={editingSection !== "basic"}
+                        />
+                      )}
+                      {role === "SERVICE_PROVIDER" && (
+                        <Input
+                          label="Work PDF"
+                          type="file"
+                          onChange={(e) =>
+                            setProfileForm((p) => ({
+                              ...p,
+                              workPdf: e.target.files?.[0] || null,
+                            }))
+                          }
+                          disabled={editingSection !== "basic"}
+                        />
+                      )} */}
                     </div>
                   </CollapsibleSection>
                   <CollapsibleSection
@@ -566,6 +598,9 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
+      {editImageOpen && (
+        <EditImageModal onClose={() => setEditImageOpen(false)} />
+      )}
     </div>
   );
 }
@@ -589,7 +624,6 @@ function CollapsibleSection({
   return (
     <div className="rounded-2xl border bg-card shadow-sm">
       <div className="flex items-center justify-between px-5 py-4">
-
         <button
           type="button"
           onClick={() => setOpenSection(isOpen ? null : section)}
@@ -616,7 +650,6 @@ function CollapsibleSection({
 
       {isOpen && (
         <div className="px-5 pb-5 space-y-4">
-
           {children}
 
           {isEditing && (
@@ -671,3 +704,6 @@ function Input({
     </div>
   );
 }
+
+
+

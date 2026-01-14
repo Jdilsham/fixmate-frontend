@@ -1,53 +1,23 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
-const API = import.meta.env.VITE_BACKEND_URL;
-
-export default function ProfessionalCard({ providerId }) {
-  const navigate = useNavigate();
+export default function ProfessionalCard() {
   const [provider, setProvider] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!providerId) return;
-
-    async function fetchProvider() {
-      try {
-        const res = await axios.get(
-          `${API}/api/provider/profile/${providerId}`
-        );
-        setProvider(res.data);
-      } catch (err) {
-        console.error("Failed to load provider", err);
-      } finally {
-        setLoading(false);
-      }
+    const stored = sessionStorage.getItem("selectedProvider");
+    if (stored) {
+      setProvider(JSON.parse(stored));
     }
-
-    fetchProvider();
-  }, [providerId]);
-
-  if (loading) {
-    return (
-      <Card className="w-full">
-        <CardContent className="p-6 text-center text-muted-foreground">
-          Loading professional...
-        </CardContent>
-      </Card>
-    );
-  }
+  }, []);
 
   if (!provider) {
     return (
       <Card className="w-full">
         <CardContent className="p-6 text-center text-muted-foreground">
-          Professional not found.
+          Professional details not available.
         </CardContent>
       </Card>
     );
@@ -75,15 +45,8 @@ export default function ProfessionalCard({ providerId }) {
             </p>
 
             <span className="text-sm opacity-70">
-              📍 {provider.city}
+              📍 {provider.location || provider.city}
             </span>
-
-            <Badge
-              variant={provider.isAvailable ? "default" : "secondary"}
-              className="w-fit mt-1"
-            >
-              {provider.isAvailable ? "Available" : "Unavailable"}
-            </Badge>
           </div>
         </div>
 
@@ -94,14 +57,15 @@ export default function ProfessionalCard({ providerId }) {
           </p>
         </div>
 
-        {/* Action */}
-        <div className="flex justify-end">
-          <Button
-            onClick={() => navigate(`/profile/${provider.providerId || provider.id}`)}
-            className="min-w-[160px]"
-          >
-            View Profile
-          </Button>
+        {/* Meta */}
+        <div className="flex flex-wrap gap-2">
+          <Badge variant={provider.isAvailable ? "default" : "secondary"}>
+            {provider.isAvailable ? "Available" : "Unavailable"}
+          </Badge>
+
+          {provider.isVerified && (
+            <Badge variant="outline">Verified</Badge>
+          )}
         </div>
 
       </CardContent>

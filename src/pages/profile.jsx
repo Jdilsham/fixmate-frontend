@@ -1,38 +1,72 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-
-import axios from "axios";
+import { useState, useEffect } from "react";
+import Header from "../components/header";
+import { useNavigate, useParams } from "react-router-dom";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "../components/ui/button";
+import { getAuthUser } from "../../utils/auth";
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
-export default function Profile() {
-  const { id } = useParams();
+export default function ProfilePage() {
+  const { id } = useParams(); // provider id
+  const navigate = useNavigate();
+  const authUser = getAuthUser();
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [date, setDate] = useState(new Date());
 
+  // ---------------- AUTH GUARD ----------------
   useEffect(() => {
-    async function fetchProfile() {
+    if (!authUser) {
+      navigate("/login");
+    }
+  }, [authUser, navigate]);
+
+  // ---------------- FETCH PROVIDER PROFILE ----------------
+  useEffect(() => {
+    if (!authUser) return;
+
+    const fetchProfile = async () => {
       try {
-        const res = await axios.get(`${API}/api/provider/profile/${id}`);
-        setProfile(res.data);
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`${API}/api/provider/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error("Profile not found");
+        }
+
+        const data = await res.json();
+        setProfile(data);
       } catch (err) {
-        console.error("Failed to load profile", err);
+        console.error(err);
+        setProfile(null);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchProfile();
-  }, [id]);
+  }, [id, authUser]);
 
+  // ---------------- TABS ----------------
+  const tabs = [
+    { id: "overview", label: "Overview" },
+    // { id: "services", label: "Services" },
+    { id: "reviews", label: "Reviews" },
+    // { id: "availability", label: "Availability" },
+  ];
+
+  // ---------------- UI STATES ----------------
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-16 text-center text-muted-foreground">
+      <div className="h-screen flex items-center justify-center">
         Loading profile...
       </div>
     );
@@ -40,88 +74,93 @@ export default function Profile() {
 
   if (!profile) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-16 text-center text-muted-foreground">
-        Profile not found.
+      <div className="h-screen flex items-center justify-center">
+        Profile not found
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
-        {/* LEFT : IDENTITY */}
-        <Card className="md:col-span-1">
-          <CardContent className="p-6 flex flex-col items-center text-center gap-4">
-            
-            <Avatar className="size-28">
-              <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
-                {profile.fullName?.charAt(0) || "U"}
-              </AvatarFallback>
-            </Avatar>
+    <div className="w-full min-h-screen bg-background text-foreground">
+      <Header />
 
-            <div className="space-y-1">
-              <h2 className="text-2xl font-semibold">
-                {profile.fullName}
-              </h2>
-
-              <p className="text-muted-foreground">
-                {profile.skill}
-              </p>
-
-              <span className="text-sm opacity-70">
-                📍 {profile.city}
-              </span>
-            </div>
-
-            <Badge variant={profile.isAvailable ? "default" : "secondary"}>
-              {profile.isAvailable ? "Available" : "Unavailable"}
-            </Badge>
-
-          </CardContent>
-        </Card>
-
-        {/* RIGHT : DETAILS */}
-        <Card className="md:col-span-2">
-          <CardContent className="p-6 flex flex-col gap-6">
-            
-            {/* About */}
-            <div>
-              <h3 className="text-lg font-semibold mb-2">
-                About
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {profile.description || "No description provided."}
-              </p>
-            </div>
-
-            {/* Services */}
-            {profile.services && profile.services.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Services
-                </h3>
-
-                <div className="flex flex-wrap gap-2">
-                  {profile.services.map((service, index) => (
-                    <Badge key={index} variant="outline">
-                      {service}
-                    </Badge>
-                  ))}
-                </div>
+      <div className="max-w-7xl mx-auto px-6 pt-16 pb-32 flex gap-8">
+        {/* ================= SIDEBAR ================= */}
+        <aside className="w-1/4">
+          <div className="bg-card border rounded-3xl p-6 sticky top-24">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center font-semibold">
+                {profile.fullName?.charAt(0)}
               </div>
-            )}
 
-            {/* Action */}
-            <div className="flex justify-end pt-4">
-              <Button className="min-w-[180px]">
+              <div>
+                <h3 className="font-semibold">{profile.fullName}</h3>
+                <p className="text-sm text-muted-foreground">{profile.skill}</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile.location}
+                </p>
+              </div>
+            </div>
+
+            <nav className="flex flex-col gap-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-3 rounded-xl text-left transition ${
+                    activeTab === tab.id ? "bg-accent" : "hover:bg-muted"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </aside>
+
+        {/* ================= CONTENT ================= */}
+        <main className="flex-1 bg-card border rounded-3xl p-8 relative">
+          {activeTab === "overview" && (
+            <div className="space-y-4 ">
+              <p className="text-muted-foreground">{profile.description}</p>
+              <p className="text-muted-foreground">{profile.experience}</p>
+              
+              <p>⭐ Rating: {profile.rating ?? "N/A"}</p>
+              <Button
+                className="min-w-[180px] absolute bottom-4 right-4"
+                onClick={() => {
+                  sessionStorage.setItem(
+                    "selectedProvider",
+                    JSON.stringify(profile)
+                  );
+                  navigate(`/book/${profile.id}`);
+                }}
+              >
                 Book Service
               </Button>
             </div>
+          )}
 
-          </CardContent>
-        </Card>
+          {/* {activeTab === "services" && (
+            <>
+              
+              
+            </>
+          )} */}
 
+          {/* {activeTab === "availability" && (
+            <Calendar
+              mode="single"
+              selected={date}
+              disabled
+              className="rounded-2xl border"
+            />
+          )} */}
+
+          {activeTab === "reviews" && (
+            <p className="text-muted-foreground">Reviews coming soon.</p>
+          )}
+        </main>
       </div>
     </div>
   );
