@@ -105,3 +105,20 @@ export async function updateProviderProfile(formData) {
   }
 
 }
+
+export async function addCustomerAddress(address) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.post(
+    `${API}/api/customer/addresses`,
+    address,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data;
+}

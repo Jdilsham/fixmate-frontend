@@ -15,7 +15,9 @@ import {
 import * as Avatar from "@radix-ui/react-avatar";
 import { updateAvailability } from "../../../utils/profile";
 import { updateProviderProfile } from "../../../utils/profile";
+import { addCustomerAddress } from "../../../utils/profile";
 import toast from "react-hot-toast";
+import { Button } from "../../components/ui/button";
 
 /* =======================
    ROLE CONFIG
@@ -60,37 +62,44 @@ export default function Dashboard() {
     workPdf: null,
   });
 
-  const reloadProfile = async () => {
-  const auth = getAuthUser();
-  if (!auth) {
-    setAuthUser(null);
-    setLoading(false);
-    return;
-  }
-
- 
-  setAuthUser(auth);
-
-  setLoading(true);
-
-  const profileData = await getUserProfile();
-
-  setProfile(profileData);
-  setIsAvailable(profileData?.available ?? false);
-
-  setProfileForm({
-    skill: profileData?.service || "",
-    experience: profileData?.experience || "",
-    address: profileData?.address || "",
-    city: profileData?.city || "",
-    description: profileData?.description || "",
-    workPdf: null,
+  const [addressForm, setAddressForm] = useState({
+    addressLine1: "",
+    addressLine2: "",
+    province: "",
+    city: "",
+    latitude: "",
+    longitude: "",
   });
 
-  setActiveTab("profile"); // stay on profile
-  setLoading(false);
-};
+  const reloadProfile = async () => {
+    const auth = getAuthUser();
+    if (!auth) {
+      setAuthUser(null);
+      setLoading(false);
+      return;
+    }
 
+    setAuthUser(auth);
+
+    setLoading(true);
+
+    const profileData = await getUserProfile();
+
+    setProfile(profileData);
+    setIsAvailable(profileData?.available ?? false);
+
+    setProfileForm({
+      skill: profileData?.service || "",
+      experience: profileData?.experience || "",
+      address: profileData?.address || "",
+      city: profileData?.city || "",
+      description: profileData?.description || "",
+      workPdf: null,
+    });
+
+    setActiveTab("profile"); // stay on profile
+    setLoading(false);
+  };
 
   const handleSaveProfile = async () => {
     try {
@@ -126,17 +135,34 @@ export default function Dashboard() {
 
       await reloadProfile();
       toast.success("Profile updated successfully");
-
     } catch (err) {
       console.error(err);
       alert("Failed to update profile");
     }
   };
 
-  useEffect(() => {
-  reloadProfile();
-}, []);
+  const handleSaveAddress = async () => {
+    try {
+      await addCustomerAddress({
+        addressLine1: addressForm.addressLine1,
+        addressLine2: addressForm.addressLine2,
+        province: addressForm.province,
+        city: addressForm.city,
+        latitude: Number(addressForm.latitude),
+        longitude: Number(addressForm.longitude),
+      });
 
+      toast.success("Address saved successfully");
+      setEditingSection(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save address");
+    }
+  };
+
+  useEffect(() => {
+    reloadProfile();
+  }, []);
 
   const role = user?.role;
   const tabs = ROLE_CONFIG[role]?.tabs || [];
@@ -202,8 +228,8 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
 
-      <div className="flex max-w-9xl mx-auto px-6 pt-8 gap-6">
-        <aside className="w-64 shrink-0">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+        <aside className="hidden lg:block w-64 shrink-0">
           <div className="bg-card border rounded-2xl p-4 sticky top-24 h-[calc(100vh-140px)] overflow-auto">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
               Navigation
@@ -287,8 +313,8 @@ export default function Dashboard() {
             {activeTab === "profile" && (
               <>
                 {/* PROFILE HEADER */}
-                <div className="flex items-center gap-10 border-b pb-6 mb-6">
-                  <div className="relative w-40 h-40 shrink-0">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-6 border-b pb-6 mb-8">
+                  <div className="relative w-28 h-28 md:w-36 md:h-36 shrink-0">
                     <div className="absolute inset-0 rounded-full bg-accent" />
 
                     <Avatar.Root className="relative w-full h-full rounded-full overflow-hidden">
@@ -307,9 +333,13 @@ export default function Dashboard() {
                         isAvailable ? "bg-green-500" : "bg-red-500"
                       }`}
                     />
+                    <Button
+                      className=" text center">
+                        edit picture
+                      </Button>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-2 text-center md:text-left">
                     <p className="text-xl font-semibold">
                       {user?.fullName || user?.username}
                     </p>
@@ -340,7 +370,7 @@ export default function Dashboard() {
                     </p>
 
                     {role === "SERVICE_PROVIDER" && (
-                      <div className="flex items-center gap-3 pt-2">
+                      <div className="mt-4 inline-flex items-center gap-3 rounded-xl bg-muted px-4 py-2">
                         <span className="text-sm font-medium">
                           Availability:
                         </span>
@@ -374,7 +404,7 @@ export default function Dashboard() {
                 {/* EDIT PROFILE */}
                 <h2 className="text-lg font-semibold mb-6">Update Profile</h2>
 
-                <div className="space-y-4 max-w-xl">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <CollapsibleSection
                     title="Basic Information"
                     section="basic"
@@ -385,11 +415,117 @@ export default function Dashboard() {
                     onCancel={() => setEditingSection(null)}
                     onSave={handleSaveProfile}
                   >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
                     <Input
                       label="Full Name"
                       defaultValue={user?.fullName || user?.username || ""}
                       disabled={editingSection !== "basic"}
                     />
+
+                    {role === "SERVICE_PROVIDER" && (
+                      <Input
+                        label="Skill"
+                        value={profileForm.skill}
+                        defaultValue={user?.service || ""}
+                        onChange={(e) =>
+                          setProfileForm((p) => ({
+                            ...p,
+                            skill: e.target.value,
+                          }))
+                        }
+                        disabled={editingSection !== "basic"}
+                      />
+                    )}
+                    {role === "SERVICE_PROVIDER" && (
+                      <Input
+                        label="Experience"
+                        value={profileForm.experience}
+                        onChange={(e) =>
+                          setProfileForm((p) => ({
+                            ...p,
+                            experience: e.target.value,
+                          }))
+                        }
+                        disabled={editingSection !== "basic"}
+                      />
+                    )}
+
+                    {role === "SERVICE_PROVIDER" && (
+                      <Input
+                        label="Description"
+                        value={profileForm.description}
+                        onChange={(e) =>
+                          setProfileForm((p) => ({
+                            ...p,
+                            description: e.target.value,
+                          }))
+                        }
+                        disabled={editingSection !== "basic"}
+                      />
+                    )}
+                    {role === "SERVICE_PROVIDER" && (
+                      <Input
+                        label="Work PDF"
+                        type="file"
+                        onChange={(e) =>
+                          setProfileForm((p) => ({
+                            ...p,
+                            workPdf: e.target.files?.[0] || null,
+                          }))
+                        }
+                        disabled={editingSection !== "basic"}
+                      />
+                      
+                    )}
+                    </div>
+                  </CollapsibleSection>
+                  <CollapsibleSection
+                    title="Address"
+                    section="address"
+                    openSection={openSection}
+                    setOpenSection={setOpenSection}
+                    isEditing={editingSection === "address"}
+                    onEdit={() => setEditingSection("address")}
+                    onCancel={() => setEditingSection(null)}
+                    onSave={handleSaveAddress}
+                  >
+                    <Input
+                      label="Address Line 1"
+                      value={addressForm.addressLine1}
+                      defaultValue={user?.address}
+                      onChange={(e) =>
+                        setAddressForm((p) => ({
+                          ...p,
+                          addressLine1: e.target.value,
+                        }))
+                      }
+                      disabled={editingSection !== "address"}
+                    />
+
+                    <Input
+                      label="Address Line 2"
+                      value={addressForm.addressLine2}
+                      onChange={(e) =>
+                        setAddressForm((p) => ({
+                          ...p,
+                          addressLine2: e.target.value,
+                        }))
+                      }
+                      disabled={editingSection !== "address"}
+                    />
+
+                    <Input
+                      label="Province"
+                      value={addressForm.province}
+                      onChange={(e) =>
+                        setAddressForm((p) => ({
+                          ...p,
+                          province: e.target.value,
+                        }))
+                      }
+                      disabled={editingSection !== "address"}
+                    />
+
                     <Input
                       label="City"
                       defaultValue={user?.city || ""}
@@ -397,62 +533,32 @@ export default function Dashboard() {
                       onChange={(e) =>
                         setProfileForm((p) => ({ ...p, city: e.target.value }))
                       }
-                      disabled={editingSection !== "basic"}
+                      disabled={editingSection !== "address"}
                     />
-                    {role === "SERVICE_PROVIDER" && <Input
-                      label="Skill"
-                      value={profileForm.skill}
-                      defaultValue={user?.service || ""}
+
+                    {/* <Input
+                      label="Latitude"
+                      value={addressForm.latitude}
                       onChange={(e) =>
-                        setProfileForm((p) => ({ ...p, skill: e.target.value }))
-                      }
-                      disabled={editingSection !== "basic"}
-                    />}
-                    {role === "SERVICE_PROVIDER" && <Input
-                      label="Experience"
-                      value={profileForm.experience}
-                      onChange={(e) =>
-                        setProfileForm((p) => ({
+                        setAddressForm((p) => ({
                           ...p,
-                          experience: e.target.value,
+                          latitude: e.target.value,
                         }))
                       }
-                      disabled={editingSection !== "basic"}
-                    />}
+                      disabled={editingSection !== "address"}
+                    />
 
                     <Input
-                      label="Address"
-                      value={profileForm.address}
+                      label="Longitude"
+                      value={addressForm.longitude}
                       onChange={(e) =>
-                        setProfileForm((p) => ({
+                        setAddressForm((p) => ({
                           ...p,
-                          address: e.target.value,
+                          longitude: e.target.value,
                         }))
                       }
-                      disabled={editingSection !== "basic"}
-                    />
-                    {role === "SERVICE_PROVIDER" && <Input
-                      label="Description"
-                      value={profileForm.description}
-                      onChange={(e) =>
-                        setProfileForm((p) => ({
-                          ...p,
-                          description: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "basic"}
-                    />}
-                    {role === "SERVICE_PROVIDER" && <Input
-                      label="Work PDF"
-                      type="file"
-                      onChange={(e) =>
-                        setProfileForm((p) => ({
-                          ...p,
-                          workPdf: e.target.files?.[0] || null,
-                        }))
-                      }
-                      disabled={editingSection !== "basic"}
-                    />}
+                      disabled={editingSection !== "address"}
+                    /> */}
                   </CollapsibleSection>
                 </div>
               </>
@@ -481,8 +587,9 @@ function CollapsibleSection({
   const isOpen = openSection === section;
 
   return (
-    <div className="border rounded-xl">
-      <div className="flex items-center justify-between px-4 py-3">
+    <div className="rounded-2xl border bg-card shadow-sm">
+      <div className="flex items-center justify-between px-5 py-4">
+
         <button
           type="button"
           onClick={() => setOpenSection(isOpen ? null : section)}
@@ -508,7 +615,8 @@ function CollapsibleSection({
       </div>
 
       {isOpen && (
-        <div className="px-4 pb-4 space-y-3">
+        <div className="px-5 pb-5 space-y-4">
+
           {children}
 
           {isEditing && (
