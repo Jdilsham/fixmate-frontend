@@ -14,7 +14,7 @@ export default function BookingsTable({role, bookings}){
     
 
     return(
-        <div className="rounded-xl border bg-card">
+        <div className="rounded-xl border-2 border-border bg-card">
             <Table>
                 <TableHeader>
                     <TableRow>

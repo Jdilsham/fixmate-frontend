@@ -12,7 +12,7 @@ export default function BookingSummary() {
       <CardContent className="flex flex-col gap-4">
         <div className="flex justify-between text-base">
           <span className="opacity-70">Service</span>
-          <span>Electrician</span>
+          <span>Plumber</span>
         </div>
 
         <div className="flex justify-between text-base">

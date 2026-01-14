@@ -28,34 +28,34 @@ export default function Header() {
   const [initials, setInitials] = useState("U");
 
   //Fetch user using token
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        if (!token) return;
+  // useEffect(() => {
+  //   const fetchUser = async () => {
+  //     try {
+  //       if (!token) return;
 
-        const res = await axios.get(`${API}/api/auth/login`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  //       const res = await axios.get(`${API}/api/auth/login`, {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
 
-        const user = res.data;
+  //       const user = res.data;
 
-        // handle different backend casing styles
-        const first = user.firstName || user.firstname || user.first_name || "";
+  //       // handle different backend casing styles
+  //       const first = user.firstName || user.firstname || user.first_name || "";
 
-        const last = user.lastName || user.lastname || user.last_name || "";
+  //       const last = user.lastName || user.lastname || user.last_name || "";
 
-        const i = ((first[0] || "") + (last[0] || "")).toUpperCase();
+  //       const i = ((first[0] || "") + (last[0] || "")).toUpperCase();
 
-        setInitials(i || "U");
-      } catch (err) {
-        console.error("Could not fetch user", err);
-      }
-    };
+  //       setInitials(i || "U");
+  //     } catch (err) {
+  //       console.error("Could not fetch user", err);
+  //     }
+  //   };
 
-    fetchUser();
-  }, [token]);
+  //   fetchUser();
+  // }, [token]);
 
   const navLinks = [
     { label: "Home", path: "/" },
