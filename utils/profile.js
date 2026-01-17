@@ -10,7 +10,6 @@ export async function getUserProfile() {
   } 
 
   const { role, token } = auth;
- 
 
 
   try {
@@ -222,3 +221,53 @@ export const changePassword = async (payload) => {
     }
   );
 };
+
+
+
+export async function addProviderService(serviceData, pdfFile) {
+  const auth = getAuthUser();
+
+  const formData = new FormData();
+
+  formData.append("data", JSON.stringify(serviceData));
+
+  if (pdfFile) {
+    formData.append("qualificationPdf", pdfFile);
+  }
+
+  return axios.post(`${API}/api/provider/services`, formData, {
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+}
+
+export async function getProviderServiceCategories() {
+  const auth = getAuthUser();
+
+  const res = await axios.get(
+    `${import.meta.env.VITE_BACKEND_URL}/api/provider/services/categories`,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data;
+}
+
+export async function getProviderServices() {
+  const auth = getAuthUser();
+
+  const res = await axios.get(
+    `${import.meta.env.VITE_BACKEND_URL}/api/provider/services`,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data;
+}

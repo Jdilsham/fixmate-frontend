@@ -1,99 +1,94 @@
 import { useNavigate } from "react-router-dom";
 
-const DUMMY_EMPLOYER = {
-  id: "dummy",
-  fullName: "Service Provider",
-  skill: "General Service",
-  description: "Experienced and reliable service provider.",
-  rating: "N/A",
-  location: "Unknown",
-  isVerified: false,
-  imageUrl: null,
-  fixrate: 0,
-  hourlyrate: 0,
-};
-
 export default function EmployerCard({ employer }) {
   const navigate = useNavigate();
 
-  // fallback if employer is undefined / null
-  const data = employer ?? DUMMY_EMPLOYER;
+  if (!employer) return null;
+
+  const {
+    profilePic,
+    providerName,
+    serviceTitle,
+    categoryName,
+    description,
+    fixedPrice,
+    hourlyRate,
+    verificationStatus,
+    providerServiceId,
+  } = employer;
 
   return (
-    <div
-      className="
-        w-full max-w-[320px]
-        h-[400px]
-        bg-muted-foreground/10
-        border border-border
-        rounded-2xl
-        p-6
-        flex flex-col
-        transition-shadow duration-300
-        hover:shadow-xl
-      "
-    >
-      {/* Header */}
-      <div className="flex items-center gap-4 h-[72px]">
-        <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-lg font-semibold overflow-hidden">
-          {data.imageUrl ? (
-            <img
-              src={data.imageUrl}
-              alt={data.fullName}
+    <div className="w-full max-w-[320px] h-[420px] bg-[#2f5d7c] rounded-2xl p-6 flex flex-col text-white shadow-md hover:shadow-xl transition">
+
+      {/* HEADER */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-xl font-semibold overflow-hidden">
+          {profilePic ? (
+           <img
+              src={profilePic?.startsWith("http")
+                ? profilePic
+                : `${import.meta.env.VITE_BACKEND_URL}${profilePic}`
+              }
+              alt={providerName}
               className="w-full h-full object-cover"
             />
+
           ) : (
-            <span>
-              {data.fullName?.charAt(0) ?? "?"}
-            </span>
+            <span>{providerName?.charAt(0) || "?"}</span>
           )}
         </div>
 
-        <div className="overflow-hidden">
-          <h3 className="text-lg font-semibold leading-tight line-clamp-2">
-            {data.fullName}
-            {data.isVerified && (
-              <span className="ml-1 text-xs text-primary">✔</span>
-            )}
-          </h3>
-          <span className="text-sm text-muted-foreground">
-            {data.skill}
-          </span>
+        <div>
+          <p className="text-base font-semibold">{providerName}</p>
+          <p className="text-sm opacity-80">{categoryName}</p>
         </div>
       </div>
 
-      {/* Description */}
-      <p className="mt-4 text-sm text-muted-foreground leading-relaxed h-[72px] line-clamp-3">
-        {data.description}
+      {/* SERVICE TITLE */}
+      <h3 className="text-xl font-bold mb-2">{serviceTitle}</h3>
+
+      {/* DESCRIPTION */}
+      <p className="text-sm opacity-90 mb-4 line-clamp-3">
+        {description}
       </p>
 
-      <div className="flex-1" >
-        <p>Fixed Rate : {data.fixrate} </p>
-        <p>Hourly Rate : {data.hourlyrate} </p>
+      {/* PRICING */}
+      <div className="bg-white/10 rounded-xl p-3 text-sm mb-4 space-y-1">
+        <p>
+          <span className="opacity-80">Fixed Rate:</span>{" "}
+          <span className="font-medium">
+            {fixedPrice ? `Rs. ${fixedPrice}` : "—"}
+          </span>
+        </p>
+        <p>
+          <span className="opacity-80">Hourly Rate:</span>{" "}
+          <span className="font-medium">
+            {hourlyRate ? `Rs. ${hourlyRate}` : "—"}
+          </span>
+        </p>
       </div>
 
-      {/* Footer */}
-      <div className="h-[96px] flex flex-col justify-between">
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>⭐ {data.rating}</span>
-          <span>📍 {data.location}</span>
-        </div>
+      {/* FOOTER */}
+      <div className="mt-auto">
+        <span
+          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3
+            ${
+              verificationStatus === "APPROVED"
+                ? "bg-green-500/20 text-green-300"
+                : verificationStatus === "PENDING"
+                ? "bg-yellow-500/20 text-yellow-300"
+                : "bg-red-500/20 text-red-300"
+            }
+          `}
+        >
+          ★ {verificationStatus}
+        </span>
 
         <button
-          disabled={!employer}
-          onClick={() => navigate(`/profile/${data.id}`)}
-          className="
-            w-full
-            py-2.5
-            rounded-xl
-            bg-accent
-            text-accent-foreground
-            font-medium
-            transition
-            hover:brightness-110
-            disabled:opacity-50
-            disabled:cursor-not-allowed
-          "
+          onClick={() =>
+            navigate(`/provider/services/${providerServiceId}`)
+          }
+          className="w-full py-2.5 rounded-xl bg-orange-500 font-medium text-white hover:bg-orange-600 transition"
         >
           View profile
         </button>

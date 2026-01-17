@@ -300,15 +300,17 @@ export default function Dashboard() {
         ];
 
   const providerProfile =
-    role === "SERVICE_PROVIDER"
-      ? {
-          id: user?.id,
-          fullName: user?.fullName,
-          service: user?.service,
-          description: user?.description || "No description provided.",
-          location: user?.city || "Not specified",
-        }
-      : null;
+  role === "SERVICE_PROVIDER"
+    ? {
+        id: user?.id,
+        fullName: user?.fullName,
+        profilePicture: user?.profilePicture, 
+        service: user?.service,
+        description: user?.description || "No description provided.",
+        location: user?.city || "Not specified",
+      }
+    : null;
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
