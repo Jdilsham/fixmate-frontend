@@ -103,6 +103,15 @@ export default function Dashboard() {
       workPdf: null,
     });
 
+    setAddressForm({
+      addressLine1: profileData?.addressLine1 || "",
+      addressLine2: profileData?.addressLine2 || "",
+      province: profileData?.province || "",
+      city: profileData?.city || "",
+      latitude: profileData?.latitude || "",
+      longitude: profileData?.longitude || "",
+    });
+
     setActiveTab("profile"); // stay on profile
     setLoading(false);
   };
@@ -148,23 +157,32 @@ export default function Dashboard() {
   };
 
   const handleSaveAddress = async () => {
-    try {
-      await addCustomerAddress({
-        addressLine1: addressForm.addressLine1,
-        addressLine2: addressForm.addressLine2,
-        province: addressForm.province,
-        city: addressForm.city,
-        latitude: Number(addressForm.latitude),
-        longitude: Number(addressForm.longitude),
-      });
+  try {
+    console.log("SENDING ADDRESS:", addressForm); // debug once
 
-      toast.success("Address saved successfully");
-      setEditingSection(null);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save address");
-    }
-  };
+    await addCustomerAddress({
+      addressLine1: addressForm.addressLine1,
+      addressLine2: addressForm.addressLine2,
+      province: addressForm.province,
+      city: addressForm.city,
+      latitude: addressForm.latitude
+        ? Number(addressForm.latitude)
+        : null,
+      longitude: addressForm.longitude
+        ? Number(addressForm.longitude)
+        : null,
+    });
+
+    toast.success("Address saved successfully");
+    setEditingSection(null);
+
+    await reloadProfile(); 
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to save address");
+  }
+};
+
 
   useEffect(() => {
     reloadProfile();
@@ -524,12 +542,8 @@ export default function Dashboard() {
                     <Input
                       label="Address Line 1"
                       value={addressForm.addressLine1}
-                      defaultValue={user?.address}
                       onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          addressLine1: e.target.value,
-                        }))
+                        setAddressForm((p) => ({ ...p, addressLine1: e.target.value }))
                       }
                       disabled={editingSection !== "address"}
                     />
@@ -538,10 +552,7 @@ export default function Dashboard() {
                       label="Address Line 2"
                       value={addressForm.addressLine2}
                       onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          addressLine2: e.target.value,
-                        }))
+                        setAddressForm((p) => ({ ...p, addressLine2: e.target.value }))
                       }
                       disabled={editingSection !== "address"}
                     />
@@ -550,32 +561,25 @@ export default function Dashboard() {
                       label="Province"
                       value={addressForm.province}
                       onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          province: e.target.value,
-                        }))
+                        setAddressForm((p) => ({ ...p, province: e.target.value }))
                       }
                       disabled={editingSection !== "address"}
                     />
 
                     <Input
                       label="City"
-                      defaultValue={user?.city || ""}
-                      value={profileForm.city}
+                      value={addressForm.city}
                       onChange={(e) =>
-                        setProfileForm((p) => ({ ...p, city: e.target.value }))
+                        setAddressForm((p) => ({ ...p, city: e.target.value }))
                       }
                       disabled={editingSection !== "address"}
                     />
 
-                    {/* <Input
+                    <Input
                       label="Latitude"
                       value={addressForm.latitude}
                       onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          latitude: e.target.value,
-                        }))
+                        setAddressForm((p) => ({ ...p, latitude: e.target.value }))
                       }
                       disabled={editingSection !== "address"}
                     />
@@ -584,13 +588,11 @@ export default function Dashboard() {
                       label="Longitude"
                       value={addressForm.longitude}
                       onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          longitude: e.target.value,
-                        }))
+                        setAddressForm((p) => ({ ...p, longitude: e.target.value }))
                       }
                       disabled={editingSection !== "address"}
-                    /> */}
+                    />
+
                   </CollapsibleSection>
                 </div>
               </>

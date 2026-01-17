@@ -39,6 +39,7 @@ export async function getUserProfile() {
       };
     }
 
+    
     //CUSTOMER
     if (role === "CUSTOMER") {
       const res = await axios.get(`${API}/api/customer/me`, {
