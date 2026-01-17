@@ -207,3 +207,18 @@ export async function updateProviderProfilePicture(file) {
 
   return res.data;
 }
+
+
+export const changePassword = async (payload) => {
+  const auth = getAuthUser();
+
+  return axios.put(
+    `${import.meta.env.VITE_BACKEND_URL}/api/user/change-password`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+};

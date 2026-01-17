@@ -13,6 +13,7 @@ import { updateProviderProfile } from "../../../utils/profile";
 import { getProviderAddress } from "../../../utils/profile";
 import {addProviderAddress, updateProviderAddress,} from "../../../utils/profile";
 import { updateProviderProfilePicture } from "../../../utils/profile";
+import { changePassword } from "../../../utils/profile";
 import toast from "react-hot-toast";
 import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -65,6 +66,9 @@ export default function Dashboard() {
 
   const [hasAddress, setHasAddress] = useState(false);
 
+  const [changingPassword, setChangingPassword] = useState(false);
+
+
 
   const [addressForm, setAddressForm] = useState({
     addressLine1: "",
@@ -73,6 +77,12 @@ export default function Dashboard() {
     city: "",
     latitude: "",
     longitude: "",
+  });
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const reloadProfile = async () => {
@@ -152,6 +162,8 @@ export default function Dashboard() {
   };
 
 
+
+
   
     const handleSaveAddress = async () => {
     try {
@@ -185,6 +197,52 @@ export default function Dashboard() {
       toast.error("Failed to save address");
     }
   };
+
+    const handleChangePassword = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("All password fields are required");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+
+      await changePassword({
+        currentPassword,
+        newPassword,
+        confirmationPassword: confirmPassword,
+      });
+
+
+      toast.success("Password changed successfully");
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      setEditingSection(null);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to change password");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+
 
 
   useEffect(() => {
@@ -542,6 +600,7 @@ export default function Dashboard() {
                     hasAddress={hasAddress}  
                     showAddInstead={true}
                   >
+
                     <Input
                       label="Address Line 1"
                       value={addressForm.addressLine1}
@@ -597,6 +656,66 @@ export default function Dashboard() {
                     />
 
                   </CollapsibleSection>
+
+
+                  <CollapsibleSection
+                    title="Change Password"
+                    section="password"
+                    openSection={openSection}
+                    setOpenSection={setOpenSection}
+                    isEditing={editingSection === "password"}
+                    changingPassword={changingPassword}
+                    onEdit={() => setEditingSection("password")}
+                    onCancel={() => {
+                      setEditingSection(null);
+                      setPasswordForm({
+                        currentPassword: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                      });
+                    }}
+                    onSave={handleChangePassword}
+                  >
+
+                    <Input
+                      label="Current Password"
+                      type="password"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) =>
+                        setPasswordForm((p) => ({
+                          ...p,
+                          currentPassword: e.target.value,
+                        }))
+                      }
+                      disabled={editingSection !== "password"}
+                    />
+
+                    <Input
+                      label="New Password"
+                      type="password"
+                      value={passwordForm.newPassword}
+                      onChange={(e) =>
+                        setPasswordForm((p) => ({
+                          ...p,
+                          newPassword: e.target.value,
+                        }))
+                      }
+                      disabled={editingSection !== "password"}
+                    />
+
+                    <Input
+                      label="Confirm New Password"
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) =>
+                        setPasswordForm((p) => ({
+                          ...p,
+                          confirmPassword: e.target.value,
+                        }))
+                      }
+                      disabled={editingSection !== "password"}
+                    />
+                  </CollapsibleSection>
                 </div>
               </>
             )}
@@ -628,7 +747,8 @@ function CollapsibleSection({
   onEdit,
   onCancel,
   onSave,
-  hasAddress,   
+  changingPassword,
+  hasAddress,
   showAddInstead,
   children,
 }) {
@@ -671,10 +791,18 @@ function CollapsibleSection({
               <button
                 type="button"
                 onClick={onSave}
-                className="rounded-lg bg-primary px-5 py-2 text-sm text-primary-foreground"
+                disabled={title === "Change Password" && changingPassword}
+                className={`rounded-lg px-5 py-2 text-sm text-primary-foreground ${
+                  title === "Change Password" && changingPassword
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-primary"
+                }`}
               >
-                Save Changes
+                {title === "Change Password" && changingPassword
+                  ? "Saving..."
+                  : "Save Changes"}
               </button>
+
 
               <button
                 type="button"
