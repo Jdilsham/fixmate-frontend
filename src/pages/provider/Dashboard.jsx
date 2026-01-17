@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 import EditImageModal from "../../components/dashboard/editProfilePic";
+import EmployerGrid from "../../components/dashboard/addService/employerGrid";
 
 
 
@@ -313,7 +314,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+      <div className="max-w-8xl mx-auto px-4 md:px-6 pt-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
         <aside className="hidden lg:block w-64 shrink-0">
           <div className="bg-card border rounded-2xl p-4 sticky top-24 h-[calc(100vh-140px)] overflow-auto">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
@@ -375,7 +376,7 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold mb-4">My Services</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {providerProfile && (
-                    <EmployerCard employer={providerProfile} />
+                    <EmployerGrid profile={providerProfile} />
                   )}
                 </div>
               </>
@@ -431,7 +432,7 @@ export default function Dashboard() {
                         onClick={() => {
                           setEditImageOpen(true);
                         }}
-                        className=" text center p-4  "
+                        className=" text center p-4 bg-muted-foreground dark:bg-card  "
                       >
                         edit picture
                       </Button>
