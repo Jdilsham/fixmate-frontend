@@ -100,10 +100,11 @@ export default function EditImageModal({ onClose }) {
       const blob = await response.blob();
 
       const formData = new FormData();
-      formData.append("file", blob); // ✅ EXACT CUSTOMER CONTRACT
+      formData.append("profilePic", blob, "profilePic.png"); // MUST match backend param name
 
-      await axios.post(
-        `${API}/api/customer/profile-image`,
+
+      await axios.put(
+        `${API}/api/provider/profile/picture`,
         formData,
         {
           headers: {
@@ -113,8 +114,8 @@ export default function EditImageModal({ onClose }) {
         }
       );
 
+
       onClose();
-      window.location.reload(); // safe + simple for now
     } catch (err) {
       console.error(err);
       setError("Failed to upload profile image");

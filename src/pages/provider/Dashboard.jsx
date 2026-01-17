@@ -89,9 +89,13 @@ export default function Dashboard() {
 
     const profileData = await getUserProfile();
 
+    console.log("PROFILE FROM BACKEND:", profileData);
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     setProfile(profileData);
+
+
     setIsAvailable(profileData?.available ?? false);
 
     setProfileForm({
@@ -338,17 +342,24 @@ export default function Dashboard() {
                 {/* PROFILE HEADER */}
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6 border-b pb-6 mb-8">
                   <div className=" flex flex-col relative w-28 h-28 md:w-36 md:h-36 shrink-0 justify-end">
-                    <div className="  absolute flex flex-col items-center inset-0 rounded-full bg-accent">
-                      <Avatar.Root className=" relative w-full h-full rounded-full overflow-hidden">
+                    <div className="absolute flex flex-col items-center inset-0 rounded-full bg-transparent">
+
+                      <Avatar.Root
+                          key={user?.profilePicture}
+                          className="relative w-full h-full rounded-full overflow-hidden bg-background"
+                        >
                         <Avatar.Image
-                          src={user?.profilePicture || ""}
-                          alt={user?.username || "Profile Picture"}
-                          className="w-full h-full object-cover"
+                          src={user?.profilePicture}
+                          alt="Profile Picture"
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover object-center"
                         />
                         <Avatar.Fallback className="flex items-center justify-center w-full h-full text-2xl font-semibold">
-                          {user?.username?.[0]?.toUpperCase() || "U"}
+                          U
                         </Avatar.Fallback>
                       </Avatar.Root>
+
+
 
                       <span
                         className={`w-5 h-5 rounded-full absolute top-4 right-2 border-2 border-background ${
@@ -593,8 +604,14 @@ export default function Dashboard() {
         </main>
       </div>
       {editImageOpen && (
-        <EditImageModal onClose={() => setEditImageOpen(false)} />
-      )}
+        <EditImageModal
+          onClose={() => {
+            setEditImageOpen(false);
+            reloadProfile();
+      }}
+  />
+)}
+
     </div>
   );
 }

@@ -32,7 +32,9 @@ export async function getUserProfile() {
         rating: p.rating,
         verified: p.isVerified,
         available: p.isAvailable,
-        profilePicture: p.profileImage,
+        profilePicture: p.profileImage
+          ? `${API}${p.profileImage}?t=${Date.now()}`
+          : null,
         services: p.services || [],
         phone: p.phone,
         role,
