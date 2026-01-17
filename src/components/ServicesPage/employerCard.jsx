@@ -9,6 +9,8 @@ const DUMMY_EMPLOYER = {
   location: "Unknown",
   isVerified: false,
   imageUrl: null,
+  fixrate: 0,
+  hourlyrate: 0,
 };
 
 export default function EmployerCard({ employer }) {
@@ -65,7 +67,10 @@ export default function EmployerCard({ employer }) {
         {data.description}
       </p>
 
-      <div className="flex-1" />
+      <div className="flex-1" >
+        <p>Fixed Rate : {data.fixrate} </p>
+        <p>Hourly Rate : {data.hourlyrate} </p>
+      </div>
 
       {/* Footer */}
       <div className="h-[96px] flex flex-col justify-between">
