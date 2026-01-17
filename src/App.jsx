@@ -12,6 +12,7 @@ import ProfilePage from "./pages/profile";
 import ProviderDashboard from "./pages/provider/Dashboard";
 import { Toaster } from "react-hot-toast";
 import BookProfessional from "./pages/BookProfessional";
+import AdminDashboard from "./pages/admin/dashboard";
 
 
 
@@ -35,6 +36,10 @@ function App() {
           <Route
             path="/provider/dashboard" element={<ProviderDashboard />}
           />
+
+          {/* Admin */}
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
 
           {/* AUTH */}
           <Route path="/login" element={<LoginPage />} />
