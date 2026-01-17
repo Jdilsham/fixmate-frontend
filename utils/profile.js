@@ -38,7 +38,6 @@ export async function getUserProfile() {
         role,
       };
     }
-
     
     //CUSTOMER
     if (role === "CUSTOMER") {
@@ -88,24 +87,24 @@ export async function updateAvailability(isAvailable) {
   }
 }
 
-export async function updateProviderProfile(formData) {
+export async function updateProviderProfile(payload) {
   const auth = getAuthUser();
-  if(!auth) throw new Error("Not Authenticated");
+  if (!auth) throw new Error("Not Authenticated");
 
-  try{
-    const res = await axios.put(`${API}/api/provider/profile`, formData, {
-      headers: { Authorization: `Bearer ${auth.token}`,
-      "Content-Type": "multipart/form-data", },
-    });
+  const res = await axios.put(
+    `${API}/api/provider/profile`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
-    return res.data;
-  } catch (err) {
-    console.log("Failed to update profile", err);
-    throw err;  
-    
-  }
-
+  return res.data;
 }
+
 
 export async function addCustomerAddress(address) {
   const auth = getAuthUser();
@@ -117,6 +116,89 @@ export async function addCustomerAddress(address) {
     {
       headers: {
         Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data;
+
+
+  
+}
+
+// =======================
+// PROVIDER ADDRESS APIs
+// =======================
+
+// GET provider address
+export async function getProviderAddress() {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(
+    `${API}/api/provider/address`,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data; // null OR address object
+}
+
+// ADD provider address
+export async function addProviderAddress(address) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.post(
+    `${API}/api/provider/address`, 
+    address,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return res.data;
+}
+
+// UPDATE provider address
+export async function updateProviderAddress(address) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.put(
+    `${API}/api/provider/address`,   
+    address,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return res.data;
+}
+
+export async function updateProviderProfilePicture(file) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const formData = new FormData();
+  formData.append("profilePic", file); // MUST match backend param name
+
+  const res = await axios.put(
+    `${API}/api/provider/profile/picture`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "multipart/form-data",
       },
     }
   );

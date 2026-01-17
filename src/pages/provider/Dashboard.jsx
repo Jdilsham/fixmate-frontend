@@ -6,16 +6,13 @@ import { getAuthUser } from "../../../utils/auth";
 import { getUserProfile } from "../../../utils/profile";
 import EmployerCard from "../../components/ServicesPage/employerCard";
 import BookingsTable from "../../components/dashboard/bookingTable";
-import {
-  Home,
-  Calendar as CalendarIcon,
-  Settings,
-  Briefcase,
-} from "lucide-react";
+import {Home,Calendar as CalendarIcon,Settings,Briefcase} from "lucide-react";
 import * as Avatar from "@radix-ui/react-avatar";
 import { updateAvailability } from "../../../utils/profile";
 import { updateProviderProfile } from "../../../utils/profile";
-import { addCustomerAddress } from "../../../utils/profile";
+import { getProviderAddress } from "../../../utils/profile";
+import {addProviderAddress, updateProviderAddress,} from "../../../utils/profile";
+import { updateProviderProfilePicture } from "../../../utils/profile";
 import toast from "react-hot-toast";
 import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -43,6 +40,7 @@ const ROLE_CONFIG = {
   },
 };
 
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [authUser, setAuthUser] = useState(null);
@@ -60,13 +58,13 @@ export default function Dashboard() {
   const user = authUser && profile ? { ...authUser, ...profile } : authUser;
 
   const [profileForm, setProfileForm] = useState({
-    skill: "",
-    experience: "",
-    address: "",
-    city: "",
-    description: "",
-    workPdf: null,
+  firstName: "",
+  lastName: "",
+  phone: "",
   });
+
+  const [hasAddress, setHasAddress] = useState(false);
+
 
   const [addressForm, setAddressForm] = useState({
     addressLine1: "",
@@ -91,97 +89,98 @@ export default function Dashboard() {
 
     const profileData = await getUserProfile();
 
+
+
     setProfile(profileData);
     setIsAvailable(profileData?.available ?? false);
 
     setProfileForm({
-      skill: profileData?.service || "",
-      experience: profileData?.experience || "",
-      address: profileData?.address || "",
-      city: profileData?.city || "",
-      description: profileData?.description || "",
-      workPdf: null,
+      firstName: profileData?.fullName?.split(" ")[0] || "",
+      lastName: profileData?.fullName?.split(" ")[1] || "",
+      phone: profileData?.phone || "",
     });
 
-    setAddressForm({
-      addressLine1: profileData?.addressLine1 || "",
-      addressLine2: profileData?.addressLine2 || "",
-      province: profileData?.province || "",
-      city: profileData?.city || "",
-      latitude: profileData?.latitude || "",
-      longitude: profileData?.longitude || "",
-    });
+
+        // LOAD PROVIDER ADDRESS
+    try {
+      const addr = await getProviderAddress();
+
+      if (addr) {
+        setHasAddress(true);
+        setAddressForm({
+          addressLine1: addr.addressLine1 || "",
+          addressLine2: addr.addressLine2 || "",
+          province: addr.province || "",
+          city: addr.city || "",
+          latitude: addr.latitude ?? "",
+          longitude: addr.longitude ?? "",
+        });
+      } else {
+        setHasAddress(false);
+      }
+    } catch (err) {
+      console.error("Failed to load provider address", err);
+      setHasAddress(false);
+    }
+
 
     setActiveTab("profile"); // stay on profile
     setLoading(false);
   };
 
-  const handleSaveProfile = async () => {
+    const handleSaveProfile = async () => {
     try {
-      const formData = new FormData();
+      const payload = {
+        firstName: profileForm.firstName,
+        lastName: profileForm.lastName,
+        phone: profileForm.phone,
+      };
 
-      formData.append("skill", profileForm.skill);
-      formData.append("experience", profileForm.experience);
-      formData.append("address", profileForm.address);
-      formData.append("city", profileForm.city);
-      formData.append("description", profileForm.description);
+      await updateProviderProfile(payload);
 
-      if (profileForm.workPdf) {
-        formData.append("workPdf", profileForm.workPdf);
-      }
-
-      const updated = await updateProviderProfile(formData);
-
-      setProfile((prev) =>
-        prev
-          ? {
-              ...prev,
-              skill: updated.skill ?? prev.skill,
-              description: updated.description ?? prev.description,
-              city: updated.city ?? prev.city,
-              isAvailable: updated.isAvailable ?? prev.isAvailable,
-              experience: updated.experience ?? prev.experience,
-              address: updated.address ?? prev.address,
-            }
-          : prev
-      );
-
-      setEditingSection(null);
-
-      await reloadProfile();
       toast.success("Profile updated successfully");
+      setEditingSection(null);
+      await reloadProfile();
     } catch (err) {
       console.error(err);
-      alert("Failed to update profile");
+      toast.error("Failed to update profile");
     }
   };
 
-  const handleSaveAddress = async () => {
-  try {
-    console.log("SENDING ADDRESS:", addressForm); // debug once
 
-    await addCustomerAddress({
-      addressLine1: addressForm.addressLine1,
-      addressLine2: addressForm.addressLine2,
-      province: addressForm.province,
-      city: addressForm.city,
-      latitude: addressForm.latitude
-        ? Number(addressForm.latitude)
-        : null,
-      longitude: addressForm.longitude
-        ? Number(addressForm.longitude)
-        : null,
-    });
+  
+    const handleSaveAddress = async () => {
+    try {
+      const payload = {
+        addressLine1: addressForm.addressLine1,
+        addressLine2: addressForm.addressLine2,
+        province: addressForm.province,
+        city: addressForm.city,
+        latitude: addressForm.latitude
+          ? Number(addressForm.latitude)
+          : null,
+        longitude: addressForm.longitude
+          ? Number(addressForm.longitude)
+          : null,
+      };
 
-    toast.success("Address saved successfully");
-    setEditingSection(null);
+      if (hasAddress) {
+        await updateProviderAddress(payload);
+        toast.success("Address updated successfully");
+      } else {
+        await addProviderAddress(payload);
+        setHasAddress(true);
+        toast.success("Address added successfully");
+      }
 
-    await reloadProfile(); 
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to save address");
-  }
-};
+
+      setEditingSection(null);
+      await reloadProfile();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save address");
+    }
+  };
 
 
   useEffect(() => {
@@ -387,9 +386,12 @@ export default function Dashboard() {
 
                     {role === "SERVICE_PROVIDER" && (
                       <p className="text-sm text-muted-foreground">
-                        {user?.city || "Location not set"}
+                        {addressForm.city
+                          ? `${addressForm.city}, ${addressForm.province}`
+                          : "Location not set"}
                       </p>
                     )}
+
 
                     <p className="text-sm text-muted-foreground">
                       {user?.phone || "Phone number not set"}
@@ -449,44 +451,32 @@ export default function Dashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
                       <Input
                         label="First Name"
-                        defaultValue={user?.fullName || user?.username || ""}
-                        //must change to first name
-                        disabled={editingSection !== "basic"}
-                      />
-                      <Input
-                        label="Last Name"
-                        defaultValue={user?.fullName || user?.username || ""}
-                        // must change to last name
+                        value={profileForm.firstName}
+                        onChange={(e) =>
+                          setProfileForm((p) => ({ ...p, firstName: e.target.value }))
+                        }
                         disabled={editingSection !== "basic"}
                       />
 
-                      {/* check the logic later  */}
+                      <Input
+                        label="Last Name"
+                        value={profileForm.lastName}
+                        onChange={(e) =>
+                          setProfileForm((p) => ({ ...p, lastName: e.target.value }))
+                        }
+                        disabled={editingSection !== "basic"}
+                      />
+
                       <Input
                         label="Phone Number"
                         value={profileForm.phone}
-                        // defaultValue={user?.service || ""}
                         onChange={(e) =>
-                          setProfileForm((p) => ({
-                            ...p,
-                            phone: e.target.value,
-                          }))
+                          setProfileForm((p) => ({ ...p, phone: e.target.value }))
                         }
                         disabled={editingSection !== "basic"}
                       />
 
-                      {/* check the logic later  */}
-                      <Input
-                        label="Email"
-                        value={profileForm.email}
-                        defaultValue={user?.username || ""}
-                        onChange={(e) =>
-                          setProfileForm((p) => ({
-                            ...p,
-                            email: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "basic"}
-                      />
+                      
                       {/* {role === "SERVICE_PROVIDER" && (
                         <Input
                           label="Experience"
@@ -538,6 +528,8 @@ export default function Dashboard() {
                     onEdit={() => setEditingSection("address")}
                     onCancel={() => setEditingSection(null)}
                     onSave={handleSaveAddress}
+                    hasAddress={hasAddress}  
+                    showAddInstead={true}
                   >
                     <Input
                       label="Address Line 1"
@@ -619,6 +611,8 @@ function CollapsibleSection({
   onEdit,
   onCancel,
   onSave,
+  hasAddress,   
+  showAddInstead,
   children,
 }) {
   const isOpen = openSection === section;
@@ -645,9 +639,10 @@ function CollapsibleSection({
             onClick={onEdit}
             className="text-sm text-primary hover:underline"
           >
-            Edit
+            {showAddInstead && !hasAddress ? "Add Address" : "Edit"}
           </button>
         )}
+
       </div>
 
       {isOpen && (
