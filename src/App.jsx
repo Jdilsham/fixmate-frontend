@@ -51,6 +51,7 @@ function App() {
            {/* BOOKING */}
           <Route path="/book/:id" element={<BookProfessional />} />
 
+
           {/* 404 */}
           <Route path="*" element={<h1>404 not found</h1>} />
         </Routes>
