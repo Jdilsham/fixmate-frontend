@@ -118,11 +118,11 @@ export default function AddEmployerModal({
         />
 
         {/* ACTIONS */}
-        <div className="flex justify-end gap-3 pt-4">
-          <button onClick={onClose} className="btn-secondary">
+        <div className="flex justify-end gap-3 pt-4 ">
+          <button onClick={onClose} className="btn-secondary hover:bg-accent w-[80px] rounded-2xl">
             Cancel
           </button>
-          <button onClick={handleSubmit} className="btn-primary">
+          <button onClick={handleSubmit} className="btn-primary hover:bg-accent w-[80px] rounded-2xl">
             Add
           </button>
         </div>

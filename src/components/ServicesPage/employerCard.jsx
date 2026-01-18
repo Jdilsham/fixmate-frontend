@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import Services from "../../pages/services";
 
 export default function EmployerCard({ employer }) {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ export default function EmployerCard({ employer }) {
     hourlyRate,
     verificationStatus,
     providerServiceId,
+    rating,
+    location,
   } = employer;
 
   return (
@@ -48,7 +51,7 @@ export default function EmployerCard({ employer }) {
       <h3 className="text-xl font-bold mb-2">{serviceTitle}</h3>
 
       {/* DESCRIPTION */}
-      <p className="text-sm opacity-90 mb-4 line-clamp-3">
+      <p className="text-sm opacity-90 mb-4 ">
         {description}
       </p>
 
@@ -70,7 +73,8 @@ export default function EmployerCard({ employer }) {
 
       {/* FOOTER */}
       <div className="mt-auto">
-        <span
+        <div className="flex justify-between ">
+          <span
           className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3
             ${
               verificationStatus === "APPROVED"
@@ -81,12 +85,17 @@ export default function EmployerCard({ employer }) {
             }
           `}
         >
-          ★ {verificationStatus}
+          ★ {rating}
+          
         </span>
+        <span>
+          📍{location}
+        </span>
+        </div>
 
         <button
           onClick={() =>
-            navigate(`/provider/services/${providerServiceId}`)
+            navigate(`/profile/${providerServiceId}`)
           }
           className="w-full py-2.5 rounded-xl bg-orange-500 font-medium text-white hover:bg-orange-600 transition"
         >

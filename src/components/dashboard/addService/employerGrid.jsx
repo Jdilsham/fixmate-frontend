@@ -67,7 +67,7 @@ export default function EmployerGrid({ profile }) {
 
       toast.success("Service added successfully");
 
-      // ✅ REFRESH LIST IMMEDIATELY
+      // REFRESH LIST IMMEDIATELY
       await loadProviderServices();
 
       // reset form
