@@ -3,22 +3,30 @@ import Header from "../../components/header";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { getAuthUser } from "../../../utils/auth";
-import { getUserProfile } from "../../../utils/profile";
 import EmployerCard from "../../components/ServicesPage/employerCard";
 import BookingsTable from "../../components/dashboard/bookingTable";
 import {Home,Calendar as CalendarIcon,Settings,Briefcase} from "lucide-react";
 import * as Avatar from "@radix-ui/react-avatar";
-import { updateAvailability } from "../../../utils/profile";
-import { updateProviderProfile } from "../../../utils/profile";
-import { getProviderAddress } from "../../../utils/profile";
-import {addProviderAddress, updateProviderAddress,} from "../../../utils/profile";
-import { updateProviderProfilePicture } from "../../../utils/profile";
-import { changePassword } from "../../../utils/profile";
 import toast from "react-hot-toast";
 import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 import EditImageModal from "../../components/dashboard/editProfilePic";
 import EmployerGrid from "../../components/dashboard/addService/employerGrid";
+
+
+import {
+  getUserProfile,
+  updateAvailability,
+  updateProviderProfile,
+  updateCustomerProfile,
+  getProviderAddress,
+  addProviderAddress,
+  updateProviderAddress,
+  getCustomerAddress,
+  addCustomerAddress,
+  updateCustomerAddress,
+  changePassword,
+} from "../../../utils/profile";
 
 
 
@@ -116,9 +124,12 @@ export default function Dashboard() {
     });
 
 
-        // LOAD PROVIDER ADDRESS
+    // LOAD ADDRESS (ROLE BASED)
     try {
-      const addr = await getProviderAddress();
+      const addr =
+        profileData.role === "SERVICE_PROVIDER"
+          ? await getProviderAddress()
+          : await getCustomerAddress();
 
       if (addr) {
         setHasAddress(true);
@@ -134,9 +145,10 @@ export default function Dashboard() {
         setHasAddress(false);
       }
     } catch (err) {
-      console.error("Failed to load provider address", err);
+      console.error("Failed to load address", err);
       setHasAddress(false);
     }
+
 
 
     setActiveTab("profile"); // stay on profile
@@ -144,28 +156,29 @@ export default function Dashboard() {
   };
 
     const handleSaveProfile = async () => {
-    try {
-      const payload = {
-        firstName: profileForm.firstName,
-        lastName: profileForm.lastName,
-        phone: profileForm.phone,
-      };
+      try {
+        const payload = {
+          firstName: profileForm.firstName,
+          lastName: profileForm.lastName,
+          phone: profileForm.phone,
+        };
 
-      await updateProviderProfile(payload);
+        if (role === "SERVICE_PROVIDER") {
+          await updateProviderProfile(payload);
+        } else if (role === "CUSTOMER") {
+          await updateCustomerProfile(payload);
+        }
 
-      toast.success("Profile updated successfully");
-      setEditingSection(null);
-      await reloadProfile();
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update profile");
-    }
-  };
+        toast.success("Profile updated successfully");
+        setEditingSection(null);
+        await reloadProfile();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to update profile");
+      }
+    };
 
 
-
-
-  
     const handleSaveAddress = async () => {
     try {
       const payload = {
@@ -181,18 +194,26 @@ export default function Dashboard() {
           : null,
       };
 
-      if (hasAddress) {
-        await updateProviderAddress(payload);
-        toast.success("Address updated successfully");
-      } else {
-        await addProviderAddress(payload);
-        setHasAddress(true);
-        toast.success("Address added successfully");
+      if (role === "SERVICE_PROVIDER") {
+        if (hasAddress) {
+          await updateProviderAddress(payload);
+        } else {
+          await addProviderAddress(payload);
+          setHasAddress(true);
+        }
+      } else if (role === "CUSTOMER") {
+        if (hasAddress) {
+          await updateCustomerAddress(payload);
+        } else {
+          await addCustomerAddress(payload);
+          setHasAddress(true);
+        }
       }
 
-
+      toast.success("Address saved successfully");
       setEditingSection(null);
       await reloadProfile();
+
     } catch (err) {
       console.error(err);
       toast.error("Failed to save address");
@@ -548,47 +569,6 @@ export default function Dashboard() {
                         disabled={editingSection !== "basic"}
                       />
 
-                      
-                      {/* {role === "SERVICE_PROVIDER" && (
-                        <Input
-                          label="Experience"
-                          value={profileForm.experience}
-                          onChange={(e) =>
-                            setProfileForm((p) => ({
-                              ...p,
-                              experience: e.target.value,
-                            }))
-                          }
-                          disabled={editingSection !== "basic"}
-                        />
-                      )} */}
-
-                      {/* {role === "SERVICE_PROVIDER" && (
-                        <Input
-                          label="Description"
-                          value={profileForm.description}
-                          onChange={(e) =>
-                            setProfileForm((p) => ({
-                              ...p,
-                              description: e.target.value,
-                            }))
-                          }
-                          disabled={editingSection !== "basic"}
-                        />
-                      )}
-                      {role === "SERVICE_PROVIDER" && (
-                        <Input
-                          label="Work PDF"
-                          type="file"
-                          onChange={(e) =>
-                            setProfileForm((p) => ({
-                              ...p,
-                              workPdf: e.target.files?.[0] || null,
-                            }))
-                          }
-                          disabled={editingSection !== "basic"}
-                        />
-                      )} */}
                     </div>
                   </CollapsibleSection>
                   <CollapsibleSection
