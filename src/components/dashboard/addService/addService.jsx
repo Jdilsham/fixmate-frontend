@@ -3,7 +3,7 @@ export default function AddServiceCard({ onClick }) {
     <div
       onClick={onClick}
       className="
-        w-full max-w-[320px]
+         max-w-[320px]
         h-[420px]
         rounded-2xl
         border-2 border-dashed border-white/40

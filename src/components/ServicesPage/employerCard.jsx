@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import Services from "../../pages/services";
+
 
 export default function EmployerCard({ employer }) {
   const navigate = useNavigate();
@@ -7,11 +7,12 @@ export default function EmployerCard({ employer }) {
   if (!employer) return null;
 
   const {
+    providerId,
     profilePic,
     providerName,
     serviceTitle,
     categoryName,
-    description,
+    serviceDescription,
     fixedPrice,
     hourlyRate,
     verificationStatus,
@@ -21,21 +22,20 @@ export default function EmployerCard({ employer }) {
   } = employer;
 
   return (
-    <div className="w-full max-w-[320px] h-[420px] bg-[#2f5d7c] rounded-2xl p-6 flex flex-col text-white shadow-md hover:shadow-xl transition">
-
+    <div className="w-full min-h-[420px] bg-[#2f5d7c] rounded-2xl p-6 flex flex-col text-white shadow-md hover:shadow-xl transition">
       {/* HEADER */}
       <div className="flex items-center gap-4 mb-4">
         <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-xl font-semibold overflow-hidden">
           {profilePic ? (
-           <img
-              src={profilePic?.startsWith("http")
-                ? profilePic
-                : `${import.meta.env.VITE_BACKEND_URL}${profilePic}`
+            <img
+              src={
+                profilePic?.startsWith("http")
+                  ? profilePic
+                  : `${import.meta.env.VITE_BACKEND_URL}${profilePic}`
               }
               alt={providerName}
               className="w-full h-full object-cover"
             />
-
           ) : (
             <span>{providerName?.charAt(0) || "?"}</span>
           )}
@@ -51,8 +51,8 @@ export default function EmployerCard({ employer }) {
       <h3 className="text-xl font-bold mb-2">{serviceTitle}</h3>
 
       {/* DESCRIPTION */}
-      <p className="text-sm opacity-90 mb-4 ">
-        {description}
+      <p className="text-sm opacity-90 mb-4 line-clamp-4">
+        {serviceDescription || "No description provided."}
       </p>
 
       {/* PRICING */}
@@ -75,28 +75,25 @@ export default function EmployerCard({ employer }) {
       <div className="mt-auto">
         <div className="flex justify-between ">
           <span
-          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3
+            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3
             ${
               verificationStatus === "APPROVED"
                 ? "bg-green-500/20 text-green-300"
                 : verificationStatus === "PENDING"
-                ? "bg-yellow-500/20 text-yellow-300"
-                : "bg-red-500/20 text-red-300"
+                  ? "bg-yellow-500/20 text-yellow-300"
+                  : "bg-red-500/20 text-red-300"
             }
           `}
-        >
-          ★ {rating}
-          
-        </span>
-        <span>
-          📍{location}
-        </span>
+          >
+            ★ {rating}
+          </span>
+          <span className="truncate max-w-[140px] opacity-90">
+            📍 {location || "Unknown"}
+          </span>
         </div>
 
         <button
-          onClick={() =>
-            navigate(`/profile/${providerServiceId}`)
-          }
+          onClick={() => navigate(`/profile/${providerId}`)}
           className="w-full py-2.5 rounded-xl bg-orange-500 font-medium text-white hover:bg-orange-600 transition"
         >
           View profile
