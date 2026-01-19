@@ -12,7 +12,6 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const [authUser] = useState(() => getAuthUser());
 
-
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -26,41 +25,40 @@ export default function ProfilePage() {
   }, [authUser, navigate]);
 
   // ---------------- FETCH PROVIDER PROFILE ----------------
-useEffect(() => {
-  if (!authUser) return;
+  useEffect(() => {
+    if (!authUser) return;
 
-  const controller = new AbortController();
+    const controller = new AbortController();
 
-  const fetchProfile = async () => {
-    try {
-      const token = localStorage.getItem("token");
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
 
-      const res = await fetch(`${API}/api/provider/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        signal: controller.signal,
-      });
+        const res = await fetch(`${API}/api/provider/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
 
-      if (!res.ok) throw new Error("Profile not found");
+        if (!res.ok) throw new Error("Profile not found");
 
-      const data = await res.json();
-      setProfile(data);
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        console.error(err);
-        setProfile(null);
+        const data = await res.json();
+        setProfile(data);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error(err);
+          setProfile(null);
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchProfile();
+    fetchProfile();
 
-  return () => controller.abort();
-}, [id]); 
-
+    return () => controller.abort();
+  }, [id]);
 
   // ---------------- TABS ----------------
   const tabs = [
@@ -144,13 +142,18 @@ useEffect(() => {
                     <div>
                       <p className="font-medium">{service.serviceTitle}</p>
                       <p className="text-sm text-muted-foreground">
-                        Rs. {service.fixedPrice ?? "—"}
+                        {service.fixedPriceAvailable
+                          ? "Fixed price available"
+                          : service.hourlyRate
+                            ? `Rs. ${service.hourlyRate}`
+                            : "—"}
                       </p>
                     </div>
 
                     <Button
                       onClick={() =>
                         navigate(`/book/${service.providerServiceId}`)
+
                       }
                     >
                       Book

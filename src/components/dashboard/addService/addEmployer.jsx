@@ -1,6 +1,3 @@
-import { useState } from "react";
-
-
 export default function AddEmployerModal({
   profile,
   onClose,
@@ -9,7 +6,7 @@ export default function AddEmployerModal({
   setServiceForm,
   setPdfFile,
   categories,
-  providerServices
+  providerServices,
 }) {
   const handleSubmit = () => {
     if (!serviceForm.serviceId) {
@@ -17,10 +14,19 @@ export default function AddEmployerModal({
       return;
     }
 
-    onSubmit(serviceForm);
+    onSubmit({
+      serviceId: Number(serviceForm.serviceId),
+      description: serviceForm.description || null,
+      fixedPriceAvailable: Boolean(serviceForm.fixedPriceAvailable),
+      hourlyRate: serviceForm.fixedPriceAvailable
+        ? null
+        : serviceForm.hourlyRate === ""
+          ? null
+          : Number(serviceForm.hourlyRate),
+    });
+
     onClose();
   };
-
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -28,8 +34,6 @@ export default function AddEmployerModal({
         <h2 className="text-xl font-semibold">Add New Service</h2>
 
         {/* Provider Info */}
-
-
         <div className="text-sm text-muted-foreground">
           <p>
             <strong>Name:</strong> {profile.fullName}
@@ -39,9 +43,12 @@ export default function AddEmployerModal({
           </p>
         </div>
 
+        {/* CATEGORY */}
+        
+
         <select
-          className="input w-full"
-          value={serviceForm.serviceId}
+          className="input w-full bg-card"
+          value={serviceForm.serviceId ?? ""}
           onChange={(e) =>
             setServiceForm((prev) => ({
               ...prev,
@@ -53,27 +60,22 @@ export default function AddEmployerModal({
 
           {categories.map((cat) => {
             const alreadyAdded = providerServices.some(
-              (ps) => ps.serviceId === cat.id
+              (ps) => ps.serviceId === cat.id,
             );
 
             return (
-              <option
-                key={cat.id}
-                value={cat.id}
-                disabled={alreadyAdded}
-              >
+              <option key={cat.id} value={cat.id} disabled={alreadyAdded}>
                 {cat.name} {alreadyAdded ? "(Already added)" : ""}
               </option>
             );
           })}
         </select>
 
-
         {/* DESCRIPTION */}
         <textarea
-          placeholder="Service Description"
           className="input w-full h-24"
-          value={serviceForm.description}
+          placeholder="Service description"
+          value={serviceForm.description ?? ""}
           onChange={(e) =>
             setServiceForm((prev) => ({
               ...prev,
@@ -83,25 +85,28 @@ export default function AddEmployerModal({
         />
 
         {/* FIXED PRICE */}
-        <input
-          type="number"
-          placeholder="Fixed Price"
-          className="input w-full"
-          value={serviceForm.fixedPrice}
-          onChange={(e) =>
-            setServiceForm((prev) => ({
-              ...prev,
-              fixedPrice: e.target.value,
-            }))
-          }
-        />
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={!!serviceForm.fixedPriceAvailable}
+            onChange={(e) =>
+              setServiceForm((prev) => ({
+                ...prev,
+                fixedPriceAvailable: e.target.checked,
+                hourlyRate: e.target.checked ? "" : prev.hourlyRate,
+              }))
+            }
+          />
+          Fixed price available
+        </label>
 
         {/* HOURLY RATE */}
         <input
           type="number"
-          placeholder="Hourly Rate"
           className="input w-full"
-          value={serviceForm.hourlyRate}
+          placeholder="Hourly rate (optional)"
+          disabled={serviceForm.fixedPriceAvailable}
+          value={serviceForm.hourlyRate ?? ""}
           onChange={(e) =>
             setServiceForm((prev) => ({
               ...prev,
@@ -118,11 +123,17 @@ export default function AddEmployerModal({
         />
 
         {/* ACTIONS */}
-        <div className="flex justify-end gap-3 pt-4 ">
-          <button onClick={onClose} className="btn-secondary hover:bg-accent w-[80px] rounded-2xl">
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            onClick={onClose}
+            className="btn-secondary hover:bg-accent w-[80px] rounded-2xl"
+          >
             Cancel
           </button>
-          <button onClick={handleSubmit} className="btn-primary hover:bg-accent w-[80px] rounded-2xl">
+          <button
+            onClick={handleSubmit}
+            className="btn-primary hover:bg-accent w-[80px] rounded-2xl"
+          >
             Add
           </button>
         </div>

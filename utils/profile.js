@@ -205,23 +205,29 @@ export const changePassword = async (payload) => {
 
 
 
-export async function addProviderService(serviceData, pdfFile) {
-  const auth = getAuthUser();
+export const addProviderService = async (formData) => {
+  const token = localStorage.getItem("token");
 
-  const formData = new FormData();
+  const res = await fetch(`${API}/api/provider/services`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // DO NOT set Content-Type
+    },
+    body: formData,
+  });
 
-  formData.append("data", JSON.stringify(serviceData));
-
-  if (pdfFile) {
-    formData.append("qualificationPdf", pdfFile);
+  
+  if (!res.ok) {
+    const text = await res.text(); 
+    throw new Error(text || "Failed to add service");
   }
 
-  return axios.post(`${API}/api/provider/services`, formData, {
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-    },
-  });
-}
+  
+  return await res.text();
+};
+
+
 
 export async function getProviderServiceCategories() {
   const auth = getAuthUser();

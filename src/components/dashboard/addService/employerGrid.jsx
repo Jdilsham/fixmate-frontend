@@ -18,8 +18,8 @@ export default function EmployerGrid({ profile }) {
   const [serviceForm, setServiceForm] = useState({
     serviceId: "",
     description: "",
-    fixedPrice: "",
     hourlyRate: "",
+    isFixedPrice: false,
   });
 
   const [pdfFile, setPdfFile] = useState(null);
@@ -46,40 +46,43 @@ export default function EmployerGrid({ profile }) {
 
   useEffect(() => {
     getProviderServiceCategories()
-      .then(setCategories)
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
       .catch(() => toast.error("Failed to load service categories"));
   }, []);
 
   /* =======================
      ADD SERVICE
   ======================= */
-  const addService = async (data) => {
+  const addService = async (payload) => {
     try {
-      await addProviderService(
-        {
-          serviceId: Number(data.serviceId),
-          description: data.description,
-          fixedPrice: data.fixedPrice ? Number(data.fixedPrice) : null,
-          hourlyRate: data.hourlyRate ? Number(data.hourlyRate) : null,
-        },
-        pdfFile
-      );
+      const formData = new FormData();
+
+      // MUST match @RequestPart("data")
+      formData.append("data", JSON.stringify(payload));
+
+      // MUST match @RequestPart("qualificationPdf")
+      if (pdfFile) {
+        formData.append("qualificationPdf", pdfFile);
+      } else {
+        formData.append("qualificationPdf", new Blob([]));
+      }
+
+      await addProviderService(formData);
 
       toast.success("Service added successfully");
 
-      // REFRESH LIST IMMEDIATELY
       await loadProviderServices();
 
       // reset form
       setServiceForm({
         serviceId: "",
         description: "",
-        fixedPrice: "",
         hourlyRate: "",
+        isFixedPrice: false,
       });
+
       setPdfFile(null);
       setOpen(false);
-
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to add service");
     }
@@ -87,9 +90,11 @@ export default function EmployerGrid({ profile }) {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10 auto-rows-fr
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10 auto-rows-fr
 
-">
+"
+      >
         {services.map((s) => (
           <EmployerCard
             key={s.providerServiceId}
