@@ -28,7 +28,7 @@ export default function Services() {
         if (location) params.append("location", location);
 
         const response = await fetch(
-          `${API}/api/v1/service-providers?${params.toString()}`,{
+          `${API}/api/user/services?${params.toString()}`,{
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -175,7 +175,7 @@ export default function Services() {
             </p>
           ) : employees.length > 0 ? (
             employees.map((employee) => (
-              <EmployerCard key={employee.id} employer={employee} />
+              <EmployerCard key={employee.providerServiceId} employer={employee} />
             ))
           ) : (
             <p className="col-span-full text-center text-muted-foreground">

@@ -1,4 +1,4 @@
-// src/components/admin/AdminStats.jsx
+
 import { Card } from "@/components/ui/card";
 
 const stats = [

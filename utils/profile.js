@@ -10,7 +10,6 @@ export async function getUserProfile() {
   } 
 
   const { role, token } = auth;
- 
 
 
   try {
@@ -56,7 +55,9 @@ export async function getUserProfile() {
         fullName: `${c.firstName} ${c.lastName}`,
         email: c.email,
         phone: c.phone,
-        profilePicture: c.profilePic,
+        profilePicture: c.profilePic
+        ? `${API}${c.profilePic}?t=${Date.now()}`
+        : null,
         verified: false,
         role,
       };
@@ -105,27 +106,6 @@ export async function updateProviderProfile(payload) {
   );
 
   return res.data;
-}
-
-
-export async function addCustomerAddress(address) {
-  const auth = getAuthUser();
-  if (!auth) throw new Error("Not authenticated");
-
-  const res = await axios.post(
-    `${API}/api/customer/addresses`,
-    address,
-    {
-      headers: {
-        Authorization: `Bearer ${auth.token}`,
-      },
-    }
-  );
-
-  return res.data;
-
-
-  
 }
 
 // =======================
@@ -222,3 +202,143 @@ export const changePassword = async (payload) => {
     }
   );
 };
+
+
+
+export const addProviderService = async (formData) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/api/provider/services`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // DO NOT set Content-Type
+    },
+    body: formData,
+  });
+
+  
+  if (!res.ok) {
+    const text = await res.text(); 
+    throw new Error(text || "Failed to add service");
+  }
+
+  
+  return await res.text();
+};
+
+
+
+export async function getProviderServiceCategories() {
+  const auth = getAuthUser();
+
+  const res = await axios.get(
+    `${import.meta.env.VITE_BACKEND_URL}/api/provider/services/categories`,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data;
+}
+
+export async function getProviderServices() {
+  const auth = getAuthUser();
+
+  const res = await axios.get(
+    `${import.meta.env.VITE_BACKEND_URL}/api/provider/services`,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data;
+}
+
+
+export async function updateCustomerProfile(payload) {
+  const auth = getAuthUser();
+
+  return axios.put(`${API}/api/customer/me`, payload, {
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+}
+
+// =======================
+// CUSTOMER ADDRESS APIs
+// =======================
+
+// GET customer address
+export async function getCustomerAddress() {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(
+    `${API}/api/customer/address`,
+    {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    }
+  );
+
+  return res.data; // null OR address
+}
+
+// ADD customer address
+export async function addCustomerAddress(address) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.post(
+    `${API}/api/customer/address`,
+    address,
+    {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    }
+  );
+
+  return res.data;
+}
+
+// UPDATE customer address
+export async function updateCustomerAddress(address) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.put(
+    `${API}/api/customer/address`,
+    address,
+    {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    }
+  );
+
+  return res.data;
+}
+
+//Customer Profile Image Upload
+export async function uploadUserProfilePicture(file) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const formData = new FormData();
+  formData.append("file", file); // MUST be "file"
+
+  const res = await axios.post(
+    `${API}/api/user/profile/image`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return res.data; // image URL
+}

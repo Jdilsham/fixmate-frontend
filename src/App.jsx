@@ -49,7 +49,9 @@ function App() {
           <Route path="/wanted" element={<Wanted />} />
 
            {/* BOOKING */}
-          <Route path="/book/:id" element={<BookProfessional />} />
+          <Route path="/book/:providerServiceId" element={<BookProfessional />} />
+
+
 
           {/* 404 */}
           <Route path="*" element={<h1>404 not found</h1>} />

@@ -100,19 +100,19 @@ export default function EditImageModal({ onClose }) {
       const blob = await response.blob();
 
       const formData = new FormData();
-      formData.append("profilePic", blob, "profilePic.png"); // MUST match backend param name
+      
+      formData.append("file", blob, "profile.png"); // MUST be "file"
 
-
-      await axios.put(
-        `${API}/api/provider/profile/picture`,
+      await axios.post(
+        `${API}/api/user/profile/image`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${auth.token}`,
-            "Content-Type": "multipart/form-data",
           },
         }
       );
+
 
 
       onClose();
