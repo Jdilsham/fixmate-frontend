@@ -1,15 +1,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
-export default function BookingForm({ service, pricingType }) {
+export default function BookingForm({ service, pricingType, user, onPreview }) {
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+  addressLine1: "",
+  city: "",
+  province: "",
+  phone: user?.phone || "",
+});
 
-  const handleSubmit = async (e) => {
+
+  useEffect(() => {
+    if (!user) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      phone: user.phone || "",
+      address: user.address || "",
+    }));
+  }, [user]);
+
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!date) {
@@ -17,39 +36,21 @@ export default function BookingForm({ service, pricingType }) {
       return;
     }
 
-    const payload = {
-      providerServiceId: service.providerServiceId,
-      pricingType,
-      scheduledAt: new Date(date).toISOString(),
-      description,
-    };
+    onPreview({
+  service,
+  pricingType,
+  date,
+  description,
 
-    try {
-      setLoading(true);
+  addressLine1: formData.addressLine1 || undefined,
+  city: formData.city || undefined,
+  province: formData.province || undefined,
+  phone: formData.phone || undefined,
 
-      const res = await fetch(`${API}/api/customer/bookings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(payload),
-      });
+  latitude: null,   // future-ready
+  longitude: null,  // future-ready
+});
 
-      if (!res.ok) {
-        throw new Error("Booking failed");
-      }
-
-      const data = await res.json();
-      console.log("Booking success:", data);
-
-      alert("Booking confirmed 🎉");
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong while booking");
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -62,12 +63,12 @@ export default function BookingForm({ service, pricingType }) {
 
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-
           {/* Name (UI only for now) */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Your Name</label>
             <input
               type="text"
+              value={`${formData.firstName} ${formData.lastName}`}
               placeholder="Enter your name"
               className="h-12 px-4 rounded-lg bg-background border border-input focus:outline-none focus:ring-2 focus:ring-ring"
             />
@@ -78,7 +79,21 @@ export default function BookingForm({ service, pricingType }) {
             <label className="text-sm font-medium">Phone Number</label>
             <input
               type="tel"
+              value={`${formData.phone}`}
               placeholder="07XXXXXXXX"
+              className="h-12 px-4 rounded-lg bg-background border border-input focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Address</label>
+            <input
+              type="text"
+              value={formData.address}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
+              placeholder="No. 123 Main St, City"
               className="h-12 px-4 rounded-lg bg-background border border-input focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -108,15 +123,10 @@ export default function BookingForm({ service, pricingType }) {
 
           {/* Submit */}
           <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="min-w-[180px]"
-            >
+            <Button type="submit" disabled={loading} className="min-w-[180px]">
               {loading ? "Booking..." : "Confirm Booking"}
             </Button>
           </div>
-
         </form>
       </CardContent>
     </Card>
