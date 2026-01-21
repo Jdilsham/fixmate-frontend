@@ -3,6 +3,7 @@ import {
   DialogContent,
   DialogTitle,
   DialogHeader,
+  DialogDescription,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 
@@ -24,10 +25,14 @@ export default function BookingSummary({
     user,
   } = bookingData;
 
-  // Address logic:
-  // - If user provided ANY address field, require at least addressLine1
+  // Address rules:
+  // If user starts entering address, addressLine1 becomes mandatory
   const addressStarted = addressLine1 || city || province;
   const addressInvalid = addressStarted && !addressLine1?.trim();
+
+  const fullAddress =
+    [addressLine1, city, province].filter(Boolean).join(", ") ||
+    "Default address will be used";
 
   return (
     <Dialog open onOpenChange={onCancel}>
@@ -36,18 +41,31 @@ export default function BookingSummary({
           <DialogTitle className="text-2xl font-semibold">
             Booking Summary
           </DialogTitle>
+          <DialogDescription>
+            Review your booking details before confirming.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 text-sm">
-          {/* CUSTOMER */}
-          {user && (
-            <div className="flex justify-between">
-              <span className="opacity-70">Customer</span>
-              <span>
-                {user.firstName} {user.lastName}
-              </span>
-            </div>
-          )}
+          {/* CUSTOMER (ALWAYS) */}
+          <div className="flex justify-between">
+            <span className="opacity-70">Customer</span>
+            <span>
+              {user?.firstName} {user?.lastName}
+            </span>
+          </div>
+
+          {/* PHONE (ALWAYS) */}
+          <div className="flex justify-between">
+            <span className="opacity-70">Phone</span>
+            <span>{phone || user?.phone || "Not provided"}</span>
+          </div>
+
+          {/* ADDRESS (ALWAYS) */}
+          <div className="flex justify-between">
+            <span className="opacity-70">Address</span>
+            <span className="text-right max-w-[60%]">{fullAddress}</span>
+          </div>
 
           {/* SERVICE */}
           <div className="flex justify-between">
@@ -61,31 +79,11 @@ export default function BookingSummary({
             <span>{new Date(date).toDateString()}</span>
           </div>
 
-          {/* ADDRESS (optional) */}
-          {(addressLine1 || city || province) && (
-            <div className="flex justify-between">
-              <span className="opacity-70">Address</span>
-              <span className="text-right max-w-[60%]">
-                {[addressLine1, city, province].filter(Boolean).join(", ")}
-              </span>
-            </div>
-          )}
-
-          {/* PHONE (optional) */}
-          {phone && (
-            <div className="flex justify-between">
-              <span className="opacity-70">Phone</span>
-              <span>{phone}</span>
-            </div>
-          )}
-
           {/* NOTES */}
           {description && (
             <div className="flex justify-between">
               <span className="opacity-70">Additional Info</span>
-              <span className="text-right max-w-[60%]">
-                {description}
-              </span>
+              <span className="text-right max-w-[60%]">{description}</span>
             </div>
           )}
 
@@ -110,11 +108,7 @@ export default function BookingSummary({
                 Confirm Booking
               </Button>
 
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={onEdit}
-              >
+              <Button variant="outline" className="flex-1" onClick={onEdit}>
                 Edit
               </Button>
             </div>
