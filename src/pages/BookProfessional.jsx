@@ -19,6 +19,9 @@ export default function BookProfessional() {
 
   const [showSummary, setShowSummary] = useState(false);
   const [bookingData, setBookingData] = useState(null);
+  const [address, setAddress] = useState(null);
+  const token = localStorage.getItem("token");
+  const isProvider = token?.includes("PROVIDER"); // adjust if needed
 
   /* ===================== LOAD SERVICE ===================== */
   useEffect(() => {
@@ -35,7 +38,7 @@ export default function BookProfessional() {
       })
       .then((services) => {
         const selected = services.find(
-          (s) => s.providerServiceId === Number(providerServiceId)
+          (s) => s.providerServiceId === Number(providerServiceId),
         );
 
         if (!selected) throw new Error();
@@ -67,6 +70,29 @@ export default function BookProfessional() {
         console.error("Failed to load user details");
       });
   }, []);
+
+  useEffect(() => {
+  const endpoint = isProvider
+    ? `${API}/api/provider/address`
+    : `${API}/api/customer/address`;
+
+  fetch(endpoint, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error();
+      return res.json();
+    })
+    .then((data) => {
+      setAddress(data); // expect { addressLine1, city, province, phone, ... }
+    })
+    .catch(() => {
+      setAddress(null); // address optional
+    });
+}, [isProvider]);
+
 
   /* ===================== FINAL CONFIRM ===================== */
   const handleFinalConfirm = async () => {
@@ -154,15 +180,17 @@ export default function BookProfessional() {
             <ProfessionalCard service={service} />
 
             <BookingForm
-              service={service}
-              pricingType={pricingType}
-              setPricingType={setPricingType}
-              user={user}
-              onPreview={(data) => {
-                setBookingData(data);
-                setShowSummary(true);
-              }}
-            />
+  service={service}
+  pricingType={pricingType}
+  setPricingType={setPricingType}
+  user={user}
+  address={address}
+  onPreview={(data) => {
+    setBookingData(data);
+    setShowSummary(true);
+  }}
+/>
+
           </div>
 
           {/* SUMMARY DIALOG */}

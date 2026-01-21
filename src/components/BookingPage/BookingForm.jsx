@@ -1,40 +1,43 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 
-const API = import.meta.env.VITE_BACKEND_URL;
-
-export default function BookingForm({ service, pricingType, user, onPreview }) {
+export default function BookingForm({
+  service,
+  pricingType,
+  setPricingType,
+  user,
+  address,
+  onPreview,
+}) {
   const [date, setDate] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
-  addressLine1: "",
-  city: "",
-  province: "",
-  phone: user?.phone || "",
-});
+    addressLine1: "",
+    city: "",
+    province: "",
+    phone: "",
+  });
 
-
+  // Load customer data from backend (NO UI CHANGE)
   useEffect(() => {
-    if (!user) return;
+  if (!address) return;
 
-    setFormData((prev) => ({
-      ...prev,
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-      phone: user.phone || "",
-      address: user.address || "",
-    }));
-  }, [user]);
+  setFormData({
+    addressLine1: address.addressLine1 || "",
+    city: address.city || "",
+    province: address.province || "",
+    phone: address.phone || user?.phone || "",
+  });
+}, [address, user]);
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (!date) {
-      alert("Please select a service date");
-      return;
-    }
+    if (!date) return;
 
     onPreview({
   service,
@@ -42,13 +45,12 @@ export default function BookingForm({ service, pricingType, user, onPreview }) {
   date,
   description,
 
-  addressLine1: formData.addressLine1 || undefined,
-  city: formData.city || undefined,
-  province: formData.province || undefined,
-  phone: formData.phone || undefined,
+  user,
+  phone: formData.phone,
 
-  latitude: null,   // future-ready
-  longitude: null,  // future-ready
+  addressLine1: formData.addressLine1,
+  city: formData.city,
+  province: formData.province,
 });
 
   };
@@ -63,68 +65,89 @@ export default function BookingForm({ service, pricingType, user, onPreview }) {
 
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          {/* Name (UI only for now) */}
+          {/* NAME */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Your Name</label>
             <input
-              type="text"
-              value={`${formData.firstName} ${formData.lastName}`}
-              placeholder="Enter your name"
-              className="h-12 px-4 rounded-lg bg-background border border-input focus:outline-none focus:ring-2 focus:ring-ring"
+              readOnly
+              value={`${user.firstName} ${user.lastName}`}
+              className="h-12 px-4 rounded-lg bg-background border border-input"
             />
           </div>
 
-          {/* Phone (UI only for now) */}
+          {/* PHONE */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Phone Number</label>
             <input
-              type="tel"
-              value={`${formData.phone}`}
-              placeholder="07XXXXXXXX"
-              className="h-12 px-4 rounded-lg bg-background border border-input focus:outline-none focus:ring-2 focus:ring-ring"
+              value={formData.phone}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
+              className="h-12 px-4 rounded-lg bg-background border border-input"
+            />
+          </div>
+
+          {/* ADDRESS */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Address</label>
+            <input
+              value={formData.addressLine1}
+              onChange={(e) =>
+                setFormData({ ...formData, addressLine1: e.target.value })
+              }
+              className="h-12 px-4 rounded-lg bg-background border border-input"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">Address</label>
+            <label className="text-sm font-medium">City</label>
             <input
-              type="text"
-              value={formData.address}
+              value={formData.city}
               onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
+                setFormData({ ...formData, city: e.target.value })
               }
-              placeholder="No. 123 Main St, City"
-              className="h-12 px-4 rounded-lg bg-background border border-input focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-12 px-4 rounded-lg bg-background border border-input"
             />
           </div>
 
-          {/* Date */}
+          {/* DATE  */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Service Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="h-12 px-4 rounded-lg bg-background border border-input focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-12 px-4 rounded-lg bg-background border border-input"
             />
           </div>
 
-          {/* Notes */}
+          {/* PAYMENT */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">Payment Method</label>
+            <select
+              value={pricingType}
+              onChange={(e) => setPricingType(e.target.value)}
+              className="h-12 px-4 rounded-lg bg-background border border-input"
+            >
+              <option value="HOURLY">Hourly</option>
+              <option value="FIXED">Fixed</option>
+            </select>
+          </div>
+
+          {/* NOTES  */}
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Additional Notes</label>
             <textarea
               rows="4"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your requirement..."
-              className="px-4 py-3 rounded-lg bg-background border border-input focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              className="px-4 py-3 rounded-lg bg-background border border-input resize-none"
             />
           </div>
 
-          {/* Submit */}
           <div className="flex justify-end">
-            <Button type="submit" disabled={loading} className="min-w-[180px]">
-              {loading ? "Booking..." : "Confirm Booking"}
+            <Button type="submit" disabled={loading}>
+              Confirm Booking
             </Button>
           </div>
         </form>
