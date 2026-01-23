@@ -7,6 +7,8 @@ import Services from "./pages/services";
 import Wanted from "./pages/wanted";
 import About from "./pages/about";
 import Contact from "./pages/contact";
+import PaymentPage from "./pages/payment/PaymentPage";
+
 
 import ProfilePage from "./pages/profile";
 import ProviderDashboard from "./pages/provider/Dashboard";
@@ -43,6 +45,8 @@ function App() {
 
            {/* BOOKING */}
           <Route path="/book/:id" element={<BookProfessional />} />
+
+          <Route path="/payment" element={<PaymentPage />} />
 
           {/* 404 */}
           <Route path="*" element={<h1>404 not found</h1>} />
