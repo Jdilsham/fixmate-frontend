@@ -3,16 +3,23 @@ import Header from "../../components/header";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { getAuthUser } from "../../../utils/auth";
-import EmployerCard from "../../components/ServicesPage/employerCard";
+
 import BookingsTable from "../../components/dashboard/bookingTable";
-import {Home,Calendar as CalendarIcon,Settings,Briefcase} from "lucide-react";
+import {
+  Home,
+  Calendar as CalendarIcon,
+  Settings,
+  Briefcase,
+  ListCheck,
+} from "lucide-react";
 import * as Avatar from "@radix-ui/react-avatar";
 import toast from "react-hot-toast";
 import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 import EditImageModal from "../../components/dashboard/editProfilePic";
 import EmployerGrid from "../../components/dashboard/addService/employerGrid";
-
+import { getProviderBookings } from "../../../utils/booking";
+import BookingViewDialog from "../../components/dashboard/bookings/BookingViewDialog";
 
 import {
   getUserProfile,
@@ -28,8 +35,6 @@ import {
   changePassword,
 } from "../../../utils/profile";
 
-
-
 /* =======================
    ROLE CONFIG
 ======================= */
@@ -39,6 +44,7 @@ const ROLE_CONFIG = {
       { id: "dashboard", label: "Dashboard", icon: Home },
       { id: "services", label: "Services", icon: Briefcase },
       { id: "calendar", label: "Calendar", icon: CalendarIcon },
+      { id: "pendingBooking", label: "Pending Bookings", icon: ListCheck },
       { id: "profile", label: "Profile", icon: Settings },
     ],
   },
@@ -49,7 +55,6 @@ const ROLE_CONFIG = {
     ],
   },
 };
-
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -66,18 +71,17 @@ export default function Dashboard() {
   const [editingSection, setEditingSection] = useState(null);
 
   const user = authUser && profile ? { ...authUser, ...profile } : authUser;
+  const role = user?.role;
 
   const [profileForm, setProfileForm] = useState({
-  firstName: "",
-  lastName: "",
-  phone: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
   });
 
   const [hasAddress, setHasAddress] = useState(false);
 
   const [changingPassword, setChangingPassword] = useState(false);
-
-
 
   const [addressForm, setAddressForm] = useState({
     addressLine1: "",
@@ -108,12 +112,11 @@ export default function Dashboard() {
 
     const profileData = await getUserProfile();
 
-    console.log("PROFILE FROM BACKEND:", profileData);
+    
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     setProfile(profileData);
-
 
     setIsAvailable(profileData?.available ?? false);
 
@@ -122,7 +125,6 @@ export default function Dashboard() {
       lastName: profileData?.fullName?.split(" ")[1] || "",
       phone: profileData?.phone || "",
     });
-
 
     // LOAD ADDRESS (ROLE BASED)
     try {
@@ -149,49 +151,54 @@ export default function Dashboard() {
       setHasAddress(false);
     }
 
-
-
     setActiveTab("profile"); // stay on profile
     setLoading(false);
   };
 
-    const handleSaveProfile = async () => {
-      try {
-        const payload = {
-          firstName: profileForm.firstName,
-          lastName: profileForm.lastName,
-          phone: profileForm.phone,
-        };
+  const [providerBookings, setProviderBookings] = useState([]);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [viewOpen, setViewOpen] = useState(false);
 
-        if (role === "SERVICE_PROVIDER") {
-          await updateProviderProfile(payload);
-        } else if (role === "CUSTOMER") {
-          await updateCustomerProfile(payload);
-        }
+  useEffect(() => {
+    if (role === "SERVICE_PROVIDER" && user?.id) {
+      getProviderBookings(user.id)
+        .then(setProviderBookings)
+        .catch(() => toast.error("Failed to load bookings"));
+    }
+  }, [role, user?.id]);
 
-        toast.success("Profile updated successfully");
-        setEditingSection(null);
-        await reloadProfile();
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to update profile");
+  const handleSaveProfile = async () => {
+    try {
+      const payload = {
+        firstName: profileForm.firstName,
+        lastName: profileForm.lastName,
+        phone: profileForm.phone,
+      };
+
+      if (role === "SERVICE_PROVIDER") {
+        await updateProviderProfile(payload);
+      } else if (role === "CUSTOMER") {
+        await updateCustomerProfile(payload);
       }
-    };
 
+      toast.success("Profile updated successfully");
+      setEditingSection(null);
+      await reloadProfile();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update profile");
+    }
+  };
 
-    const handleSaveAddress = async () => {
+  const handleSaveAddress = async () => {
     try {
       const payload = {
         addressLine1: addressForm.addressLine1,
         addressLine2: addressForm.addressLine2,
         province: addressForm.province,
         city: addressForm.city,
-        latitude: addressForm.latitude
-          ? Number(addressForm.latitude)
-          : null,
-        longitude: addressForm.longitude
-          ? Number(addressForm.longitude)
-          : null,
+        latitude: addressForm.latitude ? Number(addressForm.latitude) : null,
+        longitude: addressForm.longitude ? Number(addressForm.longitude) : null,
       };
 
       if (role === "SERVICE_PROVIDER") {
@@ -213,14 +220,13 @@ export default function Dashboard() {
       toast.success("Address saved successfully");
       setEditingSection(null);
       await reloadProfile();
-
     } catch (err) {
       console.error(err);
       toast.error("Failed to save address");
     }
   };
 
-    const handleChangePassword = async () => {
+  const handleChangePassword = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -247,7 +253,6 @@ export default function Dashboard() {
         confirmationPassword: confirmPassword,
       });
 
-
       toast.success("Password changed successfully");
 
       setPasswordForm({
@@ -264,14 +269,11 @@ export default function Dashboard() {
     }
   };
 
-
-
-
   useEffect(() => {
     reloadProfile();
   }, []);
 
-  const role = user?.role;
+  
   const tabs = ROLE_CONFIG[role]?.tabs || [];
 
   useEffect(() => {
@@ -321,17 +323,16 @@ export default function Dashboard() {
         ];
 
   const providerProfile =
-  role === "SERVICE_PROVIDER"
-    ? {
-        id: user?.id,
-        fullName: user?.fullName,
-        profilePicture: user?.profilePicture, 
-        service: user?.service,
-        description: user?.description || "No description provided.",
-        location: user?.city || "Not specified",
-      }
-    : null;
-
+    role === "SERVICE_PROVIDER"
+      ? {
+          id: user?.id,
+          fullName: user?.fullName,
+          profilePicture: user?.profilePicture,
+          service: user?.service,
+          description: user?.description || "No description provided.",
+          location: user?.city || "Not specified",
+        }
+      : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -418,6 +419,59 @@ export default function Dashboard() {
               </>
             )}
 
+            {/* Pending requests */}
+            {activeTab === "pendingBooking" && role === "SERVICE_PROVIDER" && (
+              <>
+                <Card className="p-4 rounded-2xl bg-background">
+                  <h2 className="text-lg font-semibold mb-4">
+                    Pending Bookings
+                  </h2>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left border-b">
+                          <th className="py-2">Customer Name</th>
+                          <th>Phone Number</th>
+                          <th>City</th>
+
+                          <th className="space-x-2 text-center">Action</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {providerBookings.map((b) => (
+                          <tr key={b.bookingId} className="border-b">
+                            <td className="py-2">{b.customerName}</td>
+                            <td>{b.customerPhone}</td>
+                            <td>{b.bookingAddress}</td>
+
+                            <td className="space-x-2 flex justify-center">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedBooking(b);
+                                  setViewOpen(true);
+                                }}
+                              >
+                                View
+                              </Button>
+
+                              <Button size="sm">Approve</Button>
+
+                              <Button size="sm" variant="destructive">
+                                Reject
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              </>
+            )}
+
             {/* PROFILE */}
             {activeTab === "profile" && (
               <>
@@ -425,11 +479,10 @@ export default function Dashboard() {
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6 border-b pb-6 mb-8">
                   <div className=" flex flex-col relative w-28 h-28 md:w-36 md:h-36 shrink-0 justify-end">
                     <div className="absolute flex flex-col items-center inset-0 rounded-full bg-transparent">
-
                       <Avatar.Root
-                          key={user?.profilePicture}
-                          className="relative w-full h-full rounded-full overflow-hidden bg-background"
-                        >
+                        key={user?.profilePicture}
+                        className="relative w-full h-full rounded-full overflow-hidden bg-background"
+                      >
                         <Avatar.Image
                           src={user?.profilePicture}
                           alt="Profile Picture"
@@ -440,8 +493,6 @@ export default function Dashboard() {
                           U
                         </Avatar.Fallback>
                       </Avatar.Root>
-
-
 
                       <span
                         className={`w-5 h-5 rounded-full absolute top-4 right-2 border-2 border-background ${
@@ -484,7 +535,6 @@ export default function Dashboard() {
                           : "Location not set"}
                       </p>
                     )}
-
 
                     <p className="text-sm text-muted-foreground">
                       {user?.phone || "Phone number not set"}
@@ -546,7 +596,10 @@ export default function Dashboard() {
                         label="First Name"
                         value={profileForm.firstName}
                         onChange={(e) =>
-                          setProfileForm((p) => ({ ...p, firstName: e.target.value }))
+                          setProfileForm((p) => ({
+                            ...p,
+                            firstName: e.target.value,
+                          }))
                         }
                         disabled={editingSection !== "basic"}
                       />
@@ -555,7 +608,10 @@ export default function Dashboard() {
                         label="Last Name"
                         value={profileForm.lastName}
                         onChange={(e) =>
-                          setProfileForm((p) => ({ ...p, lastName: e.target.value }))
+                          setProfileForm((p) => ({
+                            ...p,
+                            lastName: e.target.value,
+                          }))
                         }
                         disabled={editingSection !== "basic"}
                       />
@@ -564,11 +620,13 @@ export default function Dashboard() {
                         label="Phone Number"
                         value={profileForm.phone}
                         onChange={(e) =>
-                          setProfileForm((p) => ({ ...p, phone: e.target.value }))
+                          setProfileForm((p) => ({
+                            ...p,
+                            phone: e.target.value,
+                          }))
                         }
                         disabled={editingSection !== "basic"}
                       />
-
                     </div>
                   </CollapsibleSection>
                   <CollapsibleSection
@@ -580,15 +638,17 @@ export default function Dashboard() {
                     onEdit={() => setEditingSection("address")}
                     onCancel={() => setEditingSection(null)}
                     onSave={handleSaveAddress}
-                    hasAddress={hasAddress}  
+                    hasAddress={hasAddress}
                     showAddInstead={true}
                   >
-
                     <Input
                       label="Address Line 1"
                       value={addressForm.addressLine1}
                       onChange={(e) =>
-                        setAddressForm((p) => ({ ...p, addressLine1: e.target.value }))
+                        setAddressForm((p) => ({
+                          ...p,
+                          addressLine1: e.target.value,
+                        }))
                       }
                       disabled={editingSection !== "address"}
                     />
@@ -597,7 +657,10 @@ export default function Dashboard() {
                       label="Address Line 2"
                       value={addressForm.addressLine2}
                       onChange={(e) =>
-                        setAddressForm((p) => ({ ...p, addressLine2: e.target.value }))
+                        setAddressForm((p) => ({
+                          ...p,
+                          addressLine2: e.target.value,
+                        }))
                       }
                       disabled={editingSection !== "address"}
                     />
@@ -606,7 +669,10 @@ export default function Dashboard() {
                       label="Province"
                       value={addressForm.province}
                       onChange={(e) =>
-                        setAddressForm((p) => ({ ...p, province: e.target.value }))
+                        setAddressForm((p) => ({
+                          ...p,
+                          province: e.target.value,
+                        }))
                       }
                       disabled={editingSection !== "address"}
                     />
@@ -624,7 +690,10 @@ export default function Dashboard() {
                       label="Latitude"
                       value={addressForm.latitude}
                       onChange={(e) =>
-                        setAddressForm((p) => ({ ...p, latitude: e.target.value }))
+                        setAddressForm((p) => ({
+                          ...p,
+                          latitude: e.target.value,
+                        }))
                       }
                       disabled={editingSection !== "address"}
                     />
@@ -633,13 +702,14 @@ export default function Dashboard() {
                       label="Longitude"
                       value={addressForm.longitude}
                       onChange={(e) =>
-                        setAddressForm((p) => ({ ...p, longitude: e.target.value }))
+                        setAddressForm((p) => ({
+                          ...p,
+                          longitude: e.target.value,
+                        }))
                       }
                       disabled={editingSection !== "address"}
                     />
-
                   </CollapsibleSection>
-
 
                   <CollapsibleSection
                     title="Change Password"
@@ -659,7 +729,6 @@ export default function Dashboard() {
                     }}
                     onSave={handleChangePassword}
                   >
-
                     <Input
                       label="Current Password"
                       type="password"
@@ -710,10 +779,14 @@ export default function Dashboard() {
           onClose={() => {
             setEditImageOpen(false);
             reloadProfile();
-      }}
-  />
-)}
-
+          }}
+        />
+      )}
+      <BookingViewDialog
+        open={viewOpen}
+        onClose={() => setViewOpen(false)}
+        booking={selectedBooking}
+      />
     </div>
   );
 }
@@ -762,7 +835,6 @@ function CollapsibleSection({
             {showAddInstead && !hasAddress ? "Add Address" : "Edit"}
           </button>
         )}
-
       </div>
 
       {isOpen && (
@@ -785,7 +857,6 @@ function CollapsibleSection({
                   ? "Saving..."
                   : "Save Changes"}
               </button>
-
 
               <button
                 type="button"
@@ -829,6 +900,3 @@ function Input({
     </div>
   );
 }
-
-
-
