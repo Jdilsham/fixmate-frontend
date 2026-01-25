@@ -9,7 +9,7 @@ export default function CustomerPaymentDialog({ open, onClose, paymentInfo }) {
   const handlePay = async () => {
   try {
     const res = await initiatePayHereSandbox(paymentInfo.paymentId);
-
+    console.log("PayHere response:", res);
     const { checkoutUrl, fields } = res;
 
     
