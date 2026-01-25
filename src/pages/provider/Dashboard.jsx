@@ -20,6 +20,10 @@ import EditImageModal from "../../components/dashboard/editProfilePic";
 import EmployerGrid from "../../components/dashboard/addService/employerGrid";
 import { getProviderBookings, getCustomerBookings } from "../../../utils/booking";
 import BookingViewDialog from "../../components/dashboard/bookings/BookingViewDialog";
+import CustomerPaymentDialog from "../../components/dashboard/payments/CustomerPaymentDialog";
+import { getCustomerPayment } from "../../../utils/payment";
+
+
 
 import {
   getUserProfile,
@@ -73,6 +77,10 @@ export default function Dashboard() {
 
   const user = authUser && profile ? { ...authUser, ...profile } : authUser;
   const role = user?.role;
+
+  const [paymentInfo, setPaymentInfo] = useState(null);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+
 
   const [profileForm, setProfileForm] = useState({
     firstName: "",
@@ -500,14 +508,27 @@ export default function Dashboard() {
             {/* CUSTOMER - MY BOOKINGS */}
             {activeTab === "myBookings" && role === "CUSTOMER" && (
               <Card className="p-4 rounded-2xl bg-background">
-                <h2 className="text-lg font-semibold mb-4">My Bookings</h2>
+                <h2 className="text-lg font-semibold mb-1">My Bookings</h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Track all your service requests and their current status
+                </p>
 
                 {customerBookingsLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading bookings...</p>
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="h-10 rounded-lg bg-muted animate-pulse"
+                      />
+                    ))}
+                  </div>
                 ) : customerBookings.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    You have no bookings yet.
-                  </p>
+                  <div className="text-center py-10 space-y-2">
+                    <p className="text-lg font-medium">No bookings yet</p>
+                    <p className="text-sm text-muted-foreground">
+                      Once you book a service, it will appear here.
+                    </p>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -523,38 +544,75 @@ export default function Dashboard() {
                       </thead>
 
                       <tbody>
-                        {customerBookings.map((b) => (
-                          <tr key={b.bookingId} className="border-b">
-                            <td className="py-2">{b.serviceName}</td>
-                            <td>{b.providerName || "Not assigned"}</td>
-                            <td>
-                              {new Date(b.scheduledAt).toLocaleDateString()}
-                            </td>
-                            <td>
-                              <span className="capitalize">{b.status}</span>
-                            </td>
-                            <td>
-                              {b.amount ? `Rs. ${b.amount}` : "—"}
-                            </td>
-                            <td className="flex justify-center gap-2 py-2">
+                      {customerBookings.map((b) => (
+                        <tr key={b.bookingId} className="border-b hover:bg-muted/40 transition">
+                          <td className="py-3">{b.serviceName}</td>
+
+                          <td>{b.providerName || "Not assigned"}</td>
+
+                          <td>
+                            {new Date(b.scheduledAt).toLocaleDateString("en-LK", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </td>
+
+                          <td>
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${
+                                b.status === "PENDING"
+                                  ? "bg-yellow-500/20 text-yellow-400"
+                                  : b.status === "ACCEPTED"
+                                  ? "bg-green-500/20 text-green-400"
+                                  : b.status === "CANCELLED"
+                                  ? "bg-red-500/20 text-red-400"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {b.status}
+                            </span>
+                          </td>
+
+                          <td>
+                            {b.amount ? `Rs. ${b.amount}` : "To be decided"}
+                          </td>
+
+                          <td className="flex justify-center gap-2 py-2">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                setSelectedBooking(b);
+                                setViewOpen(true);
+                              }}
+                            >
+                              View
+                            </Button>
+
+                            {b.status === "PAYMENT_PENDING" && (
                               <Button
                                 size="sm"
-                                variant="secondary"
-                                onClick={() => {
-                                  setSelectedBooking(b);
-                                  setViewOpen(true);
+                                onClick={async () => {
+                                  try {
+                                    const payment = await getCustomerPayment(b.bookingId);
+                                    setPaymentInfo(payment);
+                                    setPaymentOpen(true);
+                                  } catch (err) {
+                                    console.error("PAYMENT LOAD ERROR:", err);
+                                    toast.error("Failed to load payment info");
+                                  }
                                 }}
                               >
-                                View
+                                Pay
                               </Button>
+                            )}
+                          </td>
 
-                              {b.status === "PAYMENT_PENDING" && (
-                                <Button size="sm">Pay</Button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
+                        </tr>
+                      ))}
+                    </tbody>
+
                     </table>
                   </div>
                 )}
@@ -879,6 +937,12 @@ export default function Dashboard() {
         mode={role === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}
       />
 
+      <CustomerPaymentDialog
+        open={paymentOpen}
+        onClose={() => setPaymentOpen(false)}
+        paymentInfo={paymentInfo}
+      />
+
     </div>
   );
 }
@@ -992,3 +1056,5 @@ function Input({
     </div>
   );
 }
+
+
