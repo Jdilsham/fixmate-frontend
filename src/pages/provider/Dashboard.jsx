@@ -18,7 +18,7 @@ import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 import EditImageModal from "../../components/dashboard/editProfilePic";
 import EmployerGrid from "../../components/dashboard/addService/employerGrid";
-import { getProviderBookings } from "../../../utils/booking";
+import { getProviderBookings, getCustomerBookings } from "../../../utils/booking";
 import BookingViewDialog from "../../components/dashboard/bookings/BookingViewDialog";
 
 import {
@@ -50,8 +50,9 @@ const ROLE_CONFIG = {
   },
   CUSTOMER: {
     tabs: [
-      { id: "dashboard", label: "Dashboard", icon: Home },
-      { id: "profile", label: "Profile", icon: Settings },
+        { id: "dashboard", label: "Dashboard", icon: Home },
+        { id: "myBookings", label: "My Bookings", icon: ListCheck },
+        { id: "profile", label: "Profile", icon: Settings },
     ],
   },
 };
@@ -151,13 +152,18 @@ export default function Dashboard() {
       setHasAddress(false);
     }
 
-    setActiveTab("profile"); // stay on profile
+    setActiveTab((prev) => prev || "dashboard");
+
     setLoading(false);
   };
 
   const [providerBookings, setProviderBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [viewOpen, setViewOpen] = useState(false);
+
+  const [customerBookings, setCustomerBookings] = useState([]);
+  const [customerBookingsLoading, setCustomerBookingsLoading] = useState(false);
+
 
   useEffect(() => {
     if (role === "SERVICE_PROVIDER" && user?.id) {
@@ -166,6 +172,25 @@ export default function Dashboard() {
         .catch(() => toast.error("Failed to load bookings"));
     }
   }, [role, user?.id]);
+
+
+  useEffect(() => {
+    if (role === "CUSTOMER") {
+        setCustomerBookingsLoading(true);
+
+        getCustomerBookings()
+          .then((data) => {
+            setCustomerBookings(data);
+          })
+          .catch(() => {
+            toast.error("Failed to load your bookings");
+          })
+          .finally(() => {
+            setCustomerBookingsLoading(false);
+          });
+      }
+  }, [role]);
+
 
   const handleSaveProfile = async () => {
     try {
@@ -471,6 +496,71 @@ export default function Dashboard() {
                 </Card>
               </>
             )}
+
+            {/* CUSTOMER - MY BOOKINGS */}
+            {activeTab === "myBookings" && role === "CUSTOMER" && (
+              <Card className="p-4 rounded-2xl bg-background">
+                <h2 className="text-lg font-semibold mb-4">My Bookings</h2>
+
+                {customerBookingsLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading bookings...</p>
+                ) : customerBookings.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    You have no bookings yet.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left border-b">
+                          <th className="py-2">Service</th>
+                          <th>Provider</th>
+                          <th>Date</th>
+                          <th>Status</th>
+                          <th>Amount</th>
+                          <th className="text-center">Action</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {customerBookings.map((b) => (
+                          <tr key={b.bookingId} className="border-b">
+                            <td className="py-2">{b.serviceName}</td>
+                            <td>{b.providerName || "Not assigned"}</td>
+                            <td>
+                              {new Date(b.scheduledAt).toLocaleDateString()}
+                            </td>
+                            <td>
+                              <span className="capitalize">{b.status}</span>
+                            </td>
+                            <td>
+                              {b.amount ? `Rs. ${b.amount}` : "—"}
+                            </td>
+                            <td className="flex justify-center gap-2 py-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => {
+                                  setSelectedBooking(b);
+                                  setViewOpen(true);
+                                }}
+                              >
+                                View
+                              </Button>
+
+                              {b.status === "PAYMENT_PENDING" && (
+                                <Button size="sm">Pay</Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Card>
+            )}
+
 
             {/* PROFILE */}
             {activeTab === "profile" && (
@@ -786,7 +876,9 @@ export default function Dashboard() {
         open={viewOpen}
         onClose={() => setViewOpen(false)}
         booking={selectedBooking}
+        mode={role === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}
       />
+
     </div>
   );
 }

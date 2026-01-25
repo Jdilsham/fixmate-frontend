@@ -15,3 +15,15 @@ export const getProviderBookings = async(providerId) => {
     return res.data;
 
 }
+
+export const getCustomerBookings = async () => {
+    const auth = getAuthUser();
+
+    const res = await axios.get(`${API}/api/customer/bookings`, {
+        headers: {
+            Authorization: `Bearer ${auth.token}`,
+        },
+    });
+
+    return res.data;
+};

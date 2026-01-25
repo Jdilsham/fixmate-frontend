@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 
-export default function BookingViewDialog({ open, onClose, booking }) {
+export default function BookingViewDialog({ open, onClose, booking, mode = "PROVIDER" }) {
   if (!booking) return null;
 
   return (
@@ -13,24 +13,43 @@ export default function BookingViewDialog({ open, onClose, booking }) {
 
         <div className="space-y-3 text-sm">
           <Row label="Status" value={booking.status} />
-          <Row label="Customer" value={booking.customerName} />
-          <Row label="Phone" value={booking.bookingPhone} />
-          <Row label="Service" value={booking.serviceTitle} />
-          <Row
-            label="Scheduled At"
-            value={format(new Date(booking.scheduledAt), "PPpp")}
-          />
-          <Row label="Payment Type" value={booking.paymentType} />
-          <Row
-            label="Amount"
-            value={booking.paymentAmount ?? "To be decided"}
-          />
-          <Row label="Address" value={booking.bookingAddress} />
 
-          {booking.description && (
-            <Row label="Notes" value={booking.description} />
+          {mode === "PROVIDER" ? (
+            <>
+              <Row label="Customer" value={booking.customerName} />
+              <Row label="Phone" value={booking.bookingPhone} />
+              <Row label="Service" value={booking.serviceTitle} />
+              <Row
+                label="Scheduled At"
+                value={format(new Date(booking.scheduledAt), "PPpp")}
+              />
+              <Row label="Payment Type" value={booking.paymentType} />
+              <Row
+                label="Amount"
+                value={booking.paymentAmount ?? "To be decided"}
+              />
+              <Row label="Address" value={booking.bookingAddress} />
+
+              {booking.description && (
+                <Row label="Notes" value={booking.description} />
+              )}
+            </>
+          ) : (
+            <>
+              <Row label="Service" value={booking.serviceName} />
+              <Row label="Provider" value={booking.providerName || "Not assigned"} />
+              <Row
+                label="Scheduled At"
+                value={format(new Date(booking.scheduledAt), "PPpp")}
+              />
+              <Row
+                label="Amount"
+                value={booking.amount ?? "To be decided"}
+              />
+            </>
           )}
         </div>
+
       </DialogContent>
     </Dialog>
   );
