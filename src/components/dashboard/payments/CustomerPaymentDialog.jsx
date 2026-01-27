@@ -7,34 +7,37 @@ export default function CustomerPaymentDialog({ open, onClose, paymentInfo }) {
   if (!paymentInfo) return null;
 
   const handlePay = async () => {
-  try {
-    const res = await initiatePayHereSandbox(paymentInfo.paymentId);
-    console.log("PayHere response:", res);
-    const { checkoutUrl, fields } = res;
+    try {
+      const res = await initiatePayHereSandbox(paymentInfo.paymentId);
+      console.log("PayHere response:", res);
 
-    
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = checkoutUrl;
+      
+      const { checkoutUrl, fields } = res;
 
-    
-    Object.entries(fields).forEach(([key, value]) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = key;
-      input.value = value;
-      form.appendChild(input);
-    });
-   
-    
-    document.body.appendChild(form);
-    form.submit();
+      
+      console.log("Submitting PayHere fields:", fields);
 
-  } catch (e) {
-    console.error(e);
-    toast.error("Payment initiation failed");
-  }
-};
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = checkoutUrl;
+
+      Object.entries(fields).forEach(([key, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+
+    } catch (e) {
+      console.error(e);
+      toast.error("Payment initiation failed");
+    }
+  };
+
 
 
   return (

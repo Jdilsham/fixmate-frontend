@@ -3,6 +3,8 @@ import Header from "../../components/header";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { getAuthUser } from "../../../utils/auth";
+import { Eye, CheckCircle, XCircle } from "lucide-react";
+
 
 import BookingsTable from "../../components/dashboard/bookingTable";
 import {
@@ -18,10 +20,17 @@ import { Button } from "../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 import EditImageModal from "../../components/dashboard/editProfilePic";
 import EmployerGrid from "../../components/dashboard/addService/employerGrid";
-import { getProviderBookings, getCustomerBookings } from "../../../utils/booking";
+import {
+  getProviderBookings,
+  getCustomerBookings,
+  confirmBooking,
+  rejectBookingApi,
+} from "../../../utils/booking";
+
 import BookingViewDialog from "../../components/dashboard/bookings/BookingViewDialog";
 import CustomerPaymentDialog from "../../components/dashboard/payments/CustomerPaymentDialog";
 import { getCustomerPayment } from "../../../utils/payment";
+import RejectBookingDialog from "../../components/dashboard/bookings/RejectBookingDialog";
 
 
 
@@ -67,12 +76,23 @@ export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem("dashboardActiveTab") || "dashboard";
+  });
+
+  useEffect(() => {
+    if (activeTab) {
+      localStorage.setItem("dashboardActiveTab", activeTab);
+    }
+  }, [activeTab]);
+
+
   const [date, setDate] = useState(new Date());
   const [isAvailable, setIsAvailable] = useState(false);
   const [editImageOpen, setEditImageOpen] = useState(false);
 
-  const [openSection, setOpenSection] = useState("basic");
+  const [openSection, setOpenSection] = useState(null);
+
   const [editingSection, setEditingSection] = useState(null);
 
   const user = authUser && profile ? { ...authUser, ...profile } : authUser;
@@ -171,6 +191,10 @@ export default function Dashboard() {
 
   const [customerBookings, setCustomerBookings] = useState([]);
   const [customerBookingsLoading, setCustomerBookingsLoading] = useState(false);
+
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectBooking, setRejectBooking] = useState(null);
+
 
 
   useEffect(() => {
@@ -367,6 +391,13 @@ export default function Dashboard() {
         }
       : null;
 
+  const formatStatus = (status) =>
+  status
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -455,47 +486,135 @@ export default function Dashboard() {
             {/* Pending requests */}
             {activeTab === "pendingBooking" && role === "SERVICE_PROVIDER" && (
               <>
-                <Card className="p-4 rounded-2xl bg-background">
-                  <h2 className="text-lg font-semibold mb-4">
+                <Card className="p-6 rounded-2xl bg-card border shadow-md">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold">
                     Pending Bookings
                   </h2>
+
+                  <span className="text-sm text-muted-foreground">
+                    {providerBookings.length} total
+                  </span>
+                </div>
+
 
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-left border-b">
-                          <th className="py-2">Customer Name</th>
-                          <th>Phone Number</th>
-                          <th>City</th>
-
-                          <th className="space-x-2 text-center">Action</th>
+                        <tr className="border-b text-muted-foreground">
+                          <th className="py-3 px-2 font-medium">Customer</th>
+                          <th className="px-2 font-medium">Phone</th>
+                          <th className="px-2 font-medium">Address</th>
+                          <th className="px-2 font-medium text-center">Status</th>
+                          <th className="px-2 text-center font-medium">Actions</th>
                         </tr>
                       </thead>
 
+
+
                       <tbody>
                         {providerBookings.map((b) => (
-                          <tr key={b.bookingId} className="border-b">
-                            <td className="py-2">{b.customerName}</td>
-                            <td>{b.customerPhone}</td>
-                            <td>{b.bookingAddress}</td>
+                          <tr
+                            key={b.bookingId}
+                            className="border-b hover:bg-muted/40 transition"
+                          >
 
-                            <td className="space-x-2 flex justify-center">
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedBooking(b);
-                                  setViewOpen(true);
-                                }}
-                              >
-                                View
-                              </Button>
-
-                              <Button size="sm">Approve</Button>
-
-                              <Button size="sm" variant="destructive">
-                                Reject
-                              </Button>
+                            <td className="py-3 px-2 font-medium">
+                              {b.customerName}
                             </td>
+
+                           <td className="px-2 py-3 text-muted-foreground">
+                              {b.customerPhone}
+                            </td>
+
+                            <td className="px-2 py-3 text-muted-foreground">
+                              {b.bookingAddress}
+                            </td>
+
+                            <td className="px-2 py-3 text-center">
+                              <span
+                                className={`inline-flex items-center gap-1 px-3 py-1
+                                  rounded-full text-xs font-semibold
+                                  ${
+                                    b.status === "PENDING"
+                                      ? "bg-yellow-500/20 text-yellow-600"
+                                      : b.status === "ACCEPTED"
+                                      ? "bg-green-500/20 text-green-600"
+                                      : b.status === "REJECTED"
+                                      ? "bg-red-500/20 text-red-600"
+                                      : "bg-muted text-muted-foreground"
+                                  }
+                                `}
+                              >
+                                {b.status === "PENDING" && <Eye className="w-3 h-3" />}
+                                {b.status === "ACCEPTED" && <CheckCircle className="w-3 h-3" />}
+                                {b.status === "REJECTED" && <XCircle className="w-3 h-3" />}
+
+                                {formatStatus(b.status)}
+                              </span>
+                            </td>
+
+
+
+
+                            <td className="px-2 py-3">
+                              <div className="flex justify-center items-center gap-2">
+
+                                {/* View */}
+                                <Button
+                                  size="icon"
+                                  variant="secondary"
+                                  title="View booking"
+                                  onClick={() => {
+                                    setSelectedBooking(b);
+                                    setViewOpen(true);
+                                  }}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+
+                                {/* Approve / Reject only when pending */}
+                                {b.status === "PENDING" && (
+                                  <>
+                                    <Button
+                                      size="icon"
+                                      title="Approve booking"
+                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                      onClick={async () => {
+                                        try {
+                                          await confirmBooking(b.bookingId, b.providerServiceId);
+                                          toast.success("Booking approved");
+
+                                          const updated = await getProviderBookings(user.id);
+                                          setProviderBookings(updated);
+                                        } catch (err) {
+                                          toast.error(
+                                            err?.response?.data?.message || "Failed to approve booking"
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      <CheckCircle className="w-4 h-4" />
+                                    </Button>
+
+                                    <Button
+                                      size="icon"
+                                      variant="destructive"
+                                      title="Reject booking"
+                                      onClick={() => {
+                                        setRejectBooking(b);
+                                        setRejectOpen(true);
+                                      }}
+                                    >
+                                      <XCircle className="w-4 h-4" />
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+
+
+
                           </tr>
                         ))}
                       </tbody>
@@ -545,7 +664,18 @@ export default function Dashboard() {
 
                       <tbody>
                       {customerBookings.map((b) => (
-                        <tr key={b.bookingId} className="border-b hover:bg-muted/40 transition">
+                        <tr
+                          key={b.bookingId}
+                          className="
+                            border-b
+                            hover:bg-muted/60
+                            transition
+                            duration-200
+                            last:border-b-0
+                          "
+                        >
+
+
                           <td className="py-3">{b.serviceName}</td>
 
                           <td>{b.providerName || "Not assigned"}</td>
@@ -558,21 +688,29 @@ export default function Dashboard() {
                             })}
                           </td>
 
-                          <td>
+                          <td className="px-2 text-center">
                             <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${
-                                b.status === "PENDING"
-                                  ? "bg-yellow-500/20 text-yellow-400"
-                                  : b.status === "ACCEPTED"
-                                  ? "bg-green-500/20 text-green-400"
-                                  : b.status === "CANCELLED"
-                                  ? "bg-red-500/20 text-red-400"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
+                              className={`inline-flex items-center justify-center
+                                min-w-[110px] px-3 py-1
+                                rounded-full text-xs font-semibold tracking-wide
+                                ${
+                                  b.status === "PENDING"
+                                    ? "bg-yellow-500/20 text-yellow-400"
+                                    : b.status === "ACCEPTED"
+                                    ? "bg-green-500/20 text-green-400"
+                                    : b.status === "PAYMENT_PENDING"
+                                    ? "bg-blue-500/20 text-blue-400"
+                                    : b.status === "COMPLETED"
+                                    ? "bg-emerald-500/20 text-emerald-400"
+                                    : b.status === "REJECTED"
+                                    ? "bg-red-500/20 text-red-400"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
                             >
-                              {b.status}
+                              {b.status.replace("_", " ")}
                             </span>
                           </td>
+
 
                           <td>
                             {b.amount ? `Rs. ${b.amount}` : "To be decided"}
@@ -590,7 +728,7 @@ export default function Dashboard() {
                               View
                             </Button>
 
-                            {b.status === "PAYMENT_PENDING" && (
+                            {b.status === "PAYMENT_PENDING" && b.status !== "REJECTED" && (
                               <Button
                                 size="sm"
                                 onClick={async () => {
@@ -624,7 +762,9 @@ export default function Dashboard() {
             {activeTab === "profile" && (
               <>
                 {/* PROFILE HEADER */}
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-6 border-b pb-6 mb-8">
+                <div className="border-b pb-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 items-start">
+
                   <div className=" flex flex-col relative w-28 h-28 md:w-36 md:h-36 shrink-0 justify-end">
                     <div className="absolute flex flex-col items-center inset-0 rounded-full bg-transparent">
                       <Avatar.Root
@@ -642,11 +782,14 @@ export default function Dashboard() {
                         </Avatar.Fallback>
                       </Avatar.Root>
 
-                      <span
-                        className={`w-5 h-5 rounded-full absolute top-4 right-2 border-2 border-background ${
-                          isAvailable ? "bg-green-500" : "bg-red-500"
-                        }`}
-                      />
+                      {role === "SERVICE_PROVIDER" && (
+                        <span
+                          className={`w-5 h-5 rounded-full absolute top-4 right-2 border-2 border-background ${
+                            isAvailable ? "bg-green-500" : "bg-red-500"
+                          }`}
+                        />
+                      )}
+
 
                       <Button
                         size="sm"
@@ -722,6 +865,8 @@ export default function Dashboard() {
                         </button>
                       </div>
                     )}
+
+                  
                   </div>
                 </div>
 
@@ -916,7 +1061,9 @@ export default function Dashboard() {
                       disabled={editingSection !== "password"}
                     />
                   </CollapsibleSection>
-                </div>
+                  </div>
+              </div>
+
               </>
             )}
           </div>
@@ -943,6 +1090,34 @@ export default function Dashboard() {
         paymentInfo={paymentInfo}
       />
 
+      <RejectBookingDialog
+              open={rejectOpen}
+              onClose={() => {
+                setRejectOpen(false);
+                setRejectBooking(null);
+              }}
+              onConfirm={async (reason) => {
+                try {
+                  await rejectBookingApi(
+                    rejectBooking.bookingId,
+                    rejectBooking.providerServiceId,
+                    reason
+                  );
+
+                  toast.success("Booking rejected");
+
+                  const updated = await getProviderBookings(user.id);
+                  setProviderBookings(updated);
+
+                  setRejectOpen(false);
+                  setRejectBooking(null);
+                } catch (err) {
+                  toast.error(
+                    err?.response?.data?.message || "Failed to reject booking"
+                  );
+                }
+              }}
+            />
     </div>
   );
 }
