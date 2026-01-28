@@ -1,34 +1,121 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 
-export default function BookingViewDialog({ open, onClose, booking }) {
+export default function BookingViewDialog({ open, onClose, booking, mode }) {
   if (!booking) return null;
+
+  const isProvider = mode === "PROVIDER";
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Booking Summary</DialogTitle>
+          <DialogTitle>Booking Details</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3 text-sm">
-          <Row label="Status" value={booking.status} />
-          <Row label="Customer" value={booking.customerName} />
-          <Row label="Phone" value={booking.bookingPhone} />
-          <Row label="Service" value={booking.serviceTitle} />
+        {booking.status === "REJECTED" && (
+          <div className="rounded-lg border border-red-300 bg-red-50 p-3">
+            <p className="text-sm font-semibold text-red-600">
+              Booking Rejected
+            </p>
+
+            <p className="mt-1 text-sm text-red-500">
+              Reason: {booking.rejectionReason}
+            </p>
+
+            {booking.rejectedAt && (
+              <p className="mt-1 text-xs text-gray-500">
+                Rejected at: {new Date(booking.rejectedAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-4 text-sm">
+          {/* STATUS */}
+          <Row label="Status">
+            <span
+              className={`px-2 py-1 rounded text-xs font-medium ${
+                booking.status === "PENDING"
+                  ? "bg-yellow-500/20 text-yellow-400"
+                  : booking.status === "ACCEPTED"
+                  ? "bg-green-500/20 text-green-400"
+                  : booking.status === "COMPLETED"
+                  ? "bg-blue-500/20 text-blue-400"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {booking.status}
+            </span>
+          </Row>
+
+          {/* COMMON */}
+          <Row
+            label="Service"
+            value={isProvider ? booking.serviceTitle : booking.serviceName}
+          />
+
+          <Row
+            label={isProvider ? "Customer" : "Provider"}
+            value={
+              isProvider
+                ? booking.customerName
+                : booking.providerName || "Not assigned"
+            }
+          />
+
           <Row
             label="Scheduled At"
-            value={format(new Date(booking.scheduledAt), "PPpp")}
+            value={format(new Date(booking.scheduledAt), "PPP, p")}
           />
-          <Row label="Payment Type" value={booking.paymentType} />
-          <Row
-            label="Amount"
-            value={booking.paymentAmount ?? "To be decided"}
-          />
-          <Row label="Address" value={booking.bookingAddress} />
 
-          {booking.description && (
-            <Row label="Notes" value={booking.description} />
+          {/* PROVIDER ONLY */}
+          {isProvider && (
+            <>
+              <Row label="Pricing Type" value={booking.paymentType} />
+
+              <Row
+                label="Amount"
+                value={
+                  booking.paymentAmount
+                    ? `Rs. ${booking.paymentAmount}`
+                    : "To be decided"
+                }
+              />
+
+              <Row label="Phone Number" value={booking.customerPhone} />
+              <Row label="Address" value={booking.bookingAddress} />
+
+              <Row
+                label="Additional Notes"
+                value={booking.description || "—"}
+              />
+
+              <Row
+                label="Location"
+                value={`${booking.latitude}, ${booking.longitude}`}
+              />
+            </>
+          )}
+
+          {/* CUSTOMER ONLY */}
+          {!isProvider && (
+            <>
+              <Row label="Pricing Type" value={booking.pricingType} />
+              <Row label="Phone Number" value={booking.phone} />
+              <Row label="Address" value={booking.address} />
+
+              <Row
+                label="Amount"
+                value={
+                  booking.amount ? `Rs. ${booking.amount}` : "To be decided"
+                }
+              />
+
+              {booking.description && (
+                <Row label="Additional Notes" value={booking.description} />
+              )}
+            </>
           )}
         </div>
       </DialogContent>
@@ -36,11 +123,13 @@ export default function BookingViewDialog({ open, onClose, booking }) {
   );
 }
 
-function Row({ label, value }) {
+function Row({ label, value, children }) {
   return (
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right">{value}</span>
+      <span className="font-medium text-right">
+        {children ?? value ?? "—"}
+      </span>
     </div>
   );
 }
