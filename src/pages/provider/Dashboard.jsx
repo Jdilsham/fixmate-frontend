@@ -367,10 +367,16 @@ export default function Dashboard() {
   const handleUploadIdFront = async () => {
     if (!idFrontFile) return toast.error("Select ID front image");
 
+    // ⚠️ WARNING when already approved
+    if (profile?.verificationStatus === "APPROVED") {
+      const ok = confirmReVerification();
+      if (!ok) return;
+    }
+
     try {
       setUploadingId(true);
       await uploadIdFront(idFrontFile);
-      toast.success("ID front uploaded");
+      toast.success("ID front uploaded. Re-verification required.");
       await reloadProfile();
     } catch (err) {
       toast.error("Failed to upload ID front");
@@ -379,13 +385,19 @@ export default function Dashboard() {
     }
   };
 
+
   const handleUploadIdBack = async () => {
     if (!idBackFile) return toast.error("Select ID back image");
+
+    if (profile?.verificationStatus === "APPROVED") {
+      const ok = confirmReVerification();
+      if (!ok) return;
+    }
 
     try {
       setUploadingId(true);
       await uploadIdBack(idBackFile);
-      toast.success("ID back uploaded");
+      toast.success("ID back uploaded. Re-verification required.");
       await reloadProfile();
     } catch (err) {
       toast.error("Failed to upload ID back");
@@ -394,10 +406,18 @@ export default function Dashboard() {
     }
   };
 
+
   const handleUploadWorkPdf = async () => {
+    if (!workPdf) return toast.error("Select a PDF file");
+
+    if (profile?.verificationStatus === "APPROVED") {
+      const ok = confirmReVerification();
+      if (!ok) return;
+    }
+
     try {
       await uploadWorkPdf(workPdf);
-      toast.success("Work proof uploaded");
+      toast.success("Work proof uploaded. Re-verification required.");
       setWorkPdf(null);
       await reloadProfile();
     } catch (err) {
@@ -406,9 +426,6 @@ export default function Dashboard() {
       );
     }
   };
-
-
-
 
   const handleChangePassword = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
@@ -598,6 +615,11 @@ export default function Dashboard() {
     role === "SERVICE_PROVIDER" &&
     profile?.verificationStatus === "APPROVED";
 
+  const confirmReVerification = () => {
+    return window.confirm(
+      "Uploading new documents will temporarily disable your account until admin approval. Do you want to continue?"
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
