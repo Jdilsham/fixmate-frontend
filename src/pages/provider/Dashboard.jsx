@@ -32,6 +32,7 @@ import CustomerPaymentDialog from "../../components/dashboard/payments/CustomerP
 import { getCustomerPayment } from "../../../utils/payment";
 import RejectBookingDialog from "../../components/dashboard/bookings/RejectBookingDialog";
 
+import ReVerificationDialog from "../../components/dashboard/ReVerificationDialog";
 
 
 import {
@@ -195,6 +196,11 @@ export default function Dashboard() {
 
     setProfile(profileData);
 
+    if (profileData?.verificationStatus === "APPROVED") {
+      setWasPreviouslyApproved(true);
+    }
+
+
     setIsAvailable(profileData?.available ?? false);
 
     setProfileForm({
@@ -256,6 +262,10 @@ export default function Dashboard() {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectBooking, setRejectBooking] = useState(null);
 
+
+  const [showReverifyDialog, setShowReverifyDialog] = useState(false);
+  const [wasPreviouslyApproved, setWasPreviouslyApproved] = useState(false);
+  const [pendingUploadAction, setPendingUploadAction] = useState(null);
 
 
   useEffect(() => {
@@ -364,68 +374,48 @@ export default function Dashboard() {
     }
   };
 
-  const handleUploadIdFront = async () => {
-    if (!idFrontFile) return toast.error("Select ID front image");
+const handleUploadIdFront = () => {
+  if (!idFrontFile) {
+    toast.error("Select ID front image");
+    return;
+  }
 
-    // ⚠️ WARNING when already approved
-    if (profile?.verificationStatus === "APPROVED") {
-      const ok = confirmReVerification();
-      if (!ok) return;
-    }
+  setPendingUploadAction(() => async () => {
+    await uploadIdFront(idFrontFile);
+    toast.success("ID front uploaded. Re-verification required.");
+  });
 
-    try {
-      setUploadingId(true);
-      await uploadIdFront(idFrontFile);
-      toast.success("ID front uploaded. Re-verification required.");
-      await reloadProfile();
-    } catch (err) {
-      toast.error("Failed to upload ID front");
-    } finally {
-      setUploadingId(false);
-    }
-  };
+  setShowReverifyDialog(true);
+};
 
+const handleUploadIdBack = () => {
+  if (!idBackFile) {
+    toast.error("Select ID back image");
+    return;
+  }
 
-  const handleUploadIdBack = async () => {
-    if (!idBackFile) return toast.error("Select ID back image");
+  setPendingUploadAction(() => async () => {
+    await uploadIdBack(idBackFile);
+    toast.success("ID back uploaded. Re-verification required.");
+  });
 
-    if (profile?.verificationStatus === "APPROVED") {
-      const ok = confirmReVerification();
-      if (!ok) return;
-    }
+  setShowReverifyDialog(true);
+};
 
-    try {
-      setUploadingId(true);
-      await uploadIdBack(idBackFile);
-      toast.success("ID back uploaded. Re-verification required.");
-      await reloadProfile();
-    } catch (err) {
-      toast.error("Failed to upload ID back");
-    } finally {
-      setUploadingId(false);
-    }
-  };
+const handleUploadWorkPdf = () => {
+  if (!workPdf) {
+    toast.error("Select work PDF");
+    return;
+  }
 
+  setPendingUploadAction(() => async () => {
+    await uploadWorkPdf(workPdf);
+    toast.success("Work proof uploaded. Re-verification required.");
+  });
 
-  const handleUploadWorkPdf = async () => {
-    if (!workPdf) return toast.error("Select a PDF file");
+  setShowReverifyDialog(true);
+};
 
-    if (profile?.verificationStatus === "APPROVED") {
-      const ok = confirmReVerification();
-      if (!ok) return;
-    }
-
-    try {
-      await uploadWorkPdf(workPdf);
-      toast.success("Work proof uploaded. Re-verification required.");
-      setWorkPdf(null);
-      await reloadProfile();
-    } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Failed to upload work proof"
-      );
-    }
-  };
 
   const handleChangePassword = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
@@ -614,12 +604,6 @@ export default function Dashboard() {
   const canToggleAvailability =
     role === "SERVICE_PROVIDER" &&
     profile?.verificationStatus === "APPROVED";
-
-  const confirmReVerification = () => {
-    return window.confirm(
-      "Uploading new documents will temporarily disable your account until admin approval. Do you want to continue?"
-    );
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -1220,32 +1204,32 @@ export default function Dashboard() {
                         )}
 
                         {canRequestVerification && (
-  <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 px-5 py-4">
-    <p className="text-sm text-blue-300 mb-3">
-      📄 All documents uploaded. Submit your profile for admin verification.
-    </p>
+                          <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 px-5 py-4">
+                            <p className="text-sm text-blue-300 mb-3">
+                              📄 All documents uploaded. Submit your profile for admin verification.
+                            </p>
 
-    <button
-      onClick={async () => {
-        try {
-          await requestVerification();
-          toast.success("Verification request submitted");
-          await reloadProfile();
-        } catch (err) {
-          toast.error("Failed to request verification");
-        }
-      }}
-      className="
-        rounded-lg px-4 py-2 text-sm font-medium
-        bg-blue-600 text-white
-        hover:bg-blue-700
-        transition
-      "
-    >
-      Request Verification
-    </button>
-  </div>
-)}
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await requestVerification();
+                                  toast.success("Verification request submitted");
+                                  await reloadProfile();
+                                } catch (err) {
+                                  toast.error("Failed to request verification");
+                                }
+                              }}
+                              className="
+                                rounded-lg px-4 py-2 text-sm font-medium
+                                bg-blue-600 text-white
+                                hover:bg-blue-700
+                                transition
+                              "
+                            >
+                              Request Verification
+                            </button>
+                          </div>
+                        )}
 
 
                       </div>
@@ -1603,7 +1587,7 @@ export default function Dashboard() {
 
                 )}
 
-<CollapsibleSection
+                  <CollapsibleSection
                     title="Address"
                     section="address"
                     openSection={openSection}
@@ -1798,8 +1782,27 @@ export default function Dashboard() {
                   );
                 }
               }}
-            />
+        />
+
+        <ReVerificationDialog
+        open={showReverifyDialog}
+        onClose={() => {
+          setShowReverifyDialog(false);
+          setPendingUploadAction(null);
+        }}
+        onConfirm={async () => {
+          if (pendingUploadAction) {
+            await pendingUploadAction();
+          }
+          setShowReverifyDialog(false);
+          setPendingUploadAction(null);
+        }}
+      />
+
+
     </div>
+
+              
   );
 }
 
@@ -1912,5 +1915,4 @@ function Input({
     </div>
   );
 }
-
 
