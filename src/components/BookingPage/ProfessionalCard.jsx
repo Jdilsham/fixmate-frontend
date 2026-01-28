@@ -6,78 +6,93 @@ export default function ProfessionalCard({ service }) {
   if (!service) return null;
 
   return (
-    <Card className="relative overflow-hidden border border-border/60 shadow-lg">
-      
-      {/* subtle gradient accent */}
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
 
-      <CardContent className="p-6 md:p-8 flex flex-col gap-8">
+    <Card className="rounded-2xl border border-border bg-card shadow-xl">
+  <CardContent className="p-7 flex flex-col gap-7">
 
-        {/* HEADER */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+    {/* PROVIDER HERO */}
+    <div className="flex items-center gap-5">
+      <Avatar className="size-20 ring-2 ring-primary/20">
+        <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
+          {service.providerName?.charAt(0) || "U"}
+        </AvatarFallback>
+      </Avatar>
 
-          {/* Provider */}
-          <div className="flex items-center gap-5">
-            <Avatar className="size-20 ring-2 ring-primary/20">
-              <AvatarFallback className="text-2xl bg-primary/10 text-primary font-semibold">
-                {service.providerName?.charAt(0) || "U"}
-              </AvatarFallback>
-            </Avatar>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {service.providerName}
+        </h2>
 
-            <div className="space-y-1">
-              <h2 className="text-2xl font-semibold tracking-tight">
-                {service.providerName}
-              </h2>
+        {/* SERVICE */}
+        <p className="text-base">
+          <span className="font-medium text-muted-foreground">Service:</span>{" "}
+          <span className="font-semibold text-foreground">
+            {service.serviceTitle}
+          </span>
+        </p>
 
-              <p className="text-muted-foreground text-sm">
-                {service.serviceTitle}
-              </p>
+        {/* LOCATION */}
+        <p className="text-base">
+          <span className="font-medium text-muted-foreground">Location:</span>{" "}
+          <span className="font-semibold text-foreground">
+            {service.location}
+          </span>
+        </p>
+      </div>
+    </div>
 
-              <p className="text-sm flex items-center gap-1 opacity-70">
-                <span>📍</span>
-                <span>{service.location}</span>
-              </p>
-            </div>
-          </div>
+    {/* PRICE */}
+    <div className="rounded-xl bg-muted/40 border border-border px-6 py-5 text-center">
+      <p className="text-xs uppercase tracking-wider text-muted-foreground">
+        Starting from
+      </p>
 
-          {/* Price */}
-          <div className="rounded-2xl bg-gradient-to-br from-accent/10 to-primary/10 px-8 py-5 text-center shadow-inner">
-            <p className="text-xs uppercase tracking-wide opacity-60 mb-1">
-              Starting from
-            </p>
+      <p className="text-3xl font-bold text-orange-500 mt-1">
+        LKR {service.hourlyRate}
+      </p>
 
-            <p className="text-3xl font-bold text-accent">
-              LKR {service.hourlyRate}
-            </p>
+      <p className="text-xs text-muted-foreground">
+        per hour
+      </p>
+    </div>
 
-            <p className="text-xs opacity-60 mt-1">
-              per hour
-            </p>
-          </div>
-        </div>
+    {/* DETAILS */}
+    <div className="flex flex-col gap-3">
 
-        {/* DESCRIPTION */}
-        <div className="rounded-2xl bg-muted/60 p-5 leading-relaxed text-sm">
-          {service.serviceDescription || "No description provided."}
-        </div>
+      {/* FIXED PRICE */}
+      <div className="flex items-center justify-between text-base">
+        <span className="text-muted-foreground">Fixed Price</span>
 
-        {/* TAGS */}
-        <div className="flex flex-wrap gap-2">
-          <Badge className="rounded-full px-4 py-1">
-            {service.categoryName}
-          </Badge>
+        {service.fixedPriceAvailable ? (
+          <span className="px-3 py-1 rounded-full bg-green-500/15 text-green-600 text-sm font-medium">
+            Available
+          </span>
+        ) : (
+          <span className="px-3 py-1 rounded-full border text-sm text-muted-foreground">
+            Not Available
+          </span>
+        )}
+      </div>
 
-          {service.fixedPriceAvailable && (
-            <Badge
-              variant="outline"
-              className="rounded-full px-4 py-1"
-            >
-              Fixed pricing available
-            </Badge>
-          )}
-        </div>
+      {/* RATING */}
+      <div className="flex items-center justify-between text-base">
+        <span className="text-muted-foreground">Rating</span>
+        <span className="italic text-muted-foreground">
+          Not rated yet
+        </span>
+      </div>
 
-      </CardContent>
-    </Card>
+    </div>
+
+    {/* DESCRIPTION */}
+    <div className="rounded-xl bg-muted/30 px-5 py-4 text-sm leading-relaxed text-muted-foreground">
+      {service.serviceDescription ||
+        "Professional service delivered with quality workmanship and reliability."}
+    </div>
+
+  </CardContent>
+</Card>
+
+
   );
 }

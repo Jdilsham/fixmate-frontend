@@ -46,6 +46,11 @@ import {
   addCustomerAddress,
   updateCustomerAddress,
   changePassword,
+  updateProfessionalInfo,
+  uploadIdFront,
+  uploadIdBack,
+  uploadWorkPdf,
+  requestVerification
 } from "../../../utils/profile";
 
 /* =======================
@@ -76,6 +81,7 @@ export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem("dashboardActiveTab") || "dashboard";
   });
@@ -88,6 +94,12 @@ export default function Dashboard() {
 
 
   const [date, setDate] = useState(new Date());
+  // Calendar – availability view
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [dateBookings, setDateBookings] = useState([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+
+
   const [isAvailable, setIsAvailable] = useState(false);
   const [editImageOpen, setEditImageOpen] = useState(false);
 
@@ -98,6 +110,28 @@ export default function Dashboard() {
   const user = authUser && profile ? { ...authUser, ...profile } : authUser;
   const role = user?.role;
 
+  const isProvider = role === "SERVICE_PROVIDER";
+
+  const verificationStatus = profile?.verificationStatus;
+
+  const isPendingVerification =
+    isProvider && verificationStatus === "PENDING";
+
+  const isApproved =
+    isProvider && verificationStatus === "APPROVED";
+
+  const isReuploadingVerificationDocs =
+  isApproved &&
+  (profile?.idFrontUrl || profile?.idBackUrl || profile?.workPdfUrl);
+
+  const canRequestVerification =
+  isProvider &&
+  profile?.verificationStatus === "NOT_SUBMITTED" &&
+  profile?.idFrontUrl &&
+  profile?.idBackUrl &&
+  profile?.workPdfUrl;
+
+
   const [paymentInfo, setPaymentInfo] = useState(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
 
@@ -107,6 +141,15 @@ export default function Dashboard() {
     lastName: "",
     phone: "",
   });
+
+  const [professionalForm, setProfessionalForm] = useState({
+    skill: "",
+    experience: "",
+    description: "",
+  });
+
+  const [workPdf, setWorkPdf] = useState(null);
+
 
   const [hasAddress, setHasAddress] = useState(false);
 
@@ -126,6 +169,11 @@ export default function Dashboard() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  const [idFrontFile, setIdFrontFile] = useState(null);
+  const [idBackFile, setIdBackFile] = useState(null);
+  const [uploadingId, setUploadingId] = useState(false);
+
 
   const reloadProfile = async () => {
     const auth = getAuthUser();
@@ -155,6 +203,17 @@ export default function Dashboard() {
       phone: profileData?.phone || "",
     });
 
+    if (profileData?.role === "SERVICE_PROVIDER") {
+      setProfessionalForm({
+        skill: profileData?.skill || "",
+        experience: profileData?.experience || "",
+        description: profileData?.description || "",
+      });
+    }
+
+
+
+
     // LOAD ADDRESS (ROLE BASED)
     try {
       const addr =
@@ -183,6 +242,8 @@ export default function Dashboard() {
     setActiveTab((prev) => prev || "dashboard");
 
     setLoading(false);
+
+
   };
 
   const [providerBookings, setProviderBookings] = useState([]);
@@ -282,6 +343,72 @@ export default function Dashboard() {
       toast.error("Failed to save address");
     }
   };
+
+  const handleSaveProfessionalInfo = async () => {
+    try {
+      await updateProfessionalInfo({
+        skill: professionalForm.skill,
+        experience: professionalForm.experience,
+        description: professionalForm.description,
+      });
+
+      toast.success("Professional information saved");
+      setEditingSection(null);
+      await reloadProfile();
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err?.response?.data?.message ||
+          "Failed to save professional information"
+      );
+    }
+  };
+
+  const handleUploadIdFront = async () => {
+    if (!idFrontFile) return toast.error("Select ID front image");
+
+    try {
+      setUploadingId(true);
+      await uploadIdFront(idFrontFile);
+      toast.success("ID front uploaded");
+      await reloadProfile();
+    } catch (err) {
+      toast.error("Failed to upload ID front");
+    } finally {
+      setUploadingId(false);
+    }
+  };
+
+  const handleUploadIdBack = async () => {
+    if (!idBackFile) return toast.error("Select ID back image");
+
+    try {
+      setUploadingId(true);
+      await uploadIdBack(idBackFile);
+      toast.success("ID back uploaded");
+      await reloadProfile();
+    } catch (err) {
+      toast.error("Failed to upload ID back");
+    } finally {
+      setUploadingId(false);
+    }
+  };
+
+  const handleUploadWorkPdf = async () => {
+    try {
+      await uploadWorkPdf(workPdf);
+      toast.success("Work proof uploaded");
+      setWorkPdf(null);
+      await reloadProfile();
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to upload work proof"
+      );
+    }
+  };
+
+
+
 
   const handleChangePassword = async () => {
     const { currentPassword, newPassword, confirmPassword } = passwordForm;
@@ -398,6 +525,80 @@ export default function Dashboard() {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
 
+  const loadBookingsForDate = async (day) => {
+  if (!day || !user?.id) return;
+
+    try {
+      setCalendarLoading(true);
+
+      const allBookings = await getProviderBookings(user.id);
+
+      const selectedDay = day.toISOString().split("T")[0];
+
+      const filtered = allBookings.filter((b) => {
+        if (!b.scheduledAt) return false;
+
+        const bookingDay = new Date(b.scheduledAt)
+          .toISOString()
+          .split("T")[0];
+
+        return bookingDay === selectedDay;
+      });
+
+      setDateBookings(filtered);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load bookings for selected date");
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  const busyDates = new Set(
+    providerBookings
+      .filter((b) => b.scheduledAt)
+      .map(
+        (b) =>
+          new Date(b.scheduledAt).toISOString().split("T")[0]
+      )
+  );
+
+
+  const handleViewBooking = (booking) => {
+  setSelectedBooking(booking);
+  setViewOpen(true);
+};
+
+  const handleAcceptBooking = async (booking) => {
+      try {
+        await confirmBooking(booking.bookingId, booking.providerServiceId);
+        toast.success("Booking accepted");
+
+        // refresh both views
+        const updated = await getProviderBookings(user.id);
+        setProviderBookings(updated);
+
+        if (selectedDate) {
+          loadBookingsForDate(selectedDate);
+        }
+      } catch (err) {
+        toast.error(
+          err?.response?.data?.message || "Failed to accept booking"
+        );
+      }
+  };
+
+  const handleRejectBooking = (booking) => {
+    setRejectBooking(booking);
+    setRejectOpen(true);
+  };
+
+
+  const canToggleAvailability =
+    role === "SERVICE_PROVIDER" &&
+    profile?.verificationStatus === "APPROVED";
+
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -474,14 +675,135 @@ export default function Dashboard() {
             {activeTab === "calendar" && role === "SERVICE_PROVIDER" && (
               <>
                 <h2 className="text-lg font-semibold mb-4">Availability</h2>
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  className="rounded-xl border"
-                />
+
+                <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-6">
+                  
+                  {/* LEFT – Calendar */}
+                  <Card className="p-4 rounded-2xl flex items-center justify-center">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(day) => {
+                        setSelectedDate(day);
+                        setDateBookings([]);
+                        loadBookingsForDate(day);
+                      }}
+                      disabled={(date) => date < new Date().setHours(0, 0, 0, 0)}
+                      modifiers={{
+                        busy: (date) =>
+                          busyDates.has(date.toISOString().split("T")[0]),
+                      }}
+                      modifiersClassNames={{
+                        busy:
+                          "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-red-500",
+                      }}
+                      className="rounded-xl border"
+                    />
+                  </Card>
+
+
+                  {/* RIGHT – Bookings */}
+                  <Card className="p-6 rounded-2xl">
+                    {!selectedDate && (
+                      <p className="text-muted-foreground">
+                        Select a date to view bookings
+                      </p>
+                    )}
+
+                    {calendarLoading && (
+                      <p className="text-sm text-muted-foreground">
+                        Loading bookings...
+                      </p>
+                    )}
+
+                    {selectedDate && !calendarLoading && dateBookings.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No bookings for this date
+                      </p>
+                    )}
+
+                    {dateBookings.length > 0 && (
+                      <div className="space-y-3">
+                        {dateBookings.map((b) => (
+                          <div
+                            key={b.bookingId}
+                            className="flex items-center justify-between rounded-xl border p-4 hover:bg-muted/40 transition"
+                          >
+                            <div>
+                              <p className="font-medium">{b.customerName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {b.serviceName}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(b.scheduledAt).toLocaleTimeString("en-LK", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {/* STATUS */}
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                  b.status === "PENDING"
+                                    ? "bg-yellow-500/20 text-yellow-500"
+                                    : b.status === "ACCEPTED"
+                                    ? "bg-green-500/20 text-green-500"
+                                    : b.status === "COMPLETED"
+                                    ? "bg-emerald-500/20 text-emerald-500"
+                                    : b.status === "REJECTED"
+                                    ? "bg-red-500/20 text-red-500"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                {b.status.replace("_", " ")}
+                              </span>
+
+                              {/* VIEW */}
+                              <Button
+                                size="icon"
+                                variant="secondary"
+                                title="View booking"
+                                onClick={() => handleViewBooking(b)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+
+                              {/* ACCEPT / REJECT ONLY IF PENDING */}
+                              {b.status === "PENDING" && (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    title="Accept booking"
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    onClick={() => handleAcceptBooking(b)}
+                                  >
+                                    <CheckCircle className="w-4 h-4" />
+                                  </Button>
+
+                                  <Button
+                                    size="icon"
+                                    variant="destructive"
+                                    title="Reject booking"
+                                    onClick={() => handleRejectBooking(b)}
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                </div>
               </>
             )}
+
+
 
             {/* Pending requests */}
             {activeTab === "pendingBooking" && role === "SERVICE_PROVIDER" && (
@@ -837,38 +1159,119 @@ export default function Dashboard() {
                     </p>
 
                     {role === "SERVICE_PROVIDER" && (
-                      <div className="mt-4 inline-flex items-center gap-3 rounded-xl bg-muted px-4 py-2">
-                        <span className="text-sm font-medium">
-                          Availability:
-                        </span>
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const newVal = !isAvailable;
-                            setIsAvailable(newVal); // animation state ONLY
+                      <div className="mt-4 flex flex-col gap-1">
 
-                            try {
-                              await updateAvailability(newVal);
-                            } catch {
-                              setIsAvailable(!newVal); // rollback
-                            }
-                          }}
-                          className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${
-                            isAvailable ? "bg-green-500" : "bg-gray-300"
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-300 ${
-                              isAvailable ? "translate-x-6" : "translate-x-0"
-                            }`}
-                          />
-                        </button>
+                        <div className="inline-flex items-center gap-3 rounded-xl bg-muted px-4 py-2">
+                          <span className="text-sm font-medium">Availability:</span>
+                            <button
+                              type="button"
+                              disabled={!canToggleAvailability}
+                              onClick={async () => {
+                                if (!canToggleAvailability) return;
+
+                                const newVal = !isAvailable;
+                                setIsAvailable(newVal);
+
+                                try {
+                                  await updateAvailability(newVal);
+                                } catch {
+                                  setIsAvailable(!newVal);
+                                }
+                              }}
+                              className={`relative w-12 h-6 rounded-full transition-colors duration-300
+                                ${isAvailable ? "bg-green-500" : "bg-gray-300"}
+                                ${!canToggleAvailability ? "opacity-50 cursor-not-allowed" : ""}
+                              `}
+                            >
+                              <span
+                                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-300 ${
+                                  isAvailable ? "translate-x-6" : "translate-x-0"
+                                }`}
+                              />
+                            </button>
+                        </div>
+
+                        {!canToggleAvailability && (
+                          <p className="text-xs text-muted-foreground ml-2">
+                            Availability can be changed only after verification approval
+                          </p>
+                        )}
+
+                        {canRequestVerification && (
+  <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 px-5 py-4">
+    <p className="text-sm text-blue-300 mb-3">
+      📄 All documents uploaded. Submit your profile for admin verification.
+    </p>
+
+    <button
+      onClick={async () => {
+        try {
+          await requestVerification();
+          toast.success("Verification request submitted");
+          await reloadProfile();
+        } catch (err) {
+          toast.error("Failed to request verification");
+        }
+      }}
+      className="
+        rounded-lg px-4 py-2 text-sm font-medium
+        bg-blue-600 text-white
+        hover:bg-blue-700
+        transition
+      "
+    >
+      Request Verification
+    </button>
+  </div>
+)}
+
+
                       </div>
                     )}
-
-                  
                   </div>
                 </div>
+
+                {/* VERIFICATION STATUS BANNER (SERVICE PROVIDER ONLY) */}
+                {role === "SERVICE_PROVIDER" && profile?.verificationStatus && (
+                  <div
+                    className={`
+                      mb-6 rounded-xl border px-5 py-4 text-sm
+                      ${
+                        profile.verificationStatus === "PENDING"
+                          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-300"
+                          : profile.verificationStatus === "APPROVED"
+                          ? "border-green-500/30 bg-green-500/10 text-green-300"
+                          : "border-muted bg-muted text-muted-foreground"
+                      }
+                    `}
+                  >
+                    {profile.verificationStatus === "PENDING" && (
+                      <>
+                        ⏳ <strong>Verification in progress</strong>
+                        <br />
+                        Your documents are under admin review. You cannot change availability
+                        or accept jobs until approval.
+                      </>
+                    )}
+
+                    {profile.verificationStatus === "APPROVED" && (
+                      <>
+                        ✅ <strong>Account verified</strong>
+                        <br />
+                        Your documents are approved. You can receive bookings normally.
+                      </>
+                    )}
+
+                    {profile.verificationStatus === "NOT_SUBMITTED" && (
+                      <>
+                        ⚠️ <strong>Verification not submitted</strong>
+                        <br />
+                        Please upload ID documents and work proof to request verification.
+                      </>
+                    )}
+                  </div>
+                )}
+
 
                 {/* EDIT PROFILE */}
                 <h2 className="text-lg font-semibold mb-6">Update Profile</h2>
@@ -922,7 +1325,263 @@ export default function Dashboard() {
                       />
                     </div>
                   </CollapsibleSection>
+
+                  {role === "SERVICE_PROVIDER" && (
+                    <CollapsibleSection
+                      title="Identity Verification"
+                      section="idVerification"
+                      openSection={openSection}
+                      setOpenSection={setOpenSection}
+                    >
+                      <div className="space-y-6">
+
+                        {isApproved && (
+                          <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300">
+                            ⚠️ <strong>Re-verification required</strong>
+                            <br />
+                            Uploading new documents will temporarily disable your account until admin approval.
+                          </div>
+                        )}
+
+                        {/* ID FRONT */}
+                        <div className="rounded-xl border border-border bg-background/40 p-5">
+                          <p className="text-sm font-medium mb-2">
+                            ID Card – Front
+                          </p>
+
+                          {/* FILE PICKER */}
+                          <label
+                            className="
+                              flex items-center justify-between
+                              rounded-lg border border-border
+                              px-4 py-3
+                              cursor-pointer
+                              bg-background/60
+                              hover:bg-background/80
+                              transition
+                            "
+                          >
+                            <span className="text-sm truncate text-muted-foreground">
+                              {idFrontFile ? idFrontFile.name : "Choose file"}
+                            </span>
+
+                            <span className="text-sm opacity-70">
+                              Browse
+                            </span>
+
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => setIdFrontFile(e.target.files[0])}
+                            />
+                          </label>
+
+                          {/* BUTTON – SLATE (NO ORANGE) */}
+                          <button
+                            onClick={handleUploadIdFront} // or handleUploadIdBack
+                            disabled={!idFrontFile}       // or !idBackFile
+                            className="
+                              mt-3 w-full
+                              rounded-lg py-2 text-sm font-medium
+                              bg-green-400 text-white
+                              hover:bg-green-500
+                              disabled:opacity-50
+                              transition
+                            "
+                          >
+                            Upload Front
+                          </button>
+
+                        </div>
+
+                        {/* ID BACK */}
+                        <div className="rounded-xl border border-border bg-background/40 p-5">
+                          <p className="text-sm font-medium mb-2">
+                            ID Card – Back
+                          </p>
+
+                          {/* FILE PICKER */}
+                          <label
+                            className="
+                              flex items-center justify-between
+                              rounded-lg border border-border
+                              px-4 py-3
+                              cursor-pointer
+                              bg-background/60
+                              hover:bg-background/80
+                              transition
+                            "
+                          >
+                            <span className="text-sm truncate text-muted-foreground">
+                              {idBackFile ? idBackFile.name : "Choose file"}
+                            </span>
+
+                            <span className="text-sm opacity-70">
+                              Browse
+                            </span>
+
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => setIdBackFile(e.target.files[0])}
+                            />
+                          </label>
+
+                          {/* BUTTON – SLATE (NO ORANGE) */}
+                          <button
+                            onClick={handleUploadIdBack}
+                            disabled={!idBackFile}
+                            className="
+                              mt-3 w-full
+                              rounded-lg py-2 text-sm font-medium
+                              bg-green-400 text-white
+                              hover:bg-green-500
+                              disabled:opacity-50
+                              transition
+                            "
+                          >
+                            Upload Back
+                          </button>
+
+                        </div>
+
+                      </div>
+                    </CollapsibleSection>
+
+                    
+                  )}
+
+                {role === "SERVICE_PROVIDER" && (
                   <CollapsibleSection
+                    title="Work Proof (PDF)"
+                    section="workPdf"
+                    openSection={openSection}
+                    setOpenSection={setOpenSection}
+                  >
+                    <div className="rounded-xl bg-background/30 p-4 space-y-4">
+
+                      <p className="text-sm font-medium">
+                        Work Proof Document (PDF)
+                      </p>
+
+                      {/* FILE INPUT */}
+                      <label
+                        className="
+                          flex items-center justify-between
+                          rounded-lg border border-border
+                          px-4 py-3
+                          cursor-pointer
+                          bg-background/60
+                          hover:bg-background/80
+                          transition
+                        "
+                      >
+                        <span className="text-sm text-muted-foreground truncate">
+                          {workPdf ? workPdf.name : "Choose file"}
+                        </span>
+
+                        <span className="text-sm opacity-70">
+                          Browse
+                        </span>
+
+                        <input
+                          type="file"
+                          accept="application/pdf"
+                          className="hidden"
+                          onChange={(e) => setWorkPdf(e.target.files[0])}
+                          disabled={!!profile?.workPdfUrl}
+                        />
+                      </label>
+
+                      {/* UPLOAD BUTTON — SAME COLOR AS ID FRONT/BACK */}
+                      <button
+                        onClick={handleUploadWorkPdf}
+                        disabled={!workPdf || !!profile?.workPdfUrl}
+                        className="
+                          w-full rounded-lg py-2 text-sm font-medium
+                          bg-emerald-600 text-white
+                          hover:bg-emerald-700
+                          disabled:opacity-50
+                          transition
+                        "
+                      >
+                        Upload Work PDF
+                      </button>
+
+                      {/* STATUS */}
+                      {profile?.workPdfUrl && (
+                        <p className="text-sm font-medium text-emerald-500">
+                          ✔ Work proof uploaded
+                        </p>
+                      )}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                
+                  {role === "SERVICE_PROVIDER" && (
+                  <CollapsibleSection
+                    title="Professional Information"
+                    section="professional"
+                    openSection={openSection}
+                    setOpenSection={setOpenSection}
+                    isEditing={editingSection === "professional"}
+                    onEdit={() => setEditingSection("professional")}
+                    onCancel={() => setEditingSection(null)}
+                    onSave={handleSaveProfessionalInfo}
+                  >
+                    <Input
+                      label="Skill"
+                      value={professionalForm.skill}
+                      onChange={(e) =>
+                        setProfessionalForm((p) => ({
+                          ...p,
+                          skill: e.target.value,
+                        }))
+                      }
+                      disabled={editingSection !== "professional"}
+                    />
+
+                    <Input
+                      label="Experience"
+                      value={professionalForm.experience}
+                      onChange={(e) =>
+                        setProfessionalForm((p) => ({
+                          ...p,
+                          experience: e.target.value,
+                        }))
+                      }
+                      disabled={editingSection !== "professional"}
+                    />
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium">Description</label>
+                      <textarea
+                        value={professionalForm.description}
+                        onChange={(e) =>
+                          setProfessionalForm((p) => ({
+                            ...p,
+                            description: e.target.value,
+                          }))
+                        }
+                        disabled={editingSection !== "professional"}
+                        rows={4}
+                        className={`w-full rounded-lg border px-3 py-2 bg-background ${
+                          editingSection !== "professional"
+                            ? "opacity-60 cursor-not-allowed"
+                            : ""
+                        }`}
+                      />
+                    </div>
+                  </CollapsibleSection>
+
+
+
+                )}
+
+<CollapsibleSection
                     title="Address"
                     section="address"
                     openSection={openSection}
