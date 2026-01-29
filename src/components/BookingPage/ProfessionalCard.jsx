@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
 export default function ProfessionalCard({ service }) {
@@ -13,6 +13,10 @@ export default function ProfessionalCard({ service }) {
     {/* PROVIDER HERO */}
     <div className="flex items-center gap-5">
       <Avatar className="size-20 ring-2 ring-primary/20">
+        <AvatarImage
+          src={`${import.meta.env.VITE_BACKEND_URL}${service.providerProfileImage}`}
+          alt={service.providerName}
+        />
         <AvatarFallback className="bg-primary/10 text-primary text-3xl font-bold">
           {service.providerName?.charAt(0) || "U"}
         </AvatarFallback>
