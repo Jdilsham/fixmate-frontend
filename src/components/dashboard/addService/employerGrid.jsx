@@ -7,6 +7,7 @@ import {
   addProviderService,
   getProviderServiceCategories,
   getProviderServices,
+  getProviderAddress
 } from "../../../../utils/profile";
 
 export default function EmployerGrid({ profile }) {
@@ -14,6 +15,8 @@ export default function EmployerGrid({ profile }) {
   const [providerServices, setProviderServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [open, setOpen] = useState(false);
+  const [location, setLocation] = useState("Not specified");
+  console.log("PROVIDER PROFILE:", profile);
 
   const [serviceForm, setServiceForm] = useState({
     serviceId: "",
@@ -37,12 +40,22 @@ export default function EmployerGrid({ profile }) {
     }
   };
 
-  /* =======================
-     LOAD ON PAGE LOAD
-  ======================= */
+
   useEffect(() => {
     loadProviderServices();
+
+    // load provider location
+    getProviderAddress()
+      .then((addr) => {
+        if (addr?.city) {
+          setLocation(addr.city);
+        }
+      })
+      .catch(() => {
+        setLocation("Not specified");
+      });
   }, []);
+
 
   useEffect(() => {
     getProviderServiceCategories()
@@ -89,28 +102,39 @@ export default function EmployerGrid({ profile }) {
   };
 
   return (
+    
     <>
-      <div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10 auto-rows-fr
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
 
-"
-      >
         {services.map((s) => (
           <EmployerCard
             key={s.providerServiceId}
             employer={{
               providerServiceId: s.providerServiceId,
-              profilePic: profile.profilePicture,
+
+              // provider info
               providerName: profile.fullName,
+              providerProfileImage: profile.profilePicture,
+
+              // service info
               serviceTitle: s.serviceTitle,
-              categoryName: s.categoryName,
-              description: s.description,
-              fixedPrice: s.fixedPrice,
+              serviceDescription: s.description,
+              fixedPriceAvailable: s.fixedPriceAvailable,
               hourlyRate: s.hourlyRate,
+
+              // meta
+              rating: null,
+              location: location,
+
+              //PROVIDER-ONLY
               verificationStatus: s.verificationStatus,
+              isActive: s.isActive,
+              isProviderView: true,      
+              showViewProfile: false,   
             }}
           />
         ))}
+
 
         <AddServiceCard onClick={() => setOpen(true)} />
       </div>

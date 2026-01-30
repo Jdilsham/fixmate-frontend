@@ -669,13 +669,13 @@ const handleUploadWorkPdf = () => {
             {activeTab === "services" && role === "SERVICE_PROVIDER" && (
               <>
                 <h2 className="text-lg font-semibold mb-4">My Services</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {providerProfile && (
-                    <EmployerGrid profile={providerProfile} />
-                  )}
-                </div>
+
+                {providerProfile && (
+                  <EmployerGrid profile={providerProfile} />
+                )}
               </>
             )}
+
 
             {/* CALENDAR */}
             {activeTab === "calendar" && role === "SERVICE_PROVIDER" && (
