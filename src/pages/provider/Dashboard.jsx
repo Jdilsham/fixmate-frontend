@@ -103,9 +103,6 @@ export default function Dashboard() {
 
   const [isAvailable, setIsAvailable] = useState(false);
   const [editImageOpen, setEditImageOpen] = useState(false);
-
-  const [openSection, setOpenSection] = useState(null);
-
   const [editingSection, setEditingSection] = useState(null);
 
   const user = authUser && profile ? { ...authUser, ...profile } : authUser;
@@ -1277,460 +1274,429 @@ const handleUploadWorkPdf = () => {
                     )}
                   </div>
                 )}
+                  {/* UPDATE PROFILE */}
+                  <h2 className="text-xl font-semibold mb-8">Update Profile</h2>
 
+                  <div className="space-y-6">
 
-                {/* EDIT PROFILE */}
-                <h2 className="text-lg font-semibold mb-6">Update Profile</h2>
+                    {/* ================= BASIC INFORMATION ================= */}
+                    <Card className="rounded-2xl border p-6 space-y-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">Basic Information</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Personal details visible on your profile
+                          </p>
+                        </div>
 
-                <div className="grid grid-cols-1  gap-6">
-                  <CollapsibleSection
-                    title="Basic Information"
-                    section="basic"
-                    openSection={openSection}
-                    setOpenSection={setOpenSection}
-                    isEditing={editingSection === "basic"}
-                    onEdit={() => setEditingSection("basic")}
-                    onCancel={() => setEditingSection(null)}
-                    onSave={handleSaveProfile}
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
-                      <Input
-                        label="First Name"
-                        value={profileForm.firstName}
-                        onChange={(e) =>
-                          setProfileForm((p) => ({
-                            ...p,
-                            firstName: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "basic"}
-                      />
-
-                      <Input
-                        label="Last Name"
-                        value={profileForm.lastName}
-                        onChange={(e) =>
-                          setProfileForm((p) => ({
-                            ...p,
-                            lastName: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "basic"}
-                      />
-
-                      <Input
-                        label="Phone Number"
-                        value={profileForm.phone}
-                        onChange={(e) =>
-                          setProfileForm((p) => ({
-                            ...p,
-                            phone: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "basic"}
-                      />
-                    </div>
-                  </CollapsibleSection>
-
-                  {role === "SERVICE_PROVIDER" && (
-                    <CollapsibleSection
-                      title="Identity Verification"
-                      section="idVerification"
-                      openSection={openSection}
-                      setOpenSection={setOpenSection}
-                    >
-                      <div className="space-y-6">
-
-                        {isApproved && (
-                          <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300">
-                            ⚠️ <strong>Re-verification required</strong>
-                            <br />
-                            Uploading new documents will temporarily disable your account until admin approval.
-                          </div>
+                        {editingSection !== "basic" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingSection("basic")}
+                          >
+                            Edit
+                          </Button>
                         )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                          label="First Name"
+                          value={profileForm.firstName}
+                          onChange={(e) =>
+                            setProfileForm((p) => ({ ...p, firstName: e.target.value }))
+                          }
+                          disabled={editingSection !== "basic"}
+                        />
+
+                        <Input
+                          label="Last Name"
+                          value={profileForm.lastName}
+                          onChange={(e) =>
+                            setProfileForm((p) => ({ ...p, lastName: e.target.value }))
+                          }
+                          disabled={editingSection !== "basic"}
+                        />
+
+                        <Input
+                          label="Phone Number"
+                          value={profileForm.phone}
+                          onChange={(e) =>
+                            setProfileForm((p) => ({ ...p, phone: e.target.value }))
+                          }
+                          disabled={editingSection !== "basic"}
+                        />
+                      </div>
+
+                      {editingSection === "basic" && (
+                        <div className="flex gap-3 pt-4">
+                          <Button onClick={handleSaveProfile}>Save Changes</Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setEditingSection(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
+                    </Card>
+
+                    {/* ================= IDENTITY VERIFICATION ================= */}
+                    {role === "SERVICE_PROVIDER" && (
+                      <Card className="rounded-2xl border p-6 space-y-6">
+                        <div>
+                          <h3 className="text-lg font-semibold">Identity Verification</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Upload your national ID card (front and back)
+                          </p>
+                        </div>
 
                         {/* ID FRONT */}
-                        <div className="rounded-xl border border-border bg-background/40 p-5">
-                          <p className="text-sm font-medium mb-2">
-                            ID Card – Front
-                          </p>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">ID Card – Front</label>
 
-                          {/* FILE PICKER */}
-                          <label
-                            className="
-                              flex items-center justify-between
-                              rounded-lg border border-border
-                              px-4 py-3
-                              cursor-pointer
-                              bg-background/60
-                              hover:bg-background/80
-                              transition
-                            "
-                          >
-                            <span className="text-sm truncate text-muted-foreground">
-                              {idFrontFile ? idFrontFile.name : "Choose file"}
-                            </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setIdFrontFile(e.target.files?.[0] || null)}
+                            className="block w-full text-sm
+                              file:mr-4 file:rounded-lg file:border-0
+                              file:bg-muted file:px-4 file:py-2
+                              file:text-sm file:font-medium
+                              hover:file:bg-muted/70
+                              cursor-pointer"
+                          />
 
-                            <span className="text-sm opacity-70">
-                              Browse
-                            </span>
-
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => setIdFrontFile(e.target.files[0])}
-                            />
-                          </label>
-
-                          {/* BUTTON – SLATE (NO ORANGE) */}
-                          <button
-                            onClick={handleUploadIdFront} // or handleUploadIdBack
-                            disabled={!idFrontFile}       // or !idBackFile
-                            className="
-                              mt-3 w-full
-                              rounded-lg py-2 text-sm font-medium
-                              bg-green-400 text-white
-                              hover:bg-green-500
-                              disabled:opacity-50
-                              transition
-                            "
+                          <Button
+                            onClick={handleUploadIdFront}
+                            disabled={!idFrontFile}
+                            className="w-full md:w-fit"
                           >
                             Upload Front
-                          </button>
+                          </Button>
 
+                          {profile?.idFrontUrl && (
+                            <p className="text-xs text-muted-foreground">
+                              ✔ Front ID already uploaded. Uploading again requires re-verification.
+                            </p>
+                          )}
                         </div>
 
                         {/* ID BACK */}
-                        <div className="rounded-xl border border-border bg-background/40 p-5">
-                          <p className="text-sm font-medium mb-2">
-                            ID Card – Back
-                          </p>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">ID Card – Back</label>
 
-                          {/* FILE PICKER */}
-                          <label
-                            className="
-                              flex items-center justify-between
-                              rounded-lg border border-border
-                              px-4 py-3
-                              cursor-pointer
-                              bg-background/60
-                              hover:bg-background/80
-                              transition
-                            "
-                          >
-                            <span className="text-sm truncate text-muted-foreground">
-                              {idBackFile ? idBackFile.name : "Choose file"}
-                            </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setIdBackFile(e.target.files?.[0] || null)}
+                            className="block w-full text-sm
+                              file:mr-4 file:rounded-lg file:border-0
+                              file:bg-muted file:px-4 file:py-2
+                              file:text-sm file:font-medium
+                              hover:file:bg-muted/70
+                              cursor-pointer"
+                          />
 
-                            <span className="text-sm opacity-70">
-                              Browse
-                            </span>
-
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => setIdBackFile(e.target.files[0])}
-                            />
-                          </label>
-
-                          {/* BUTTON – SLATE (NO ORANGE) */}
-                          <button
+                          <Button
                             onClick={handleUploadIdBack}
                             disabled={!idBackFile}
-                            className="
-                              mt-3 w-full
-                              rounded-lg py-2 text-sm font-medium
-                              bg-green-400 text-white
-                              hover:bg-green-500
-                              disabled:opacity-50
-                              transition
-                            "
+                            className="w-full md:w-fit"
                           >
                             Upload Back
-                          </button>
+                          </Button>
 
+                          {profile?.idBackUrl && (
+                            <p className="text-xs text-muted-foreground">
+                              ✔ Back ID already uploaded. Uploading again requires re-verification.
+                            </p>
+                          )}
+                        </div>
+                      </Card>
+                    )}
+
+
+                    {/* ================= WORK PROOF (PDF) ================= */}
+                    {role === "SERVICE_PROVIDER" && (
+                      <Card className="rounded-2xl border p-6 space-y-5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold">Work Proof (PDF)</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Upload documents that prove your professional experience
+                            </p>
+                          </div>
                         </div>
 
-                      </div>
-                    </CollapsibleSection>
+                        <div className="space-y-3">
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            onChange={(e) => setWorkPdf(e.target.files?.[0] || null)}
+                            className="block w-full text-sm
+                              file:mr-4 file:rounded-lg file:border-0
+                              file:bg-muted file:px-4 file:py-2
+                              file:text-sm file:font-medium
+                              hover:file:bg-muted/70
+                              cursor-pointer"
+                          />
 
-                    
-                  )}
+                          <Button
+                            onClick={handleUploadWorkPdf}
+                            disabled={!workPdf}
+                            className="w-full md:w-fit"
+                          >
+                            Upload Work Proof
+                          </Button>
 
-                {role === "SERVICE_PROVIDER" && (
-                  <CollapsibleSection
-                    title="Work Proof (PDF)"
-                    section="workPdf"
-                    openSection={openSection}
-                    setOpenSection={setOpenSection}
-                  >
-                    <div className="rounded-xl bg-background/30 p-4 space-y-4">
+                          {profile?.workPdfUrl && (
+                            <p className="text-xs text-muted-foreground">
+                              📄 A work proof document is already uploaded. Uploading a new file
+                              will require re-verification.
+                            </p>
+                          )}
+                        </div>
+                      </Card>
+                    )}
 
-                      <p className="text-sm font-medium">
-                        Work Proof Document (PDF)
-                      </p>
 
-                      {/* FILE INPUT */}
-                      <label
-                        className="
-                          flex items-center justify-between
-                          rounded-lg border border-border
-                          px-4 py-3
-                          cursor-pointer
-                          bg-background/60
-                          hover:bg-background/80
-                          transition
-                        "
-                      >
-                        <span className="text-sm text-muted-foreground truncate">
-                          {workPdf ? workPdf.name : "Choose file"}
-                        </span>
+                    {/* ================= PROFESSIONAL INFORMATION ================= */}
+                    {role === "SERVICE_PROVIDER" && (
+                      <Card className="rounded-2xl border p-6 space-y-5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold">Professional Information</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Your skills and experience
+                            </p>
+                          </div>
 
-                        <span className="text-sm opacity-70">
-                          Browse
-                        </span>
+                          {editingSection !== "professional" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingSection("professional")}
+                            >
+                              Edit
+                            </Button>
+                          )}
+                        </div>
 
-                        <input
-                          type="file"
-                          accept="application/pdf"
-                          className="hidden"
-                          onChange={(e) => setWorkPdf(e.target.files[0])}
-                          disabled={!!profile?.workPdfUrl}
+                        <Input
+                          label="Skill"
+                          value={professionalForm.skill}
+                          onChange={(e) =>
+                            setProfessionalForm((p) => ({ ...p, skill: e.target.value }))
+                          }
+                          disabled={editingSection !== "professional"}
                         />
-                      </label>
 
-                      {/* UPLOAD BUTTON — SAME COLOR AS ID FRONT/BACK */}
-                      <button
-                        onClick={handleUploadWorkPdf}
-                        disabled={!workPdf || !!profile?.workPdfUrl}
-                        className="
-                          w-full rounded-lg py-2 text-sm font-medium
-                          bg-emerald-600 text-white
-                          hover:bg-emerald-700
-                          disabled:opacity-50
-                          transition
-                        "
-                      >
-                        Upload Work PDF
-                      </button>
+                        <Input
+                          label="Experience"
+                          value={professionalForm.experience}
+                          onChange={(e) =>
+                            setProfessionalForm((p) => ({ ...p, experience: e.target.value }))
+                          }
+                          disabled={editingSection !== "professional"}
+                        />
 
-                      {/* STATUS */}
-                      {profile?.workPdfUrl && (
-                        <p className="text-sm font-medium text-emerald-500">
-                          ✔ Work proof uploaded
-                        </p>
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium">Description</label>
+                          <textarea
+                            rows={4}
+                            value={professionalForm.description}
+                            onChange={(e) =>
+                              setProfessionalForm((p) => ({ ...p, description: e.target.value }))
+                            }
+                            disabled={editingSection !== "professional"}
+                            className={`w-full rounded-lg border px-3 py-2 bg-background ${
+                              editingSection !== "professional"
+                                ? "opacity-60 cursor-not-allowed"
+                                : ""
+                            }`}
+                          />
+                        </div>
+
+                        {editingSection === "professional" && (
+                          <div className="flex gap-3 pt-4">
+                            <Button onClick={handleSaveProfessionalInfo}>
+                              Save Changes
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setEditingSection(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
+                      </Card>
+                    )}
+
+                    {/* ================= ADDRESS ================= */}
+                    <Card className="rounded-2xl border p-6 space-y-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">Address</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Your service location
+                          </p>
+                        </div>
+
+                        {editingSection !== "address" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingSection("address")}
+                          >
+                            {hasAddress ? "Edit" : "Add"}
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                          label="Address Line 1"
+                          value={addressForm.addressLine1}
+                          onChange={(e) =>
+                            setAddressForm((p) => ({ ...p, addressLine1: e.target.value }))
+                          }
+                          disabled={editingSection !== "address"}
+                        />
+
+                        <Input
+                          label="Address Line 2"
+                          value={addressForm.addressLine2}
+                          onChange={(e) =>
+                            setAddressForm((p) => ({ ...p, addressLine2: e.target.value }))
+                          }
+                          disabled={editingSection !== "address"}
+                        />
+
+                        <Input
+                          label="Province"
+                          value={addressForm.province}
+                          onChange={(e) =>
+                            setAddressForm((p) => ({ ...p, province: e.target.value }))
+                          }
+                          disabled={editingSection !== "address"}
+                        />
+
+                        <Input
+                          label="City"
+                          value={addressForm.city}
+                          onChange={(e) =>
+                            setAddressForm((p) => ({ ...p, city: e.target.value }))
+                          }
+                          disabled={editingSection !== "address"}
+                        />
+                      </div>
+
+                      {editingSection === "address" && (
+                        <div className="flex gap-3 pt-4">
+                          <Button onClick={handleSaveAddress}>Save Address</Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setEditingSection(null)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       )}
-                    </div>
-                  </CollapsibleSection>
-                )}
+                    </Card>
 
-                
-                  {role === "SERVICE_PROVIDER" && (
-                  <CollapsibleSection
-                    title="Professional Information"
-                    section="professional"
-                    openSection={openSection}
-                    setOpenSection={setOpenSection}
-                    isEditing={editingSection === "professional"}
-                    onEdit={() => setEditingSection("professional")}
-                    onCancel={() => setEditingSection(null)}
-                    onSave={handleSaveProfessionalInfo}
-                  >
-                    <Input
-                      label="Skill"
-                      value={professionalForm.skill}
-                      onChange={(e) =>
-                        setProfessionalForm((p) => ({
-                          ...p,
-                          skill: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "professional"}
-                    />
+                    {/* ================= CHANGE PASSWORD ================= */}
+                    <Card className="rounded-2xl border p-6 space-y-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">Change Password</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Update your account password
+                          </p>
+                        </div>
 
-                    <Input
-                      label="Experience"
-                      value={professionalForm.experience}
-                      onChange={(e) =>
-                        setProfessionalForm((p) => ({
-                          ...p,
-                          experience: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "professional"}
-                    />
+                        {editingSection !== "password" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingSection("password")}
+                          >
+                            Edit
+                          </Button>
+                        )}
+                      </div>
 
-                    <div className="space-y-1">
-                      <label className="text-sm font-medium">Description</label>
-                      <textarea
-                        value={professionalForm.description}
+                      <Input
+                        label="Current Password"
+                        type="password"
+                        value={passwordForm.currentPassword}
                         onChange={(e) =>
-                          setProfessionalForm((p) => ({
+                          setPasswordForm((p) => ({
                             ...p,
-                            description: e.target.value,
+                            currentPassword: e.target.value,
                           }))
                         }
-                        disabled={editingSection !== "professional"}
-                        rows={4}
-                        className={`w-full rounded-lg border px-3 py-2 bg-background ${
-                          editingSection !== "professional"
-                            ? "opacity-60 cursor-not-allowed"
-                            : ""
-                        }`}
+                        disabled={editingSection !== "password"}
                       />
-                    </div>
-                  </CollapsibleSection>
 
+                      <Input
+                        label="New Password"
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) =>
+                          setPasswordForm((p) => ({
+                            ...p,
+                            newPassword: e.target.value,
+                          }))
+                        }
+                        disabled={editingSection !== "password"}
+                      />
 
+                      <Input
+                        label="Confirm New Password"
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordForm((p) => ({
+                            ...p,
+                            confirmPassword: e.target.value,
+                          }))
+                        }
+                        disabled={editingSection !== "password"}
+                      />
 
-                )}
+                      {editingSection === "password" && (
+                        <div className="flex gap-3 pt-4">
+                          <Button
+                            onClick={handleChangePassword}
+                            disabled={changingPassword}
+                          >
+                            {changingPassword ? "Saving..." : "Change Password"}
+                          </Button>
 
-                  <CollapsibleSection
-                    title="Address"
-                    section="address"
-                    openSection={openSection}
-                    setOpenSection={setOpenSection}
-                    isEditing={editingSection === "address"}
-                    onEdit={() => setEditingSection("address")}
-                    onCancel={() => setEditingSection(null)}
-                    onSave={handleSaveAddress}
-                    hasAddress={hasAddress}
-                    showAddInstead={true}
-                  >
-                    <Input
-                      label="Address Line 1"
-                      value={addressForm.addressLine1}
-                      onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          addressLine1: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "address"}
-                    />
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setEditingSection(null);
+                              setPasswordForm({
+                                currentPassword: "",
+                                newPassword: "",
+                                confirmPassword: "",
+                              });
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
+                    </Card>
 
-                    <Input
-                      label="Address Line 2"
-                      value={addressForm.addressLine2}
-                      onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          addressLine2: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "address"}
-                    />
-
-                    <Input
-                      label="Province"
-                      value={addressForm.province}
-                      onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          province: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "address"}
-                    />
-
-                    <Input
-                      label="City"
-                      value={addressForm.city}
-                      onChange={(e) =>
-                        setAddressForm((p) => ({ ...p, city: e.target.value }))
-                      }
-                      disabled={editingSection !== "address"}
-                    />
-
-                    <Input
-                      label="Latitude"
-                      value={addressForm.latitude}
-                      onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          latitude: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "address"}
-                    />
-
-                    <Input
-                      label="Longitude"
-                      value={addressForm.longitude}
-                      onChange={(e) =>
-                        setAddressForm((p) => ({
-                          ...p,
-                          longitude: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "address"}
-                    />
-                  </CollapsibleSection>
-
-                  <CollapsibleSection
-                    title="Change Password"
-                    section="password"
-                    openSection={openSection}
-                    setOpenSection={setOpenSection}
-                    isEditing={editingSection === "password"}
-                    changingPassword={changingPassword}
-                    onEdit={() => setEditingSection("password")}
-                    onCancel={() => {
-                      setEditingSection(null);
-                      setPasswordForm({
-                        currentPassword: "",
-                        newPassword: "",
-                        confirmPassword: "",
-                      });
-                    }}
-                    onSave={handleChangePassword}
-                  >
-                    <Input
-                      label="Current Password"
-                      type="password"
-                      value={passwordForm.currentPassword}
-                      onChange={(e) =>
-                        setPasswordForm((p) => ({
-                          ...p,
-                          currentPassword: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "password"}
-                    />
-
-                    <Input
-                      label="New Password"
-                      type="password"
-                      value={passwordForm.newPassword}
-                      onChange={(e) =>
-                        setPasswordForm((p) => ({
-                          ...p,
-                          newPassword: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "password"}
-                    />
-
-                    <Input
-                      label="Confirm New Password"
-                      type="password"
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) =>
-                        setPasswordForm((p) => ({
-                          ...p,
-                          confirmPassword: e.target.value,
-                        }))
-                      }
-                      disabled={editingSection !== "password"}
-                    />
-                  </CollapsibleSection>
                   </div>
-              </div>
-
+                </div>
               </>
             )}
+            
           </div>
         </main>
       </div>
@@ -1803,88 +1769,6 @@ const handleUploadWorkPdf = () => {
     </div>
 
               
-  );
-}
-
-/* =======================
-   COLLAPSIBLE SECTION
-======================= */
-function CollapsibleSection({
-  title,
-  section,
-  openSection,
-  setOpenSection,
-  isEditing,
-  onEdit,
-  onCancel,
-  onSave,
-  changingPassword,
-  hasAddress,
-  showAddInstead,
-  children,
-}) {
-  const isOpen = openSection === section;
-
-  return (
-    <div className="rounded-2xl border bg-card shadow-sm">
-      <div className="flex items-center justify-between px-5 py-4">
-        <button
-          type="button"
-          onClick={() => setOpenSection(isOpen ? null : section)}
-          className="flex items-center gap-2 "
-        >
-          <span className="font-medium">{title}</span>
-          <span
-            className={`transition-transform ${isOpen ? "rotate-180" : ""} `}
-          >
-            ▼
-          </span>
-        </button>
-
-        {isOpen && !isEditing && (
-          <button
-            type="button"
-            onClick={onEdit}
-            className="text-sm text-primary hover:underline"
-          >
-            {showAddInstead && !hasAddress ? "Add Address" : "Edit"}
-          </button>
-        )}
-      </div>
-
-      {isOpen && (
-        <div className="px-5 pb-5 space-y-4">
-          {children}
-
-          {isEditing && (
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onSave}
-                disabled={title === "Change Password" && changingPassword}
-                className={`rounded-lg px-5 py-2 text-sm text-primary-foreground ${
-                  title === "Change Password" && changingPassword
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-primary"
-                }`}
-              >
-                {title === "Change Password" && changingPassword
-                  ? "Saving..."
-                  : "Save Changes"}
-              </button>
-
-              <button
-                type="button"
-                onClick={onCancel}
-                className="rounded-lg border px-5 py-2 text-sm hover:bg-muted"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
   );
 }
 
