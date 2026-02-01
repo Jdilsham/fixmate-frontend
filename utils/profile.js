@@ -26,13 +26,16 @@ export async function getUserProfile() {
         id: p.providerId,
         fullName: p.fullName,
         city: p.city,
+
+        skill: p.skill,
+        experience: p.experience,
         description: p.description,
-        service: p.skill,
+
         rating: p.rating,
-        
+
         verified: p.isVerified,
         verificationStatus: p.verificationStatus,
-        
+
         idFrontUrl: p.idFrontUrl,
         idBackUrl: p.idBackUrl,
         workPdfUrl: p.workPdfUrl,
@@ -47,6 +50,7 @@ export async function getUserProfile() {
         phone: p.phone,
         role,
       };
+
 
     }
     

@@ -54,6 +54,8 @@ import {
   requestVerification
 } from "../../../utils/profile";
 
+const API = import.meta.env.VITE_BACKEND_URL;
+
 /* =======================
    ROLE CONFIG
 ======================= */
@@ -213,8 +215,6 @@ export default function Dashboard() {
         description: profileData?.description || "",
       });
     }
-
-
 
 
     // LOAD ADDRESS (ROLE BASED)
@@ -1259,7 +1259,7 @@ const handleUploadWorkPdf = () => {
 
                     {profile.verificationStatus === "APPROVED" && (
                       <>
-                        ✅ <strong>Account verified</strong>
+                        <strong>Account verified</strong>
                         <br />
                         Your documents are approved. You can receive bookings normally.
                       </>
@@ -1342,125 +1342,6 @@ const handleUploadWorkPdf = () => {
                       )}
                     </Card>
 
-                    {/* ================= IDENTITY VERIFICATION ================= */}
-                    {role === "SERVICE_PROVIDER" && (
-                      <Card className="rounded-2xl border p-6 space-y-6">
-                        <div>
-                          <h3 className="text-lg font-semibold">Identity Verification</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Upload your national ID card (front and back)
-                          </p>
-                        </div>
-
-                        {/* ID FRONT */}
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">ID Card – Front</label>
-
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setIdFrontFile(e.target.files?.[0] || null)}
-                            className="block w-full text-sm
-                              file:mr-4 file:rounded-lg file:border-0
-                              file:bg-muted file:px-4 file:py-2
-                              file:text-sm file:font-medium
-                              hover:file:bg-muted/70
-                              cursor-pointer"
-                          />
-
-                          <Button
-                            onClick={handleUploadIdFront}
-                            disabled={!idFrontFile}
-                            className="w-full md:w-fit"
-                          >
-                            Upload Front
-                          </Button>
-
-                          {profile?.idFrontUrl && (
-                            <p className="text-xs text-muted-foreground">
-                              ✔ Front ID already uploaded. Uploading again requires re-verification.
-                            </p>
-                          )}
-                        </div>
-
-                        {/* ID BACK */}
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">ID Card – Back</label>
-
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setIdBackFile(e.target.files?.[0] || null)}
-                            className="block w-full text-sm
-                              file:mr-4 file:rounded-lg file:border-0
-                              file:bg-muted file:px-4 file:py-2
-                              file:text-sm file:font-medium
-                              hover:file:bg-muted/70
-                              cursor-pointer"
-                          />
-
-                          <Button
-                            onClick={handleUploadIdBack}
-                            disabled={!idBackFile}
-                            className="w-full md:w-fit"
-                          >
-                            Upload Back
-                          </Button>
-
-                          {profile?.idBackUrl && (
-                            <p className="text-xs text-muted-foreground">
-                              ✔ Back ID already uploaded. Uploading again requires re-verification.
-                            </p>
-                          )}
-                        </div>
-                      </Card>
-                    )}
-
-
-                    {/* ================= WORK PROOF (PDF) ================= */}
-                    {role === "SERVICE_PROVIDER" && (
-                      <Card className="rounded-2xl border p-6 space-y-5">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-lg font-semibold">Work Proof (PDF)</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Upload documents that prove your professional experience
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <input
-                            type="file"
-                            accept="application/pdf"
-                            onChange={(e) => setWorkPdf(e.target.files?.[0] || null)}
-                            className="block w-full text-sm
-                              file:mr-4 file:rounded-lg file:border-0
-                              file:bg-muted file:px-4 file:py-2
-                              file:text-sm file:font-medium
-                              hover:file:bg-muted/70
-                              cursor-pointer"
-                          />
-
-                          <Button
-                            onClick={handleUploadWorkPdf}
-                            disabled={!workPdf}
-                            className="w-full md:w-fit"
-                          >
-                            Upload Work Proof
-                          </Button>
-
-                          {profile?.workPdfUrl && (
-                            <p className="text-xs text-muted-foreground">
-                              📄 A work proof document is already uploaded. Uploading a new file
-                              will require re-verification.
-                            </p>
-                          )}
-                        </div>
-                      </Card>
-                    )}
-
-
                     {/* ================= PROFESSIONAL INFORMATION ================= */}
                     {role === "SERVICE_PROVIDER" && (
                       <Card className="rounded-2xl border p-6 space-y-5">
@@ -1533,6 +1414,236 @@ const handleUploadWorkPdf = () => {
                         )}
                       </Card>
                     )}
+
+                    {/* ================= IDENTITY VERIFICATION ================= */}
+                    {role === "SERVICE_PROVIDER" && (
+                      <Card className="rounded-2xl border p-6 space-y-6">
+                        <div>
+                          <h3 className="text-lg font-semibold">Identity Verification</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Upload your national ID card (front and back)
+                          </p>
+                        </div>
+
+                        {/* ================= ID FRONT ================= */}
+                        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-start">
+
+                          {/* LEFT — Upload Card */}
+                          <div className="rounded-xl border bg-card p-5 space-y-4">
+                            <div>
+                              <label className="text-sm font-semibold">ID Card – Front</label>
+                              <p className="text-xs text-muted-foreground">
+                                Upload a clear photo of the front side
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setIdFrontFile(e.target.files?.[0] || null)}
+                                className="block w-full text-sm
+                                  file:mr-3 file:rounded-md file:border-0
+                                  file:bg-muted file:px-3 file:py-2
+                                  file:text-xs file:font-medium
+                                  hover:file:bg-muted/70
+                                  cursor-pointer"
+                              />
+
+                              <Button
+                                onClick={handleUploadIdFront}
+                                disabled={!idFrontFile}
+                                className="shrink-0"
+                              >
+                                Upload
+                              </Button>
+                            </div>
+
+                            {profile?.idFrontUrl && (
+                              <p className="text-xs flex items-center gap-1
+                                text-amber-700 dark:text-amber-300">
+                                ⚠ Re-uploading will require re-verification
+                              </p>
+
+                            )}
+                          </div>
+
+                          {/* RIGHT — Preview Card */}
+                          {profile?.idFrontUrl && (
+                            <div className="rounded-xl border bg-muted/40 p-4 shadow-sm">
+                              <p className="text-xs font-semibold mb-2 text-muted-foreground">
+                                Current ID (Front)
+                              </p>
+
+                              <div className="relative overflow-hidden rounded-lg border bg-background">
+                              <img
+                                src={`${API}${profile.idFrontUrl}`}
+                                alt="ID Front"
+                                className="
+                                  w-full h-70 object-cover
+                                  rounded-lg
+                                  transition-transform duration-300
+                                  hover:scale-105
+                                "
+                              />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+
+                        <hr className="border-muted" />
+
+                        {/* ================= ID CARD – BACK ================= */}
+                        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-start">
+
+                          {/* LEFT — Upload Card */}
+                          <div className="rounded-xl border bg-card p-5 space-y-4">
+                            <div>
+                              <label className="text-sm font-semibold">ID Card – Back</label>
+                              <p className="text-xs text-muted-foreground">
+                                Upload a clear photo of the back side
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => setIdBackFile(e.target.files?.[0] || null)}
+                                className="block w-full text-sm
+                                  file:mr-3 file:rounded-md file:border-0
+                                  file:bg-muted file:px-3 file:py-2
+                                  file:text-xs file:font-medium
+                                  hover:file:bg-muted/70
+                                  cursor-pointer"
+                              />
+
+                              <Button
+                                onClick={handleUploadIdBack}
+                                disabled={!idBackFile}
+                                className="shrink-0"
+                              >
+                                Upload
+                              </Button>
+                            </div>
+
+                            {profile?.idBackUrl && (
+                               <p className="text-xs flex items-center gap-1
+                                text-amber-700 dark:text-amber-300">
+                                ⚠ Re-uploading will require re-verification
+                              </p>
+                            )}
+                          </div>
+
+                          {/* RIGHT — Preview Card */}
+                          {profile?.idBackUrl && (
+                            <div className="rounded-xl border bg-muted/40 p-4 shadow-sm">
+                              <p className="text-xs font-semibold mb-2 text-muted-foreground">
+                                Current ID (Back)
+                              </p>
+
+                              <div className="relative overflow-hidden rounded-lg border bg-background">
+                                <img
+                                  src={`${API}${profile.idBackUrl}`}
+                                  alt="ID Back"
+                                  className="
+                                    w-full h-70 object-cover
+                                    rounded-lg
+                                    transition-transform duration-300
+                                    hover:scale-105
+                                  "
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </Card>
+                    )}
+
+
+                  {/* ================= WORK PROOF (PDF) ================= */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-stretch">
+
+                      {/* LEFT — Upload Card */}
+                      <div className="rounded-xl border bg-card p-5 space-y-4 h-full flex flex-col justify-between">
+                        <div className="space-y-1">
+                          <label className="text-sm font-semibold">Work Proof (PDF)</label>
+                          <p className="text-xs text-muted-foreground">
+                            Upload documents that prove your professional experience
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            onChange={(e) => setWorkPdf(e.target.files?.[0] || null)}
+                            className="block w-full text-sm
+                              file:mr-3 file:rounded-md file:border-0
+                              file:bg-muted file:px-3 file:py-2
+                              file:text-xs file:font-medium
+                              hover:file:bg-muted/70
+                              cursor-pointer"
+                          />
+
+                          <Button
+                            onClick={handleUploadWorkPdf}
+                            disabled={!workPdf}
+                            className="shrink-0"
+                          >
+                            Upload
+                          </Button>
+                        </div>
+
+                        {profile?.workPdfUrl && (
+                          <p className="text-xs flex items-center gap-1
+                            text-amber-700 dark:text-amber-300">
+                            ⚠ Re-uploading will require re-verification
+                          </p>
+
+                        )}
+                      </div>
+
+                      {/* RIGHT — Preview Card */}
+                      {profile?.workPdfUrl && (
+                        <div className="rounded-xl border bg-muted/40 p-5 shadow-sm h-full flex flex-col justify-center">
+                          <p className="text-xs font-semibold mb-3 text-muted-foreground">
+                            Current Work Proof
+                          </p>
+
+                          <div className="flex items-center gap-4 rounded-lg border bg-background p-4">
+                            {/* PDF Icon */}
+                            <div className="w-12 h-12 rounded-lg bg-red-500/10 text-red-500
+                                            flex items-center justify-center text-sm font-bold">
+                              PDF
+                            </div>
+
+                            {/* File Info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {profile.workPdfUrl.split("/").pop()}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Uploaded document
+                              </p>
+                            </div>
+
+                            {/* View */}
+                            <a
+                              href={`${API}${profile.workPdfUrl}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-primary hover:underline"
+                            >
+                              View
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
 
                     {/* ================= ADDRESS ================= */}
                     <Card className="rounded-2xl border p-6 space-y-5">
