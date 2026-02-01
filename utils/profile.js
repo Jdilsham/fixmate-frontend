@@ -86,23 +86,23 @@ export async function getUserProfile() {
   }
 }
 
-export async function updateAvailability(isAvailable) {
+export async function updateAvailability() {
   const auth = getAuthUser();
-  if(!auth) return null;
+  if (!auth) throw new Error("Not authenticated");
 
-  try{
-    const res =await axios.patch(`${API}/api/provider/availability`, 
-    { isAvailable },
+  const res = await axios.patch(
+    `${API}/api/provider/availability`,
+    {},
     {
-      headers: { Authorization: `Bearer ${auth.token}`,},
-    });
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
 
-    return res.data;
-  } catch (err) {
-    console.error("Failed to update availability", err);
-    throw err;
-  }
+  return res.data; // { isAvailable: true/false }
 }
+
 
 export async function updateProviderProfile(payload) {
   const auth = getAuthUser();

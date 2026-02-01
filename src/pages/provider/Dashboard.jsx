@@ -31,8 +31,8 @@ import BookingViewDialog from "../../components/dashboard/bookings/BookingViewDi
 import CustomerPaymentDialog from "../../components/dashboard/payments/CustomerPaymentDialog";
 import { getCustomerPayment } from "../../../utils/payment";
 import RejectBookingDialog from "../../components/dashboard/bookings/RejectBookingDialog";
-
 import ReVerificationDialog from "../../components/dashboard/ReVerificationDialog";
+import AvailabilityToggle from "../../components/dashboard/AvailabilityToggle";
 
 
 import {
@@ -602,6 +602,22 @@ const handleUploadWorkPdf = () => {
     role === "SERVICE_PROVIDER" &&
     profile?.verificationStatus === "APPROVED";
 
+
+  const handleAvailabilityToggle = async () => {
+  if (!canToggleAvailability) return;
+
+  const previous = isAvailable;
+  setIsAvailable(!previous); // optimistic UI
+
+  try {
+    const res = await updateAvailability(!previous);
+    setIsAvailable(res.isAvailable);
+  } catch (err) {
+    setIsAvailable(previous); // rollback on error
+  }
+};
+
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -1154,18 +1170,31 @@ const handleUploadWorkPdf = () => {
                         <div className="space-y-4">
                           <div>
                             <p className="text-muted-foreground text-sm">Account Status</p>
-                              {user?.verified && (
+                              {profile?.verificationStatus === "APPROVED" && (
                                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-600">
                                   ✓ Verified
+                                </span>
+                              )}
+
+                              {profile?.verificationStatus === "PENDING" && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-600">
+                                  ⏳ Pending Verification
+                                </span>
+                              )}
+
+                              {profile?.verificationStatus === "NOT_SUBMITTED" && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-500/10 text-gray-600">
+                                  Not Verified
                                 </span>
                               )}
                           </div>
 
                           {role === "SERVICE_PROVIDER" && (
-                            <div>
-                              <p className="text-muted-foreground text-sm mb-2">Availability</p>
+                            <div className="space-y-1">
+                              {/* Label + Toggle SAME LINE */}
+                              <div className="flex items-center justify-between">
+                                <p className="text-muted-foreground text-sm">Availability</p>
 
-                              <div className="flex items-center gap-4">
                                 <button
                                   disabled={!canToggleAvailability}
                                   onClick={async () => {
@@ -1191,14 +1220,16 @@ const handleUploadWorkPdf = () => {
                                     `}
                                   />
                                 </button>
-
-                                {!canToggleAvailability && (
-                                  <p className="text-xs text-muted-foreground">
-                                    Verify your account to change availability
-                                  </p>
-                                )}
                               </div>
+
+                              {/* Helper text BELOW */}
+                              {!canToggleAvailability && (
+                                <p className="text-xs text-muted-foreground">
+                                  Verify your account to change availability
+                                </p>
+                              )}
                             </div>
+
                           )}
                         </div>
 
