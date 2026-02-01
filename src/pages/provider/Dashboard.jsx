@@ -1086,154 +1086,128 @@ const handleUploadWorkPdf = () => {
             {/* PROFILE */}
             {activeTab === "profile" && (
               <>
-                {/* PROFILE HEADER */}
-                <div className="border-b pb-6 mb-8">
-                  <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 items-start">
+                {/* ================= PROFILE HEADER ================= */}
+                <Card className="rounded-3xl border p-8 mb-10">
+                  <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8 items-center">
 
-                  <div className=" flex flex-col relative w-28 h-28 md:w-36 md:h-36 shrink-0 justify-end">
-                    <div className="absolute flex flex-col items-center inset-0 rounded-full bg-transparent">
-                      <Avatar.Root
-                        key={user?.profilePicture}
-                        className="relative w-full h-full rounded-full overflow-hidden bg-background"
-                      >
-                        <Avatar.Image
-                          src={user?.profilePicture}
-                          alt="Profile Picture"
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover object-center"
-                        />
-                        <Avatar.Fallback className="flex items-center justify-center w-full h-full text-2xl font-semibold">
-                          U
-                        </Avatar.Fallback>
-                      </Avatar.Root>
+                    {/* LEFT — PROFILE IMAGE */}
+                  <div className="relative w-58 h-58 rounded-full overflow-hidden shadow-lg">
+                    <Avatar.Root className="w-full h-full">
+                      <Avatar.Image
+                        src={user?.profilePicture}
+                        alt="Profile"
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                      <Avatar.Fallback className="flex items-center justify-center w-full h-full rounded-full text-4xl font-bold bg-muted">
+                        {user?.fullName?.[0] || "U"}
+                      </Avatar.Fallback>
+                    </Avatar.Root>
 
-                      {role === "SERVICE_PROVIDER" && (
-                        <span
-                          className={`w-5 h-5 rounded-full absolute top-4 right-2 border-2 border-background ${
-                            isAvailable ? "bg-green-500" : "bg-red-500"
-                          }`}
-                        />
-                      )}
-
-
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          setEditImageOpen(true);
-                        }}
-                        className=" text center p-4 bg-muted-foreground dark:bg-card  "
-                      >
-                        edit picture
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-center md:text-left">
-                    <p className="text-xl font-semibold">
-                      {user?.fullName || user?.username}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{role}</p>
-
-                    {role === "SERVICE_PROVIDER" && (
-                      <p className="text-sm text-muted-foreground">
-                        Skill:{" "}
-                        <span className="font-medium">
-                          {user?.service || "Not set"}
-                        </span>
-                      </p>
-                    )}
-
-                    {role === "SERVICE_PROVIDER" && (
-                      <p className="text-sm text-muted-foreground">
-                        {addressForm.city
-                          ? `${addressForm.city}, ${addressForm.province}`
-                          : "Location not set"}
-                      </p>
-                    )}
-
-                    <p className="text-sm text-muted-foreground">
-                      {user?.phone || "Phone number not set"}
-                    </p>
-
-                    <p className="text-sm text-muted-foreground">
-                      <span className="font-medium">Verified:</span>{" "}
-                      {user?.verified ? "Yes" : "No"}
-                    </p>
-
-                    {role === "SERVICE_PROVIDER" && (
-                      <div className="mt-4 flex flex-col gap-1">
-
-                        <div className="inline-flex items-center gap-3 rounded-xl bg-muted px-4 py-2">
-                          <span className="text-sm font-medium">Availability:</span>
-                            <button
-                              type="button"
-                              disabled={!canToggleAvailability}
-                              onClick={async () => {
-                                if (!canToggleAvailability) return;
-
-                                const newVal = !isAvailable;
-                                setIsAvailable(newVal);
-
-                                try {
-                                  await updateAvailability(newVal);
-                                } catch {
-                                  setIsAvailable(!newVal);
-                                }
-                              }}
-                              className={`relative w-12 h-6 rounded-full transition-colors duration-300
-                                ${isAvailable ? "bg-green-500" : "bg-gray-300"}
-                                ${!canToggleAvailability ? "opacity-50 cursor-not-allowed" : ""}
-                              `}
-                            >
-                              <span
-                                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-300 ${
-                                  isAvailable ? "translate-x-6" : "translate-x-0"
-                                }`}
-                              />
-                            </button>
-                        </div>
-
-                        {!canToggleAvailability && (
-                          <p className="text-xs text-muted-foreground ml-2">
-                            Availability can be changed only after verification approval
-                          </p>
-                        )}
-
-                        {canRequestVerification && (
-                          <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 px-5 py-4">
-                            <p className="text-sm text-blue-300 mb-3">
-                              📄 All documents uploaded. Submit your profile for admin verification.
-                            </p>
-
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await requestVerification();
-                                  toast.success("Verification request submitted");
-                                  await reloadProfile();
-                                } catch (err) {
-                                  toast.error("Failed to request verification");
-                                }
-                              }}
-                              className="
-                                rounded-lg px-4 py-2 text-sm font-medium
-                                bg-blue-600 text-white
-                                hover:bg-blue-700
-                                transition
-                              "
-                            >
-                              Request Verification
-                            </button>
-                          </div>
-                        )}
-
-
-                      </div>
-                    )}
-                  </div>
+                  {/* Availability dot */}
+                  {role === "SERVICE_PROVIDER" && (
+                    <span
+                      className={`absolute bottom-3 right-3 w-5 h-5 rounded-full border-4 border-background ${
+                        isAvailable ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    />
+                  )}
                 </div>
 
+                    {/* RIGHT — DETAILS */}
+                    <div className="space-y-6">
+
+                      {/* Name + Badges */}
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h2 className="text-3xl font-bold">{user?.fullName}</h2>
+
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted">
+                          {role}
+                        </span>
+                      </div>
+
+                      {/* DETAILS GRID */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+
+                        {/* LEFT SIDE */}
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-muted-foreground text-sm">Skill</p>
+                            <p className="font-medium">{user?.skill || "Not set"}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-muted-foreground text-sm">Location</p>
+                            <p className="font-medium">
+                              {addressForm.city
+                                ? `${addressForm.city}, ${addressForm.province}`
+                                : "Not set"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-muted-foreground text-sm">Phone</p>
+                            <p className="font-medium">{user?.phone || "Not set"}</p>
+                          </div>
+                        </div>
+
+                        {/* RIGHT SIDE */}
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-muted-foreground text-sm">Account Status</p>
+                              {user?.verified && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-600">
+                                  ✓ Verified
+                                </span>
+                              )}
+                          </div>
+
+                          {role === "SERVICE_PROVIDER" && (
+                            <div>
+                              <p className="text-muted-foreground text-sm mb-2">Availability</p>
+
+                              <div className="flex items-center gap-4">
+                                <button
+                                  disabled={!canToggleAvailability}
+                                  onClick={async () => {
+                                    if (!canToggleAvailability) return;
+
+                                    const newVal = !isAvailable;
+                                    setIsAvailable(newVal);
+
+                                    try {
+                                      await updateAvailability(newVal);
+                                    } catch {
+                                      setIsAvailable(!newVal);
+                                    }
+                                  }}
+                                  className={`relative w-14 h-7 rounded-full transition
+                                    ${isAvailable ? "bg-green-500" : "bg-gray-300"}
+                                    ${!canToggleAvailability && "opacity-50 cursor-not-allowed"}
+                                  `}
+                                >
+                                  <span
+                                    className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full transition-transform
+                                      ${isAvailable ? "translate-x-7" : "translate-x-0"}
+                                    `}
+                                  />
+                                </button>
+
+                                {!canToggleAvailability && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Verify your account to change availability
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                
                 {/* VERIFICATION STATUS BANNER (SERVICE PROVIDER ONLY) */}
                 {role === "SERVICE_PROVIDER" && profile?.verificationStatus && (
                   <div
@@ -1803,8 +1777,7 @@ const handleUploadWorkPdf = () => {
                       )}
                     </Card>
 
-                  </div>
-                </div>
+                  </div>               
               </>
             )}
             

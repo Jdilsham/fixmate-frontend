@@ -7,7 +7,8 @@ import {
   addProviderService,
   getProviderServiceCategories,
   getProviderServices,
-  getProviderAddress
+  getProviderAddress,
+  toggleProviderServiceActive
 } from "../../../../utils/profile";
 
 export default function EmployerGrid({ profile }) {
@@ -39,6 +40,34 @@ export default function EmployerGrid({ profile }) {
       toast.error("Failed to load provider services");
     }
   };
+
+  const handleToggleActive = async (providerServiceId) => {
+  // optimistic UI update
+  setServices((prev) =>
+    prev.map((s) =>
+      s.providerServiceId === providerServiceId
+        ? { ...s, isActive: !s.isActive }
+        : s
+    )
+  );
+
+  try {
+    await toggleProviderServiceActive(providerServiceId);
+    toast.success("Service status updated");
+  } catch (err) {
+    toast.error("Failed to update service status");
+
+    // rollback if failed
+    setServices((prev) =>
+      prev.map((s) =>
+        s.providerServiceId === providerServiceId
+          ? { ...s, isActive: !s.isActive }
+          : s
+      )
+    );
+  }
+};
+
 
 
   useEffect(() => {
@@ -132,6 +161,7 @@ export default function EmployerGrid({ profile }) {
               isProviderView: true,      
               showViewProfile: false,   
             }}
+             onToggleActive={handleToggleActive}
           />
         ))}
 

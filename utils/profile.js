@@ -454,3 +454,21 @@ export async function uploadUserProfilePicture(file) {
 
   return res.data; // image URL
 }
+
+
+// toggle service active/inactive
+export const toggleProviderServiceActive = async (providerServiceId) => {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  return axios.patch(
+    `${API}/api/provider/service/${providerServiceId}/active`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+};
+
