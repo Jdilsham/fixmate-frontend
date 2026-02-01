@@ -8,22 +8,23 @@ import { useNavigate } from "react-router-dom";
 export default function Homepage() {
   const navigate = useNavigate();
   const SERVICES = [
-    { title: "Landscaping", icon: "/serviceIcons/landscaping.png" },
-    { title: "Electrical", icon: "/serviceIcons/electric.png" },
-    { title: "Cleaners", icon: "/serviceIcons/cleaning.png" },
-    { title: "Plumbing", icon: "/serviceIcons/plumbing.png" },
-    { title: "Color Washing", icon: "/serviceIcons/colorwash.png" },
-    { title: "Masonry", icon: "/serviceIcons/mason.png" },
-    { title: "Vehicle Repair", icon: "/serviceIcons/mechanic.png" },
-    { title: "Tile Work", icon: "/serviceIcons/tile.png" },
-    { title: "Cushion Works", icon: "/serviceIcons/cushioning.png" },
-    { title: "Carpentry", icon: "/serviceIcons/carpenter.png" },
-    { title: "Welding", icon: "/serviceIcons/welding.png" },
-    { title: "TV Repair", icon: "/serviceIcons/Tv.png" },
-    { title: "Equipment Repairing", icon: "/serviceIcons/repairing.png" },
-    { title: "Roofing", icon: "/serviceIcons/roofing.png" },
-    { title: "Contractors", icon: "/serviceIcons/construction.png" },
-  ];
+  { key: "landscaper", title: "Landscaping", icon: "/serviceIcons/landscaping.png" },
+  { key: "electrician", title: "Electrical", icon: "/serviceIcons/electric.png" },
+  { key: "cleaner", title: "Cleaners", icon: "/serviceIcons/cleaning.png" },
+  { key: "plumber", title: "Plumbing", icon: "/serviceIcons/plumbing.png" },
+  { key: "painter", title: "Color Washing", icon: "/serviceIcons/colorwash.png" },
+  { key: "mason", title: "Masonry", icon: "/serviceIcons/mason.png" },
+  { key: "mechanic", title: "Vehicle Repair", icon: "/serviceIcons/mechanic.png" },
+  { key: "tiler", title: "Tile Work", icon: "/serviceIcons/tile.png" },
+  { key: "upholsterer", title: "Cushion Works", icon: "/serviceIcons/cushioning.png" },
+  { key: "carpenter", title: "Carpentry", icon: "/serviceIcons/carpenter.png" },
+  { key: "welder", title: "Welding", icon: "/serviceIcons/welding.png" },
+  { key: "tv_technician", title: "TV Repair", icon: "/serviceIcons/Tv.png" },
+  { key: "equipment_repair", title: "Equipment Repairing", icon: "/serviceIcons/repairing.png" },
+  { key: "roofer", title: "Roofing", icon: "/serviceIcons/roofing.png" },
+  { key: "contractor", title: "Contractors", icon: "/serviceIcons/construction.png" },
+];
+
 
   const [query, setQuery] = useState("");
 
@@ -112,11 +113,11 @@ export default function Homepage() {
           {filteredServices.length > 0 ? (
             filteredServices.map((service) => (
               <ServiceCard
-                key={service.title}
+                key={service.key}
                 imgsrc={service.icon}
                 title={service.title}
                 onClick={() =>
-                  navigate(`/services?category=${service.title.toLowerCase()}`)
+                  navigate(`/services?service=${service.key.toLowerCase()}`)
                 }
               />
             ))
