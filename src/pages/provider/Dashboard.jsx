@@ -32,7 +32,7 @@ import CustomerPaymentDialog from "../../components/dashboard/payments/CustomerP
 import { getCustomerPayment } from "../../../utils/payment";
 import RejectBookingDialog from "../../components/dashboard/bookings/RejectBookingDialog";
 import ReVerificationDialog from "../../components/dashboard/ReVerificationDialog";
-import AvailabilityToggle from "../../components/dashboard/AvailabilityToggle";
+import AvailabilityConfirmDialog from "../../components/dashboard/AvailabilityConfirmDialog";
 
 
 import {
@@ -189,7 +189,8 @@ export default function Dashboard() {
 
     const profileData = await getUserProfile();
 
-    
+    console.log("FULL PROFILE FROM BACKEND =", profileData);
+
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -200,7 +201,10 @@ export default function Dashboard() {
     }
 
 
-    setIsAvailable(profileData?.available ?? false);
+    if (typeof profileData?.available === "boolean") {
+      setIsAvailable(profileData.available);
+    }
+
 
     setProfileForm({
       firstName: profileData?.fullName?.split(" ")[0] || "",
@@ -263,6 +267,9 @@ export default function Dashboard() {
   const [showReverifyDialog, setShowReverifyDialog] = useState(false);
   const [wasPreviouslyApproved, setWasPreviouslyApproved] = useState(false);
   const [pendingUploadAction, setPendingUploadAction] = useState(null);
+
+  const [showAvailabilityDialog, setShowAvailabilityDialog] = useState(false);
+  const [pendingAvailability, setPendingAvailability] = useState(null);
 
 
   useEffect(() => {
@@ -599,23 +606,48 @@ const handleUploadWorkPdf = () => {
 
 
   const canToggleAvailability =
-    role === "SERVICE_PROVIDER" &&
-    profile?.verificationStatus === "APPROVED";
+  role === "SERVICE_PROVIDER" &&
+  profile?.verificationStatus === "APPROVED";
 
 
-  const handleAvailabilityToggle = async () => {
-  if (!canToggleAvailability) return;
+  const handleAvailabilityToggle = () => {
+    if (!canToggleAvailability) return;
 
-  const previous = isAvailable;
-  setIsAvailable(!previous); // optimistic UI
+    const next = !isAvailable;
 
-  try {
-    const res = await updateAvailability(!previous);
-    setIsAvailable(res.isAvailable);
-  } catch (err) {
-    setIsAvailable(previous); // rollback on error
-  }
-};
+    // store intended action
+    setPendingAvailability(next);
+
+    // open confirmation popup
+    setShowAvailabilityDialog(true);
+  };
+
+
+  const confirmAvailabilityChange = async () => {
+    try {
+      if (pendingAvailability === null) return;
+
+      // optimistic UI update
+      setIsAvailable(pendingAvailability);
+
+      await updateAvailability(pendingAvailability);
+
+      toast.success(
+        pendingAvailability
+          ? "Your services are now active"
+          : "Your services are temporarily disabled"
+      );
+    } catch (err) {
+      // rollback UI on error
+      setIsAvailable((prev) => !prev);
+      toast.error("Failed to update availability");
+    } finally {
+      setShowAvailabilityDialog(false);
+      setPendingAvailability(null);
+    }
+  };
+
+  
 
 
   return (
@@ -1192,36 +1224,24 @@ const handleUploadWorkPdf = () => {
                           {role === "SERVICE_PROVIDER" && (
                             <div className="space-y-1">
                               {/* Label + Toggle SAME LINE */}
-                              <div className="flex items-center justify-between">
-                                <p className="text-muted-foreground text-sm">Availability</p>
+                              <div className="flex items-center gap-3">
+                              <p className="text-muted-foreground text-sm">Availability</p>
 
-                                <button
-                                  disabled={!canToggleAvailability}
-                                  onClick={async () => {
-                                    if (!canToggleAvailability) return;
-
-                                    const newVal = !isAvailable;
-                                    setIsAvailable(newVal);
-
-                                    try {
-                                      await updateAvailability(newVal);
-                                    } catch {
-                                      setIsAvailable(!newVal);
-                                    }
-                                  }}
-                                  className={`relative w-14 h-7 rounded-full transition
-                                    ${isAvailable ? "bg-green-500" : "bg-gray-300"}
-                                    ${!canToggleAvailability && "opacity-50 cursor-not-allowed"}
+                              <button
+                                onClick={handleAvailabilityToggle}
+                                disabled={!canToggleAvailability}
+                                className={`relative w-14 h-7 rounded-full transition
+                                  ${isAvailable ? "bg-green-500" : "bg-gray-300"}
+                                  ${!canToggleAvailability ? "opacity-50 cursor-not-allowed" : ""}
+                                `}
+                              >
+                                <span
+                                  className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full transition-transform
+                                    ${isAvailable ? "translate-x-7" : "translate-x-0"}
                                   `}
-                                >
-                                  <span
-                                    className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full transition-transform
-                                      ${isAvailable ? "translate-x-7" : "translate-x-0"}
-                                    `}
-                                  />
-                                </button>
-                              </div>
-
+                                />
+                              </button>
+                            </div>
                               {/* Helper text BELOW */}
                               {!canToggleAvailability && (
                                 <p className="text-xs text-muted-foreground">
@@ -1241,44 +1261,45 @@ const handleUploadWorkPdf = () => {
                 
                 {/* VERIFICATION STATUS BANNER (SERVICE PROVIDER ONLY) */}
                 {role === "SERVICE_PROVIDER" && profile?.verificationStatus && (
-                  <div
-                    className={`
-                      mb-6 rounded-xl border px-5 py-4 text-sm
-                      ${
-                        profile.verificationStatus === "PENDING"
-                          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-300"
-                          : profile.verificationStatus === "APPROVED"
-                          ? "border-green-500/30 bg-green-500/10 text-green-300"
-                          : "border-muted bg-muted text-muted-foreground"
-                      }
-                    `}
-                  >
-                    {profile.verificationStatus === "PENDING" && (
-                      <>
-                        ⏳ <strong>Verification in progress</strong>
-                        <br />
-                        Your documents are under admin review. You cannot change availability
-                        or accept jobs until approval.
-                      </>
-                    )}
+                    <div
+                      className={`
+                        mb-6 rounded-xl border px-5 py-4 text-sm
+                        ${
+                          profile.verificationStatus === "PENDING"
+                            ? "border-yellow-500/30 bg-yellow-50 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-300"
+                            : profile.verificationStatus === "APPROVED"
+                            ? "border-green-500/30 bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300"
+                            : "border-muted bg-muted text-muted-foreground"
+                        }
+                      `}
+                    >
+                      {profile.verificationStatus === "PENDING" && (
+                        <>
+                          ⏳ <strong>Verification in progress</strong>
+                          <br />
+                          Your documents are under admin review. You cannot change availability
+                          or accept jobs until approval.
+                        </>
+                      )}
 
-                    {profile.verificationStatus === "APPROVED" && (
-                      <>
-                        <strong>Account verified</strong>
-                        <br />
-                        Your documents are approved. You can receive bookings normally.
-                      </>
-                    )}
+                      {profile.verificationStatus === "APPROVED" && (
+                        <>
+                          <strong>Account verified</strong>
+                          <br />
+                          Your documents are approved. You can receive bookings normally.
+                        </>
+                      )}
 
-                    {profile.verificationStatus === "NOT_SUBMITTED" && (
-                      <>
-                        ⚠️ <strong>Verification not submitted</strong>
-                        <br />
-                        Please upload ID documents and work proof to request verification.
-                      </>
-                    )}
-                  </div>
-                )}
+                      {profile.verificationStatus === "NOT_SUBMITTED" && (
+                        <>
+                          ⚠️ <strong>Verification not submitted</strong>
+                          <br />
+                          Please upload ID documents and work proof to request verification.
+                        </>
+                      )}
+                    </div>
+                  )}
+
                   {/* UPDATE PROFILE */}
                   <h2 className="text-xl font-semibold mb-8">Update Profile</h2>
 
@@ -1879,6 +1900,16 @@ const handleUploadWorkPdf = () => {
           setPendingUploadAction(null);
         }}
       />
+
+        <AvailabilityConfirmDialog
+          open={showAvailabilityDialog}
+          onClose={() => {
+            setShowAvailabilityDialog(false);
+            setPendingAvailability(null);
+          }}
+          onConfirm={confirmAvailabilityChange}
+          nextState={pendingAvailability}
+        />
 
 
     </div>
