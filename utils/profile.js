@@ -26,18 +26,32 @@ export async function getUserProfile() {
         id: p.providerId,
         fullName: p.fullName,
         city: p.city,
+
+        skill: p.skill,
+        experience: p.experience,
         description: p.description,
-        service: p.skill,
+
         rating: p.rating,
+
         verified: p.isVerified,
+        verificationStatus: p.verificationStatus,
+
+        idFrontUrl: p.idFrontUrl,
+        idBackUrl: p.idBackUrl,
+        workPdfUrl: p.workPdfUrl,
+
         available: p.isAvailable,
+
         profilePicture: p.profileImage
           ? `${API}${p.profileImage}?t=${Date.now()}`
           : null,
+
         services: p.services || [],
         phone: p.phone,
         role,
       };
+
+
     }
     
     //CUSTOMER
@@ -72,23 +86,23 @@ export async function getUserProfile() {
   }
 }
 
-export async function updateAvailability(isAvailable) {
+export async function updateAvailability() {
   const auth = getAuthUser();
-  if(!auth) return null;
+  if (!auth) throw new Error("Not authenticated");
 
-  try{
-    const res =await axios.patch(`${API}/api/provider/availability`, 
-    { isAvailable },
+  const res = await axios.patch(
+    `${API}/api/provider/availability`,
+    {},
     {
-      headers: { Authorization: `Bearer ${auth.token}`,},
-    });
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
 
-    return res.data;
-  } catch (err) {
-    console.error("Failed to update availability", err);
-    throw err;
-  }
+  return res.data; // { isAvailable: true/false }
 }
+
 
 export async function updateProviderProfile(payload) {
   const auth = getAuthUser();
@@ -148,6 +162,8 @@ export async function addProviderAddress(address) {
   return res.data;
 }
 
+
+
 // UPDATE provider address
 export async function updateProviderAddress(address) {
   const auth = getAuthUser();
@@ -186,6 +202,102 @@ export async function updateProviderProfilePicture(file) {
   );
 
   return res.data;
+}
+
+
+export async function updateProfessionalInfo(payload) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.put(
+    `${API}/api/provider/professional-info`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return res.data;
+}
+
+// =======================
+// PROVIDER ID VERIFICATION
+// =======================
+
+export async function uploadIdFront(file) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return axios.put(
+    `${API}/api/provider/verification/id-front`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+}
+
+export async function uploadIdBack(file) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return axios.put(
+    `${API}/api/provider/verification/id-back`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+}
+
+export async function uploadWorkPdf(file) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const formData = new FormData();
+  formData.append("pdf", file);
+
+  const res = await axios.put(
+    `${API}/api/provider/verification/pdf`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return res.data;
+}
+
+
+export async function requestVerification() {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  return axios.post(
+    `${API}/api/provider/verify`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    }
+  );
 }
 
 
@@ -342,3 +454,21 @@ export async function uploadUserProfilePicture(file) {
 
   return res.data; // image URL
 }
+
+
+// toggle service active/inactive
+export const toggleProviderServiceActive = async (providerServiceId) => {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  return axios.patch(
+    `${API}/api/provider/service/${providerServiceId}/active`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+};
+

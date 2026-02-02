@@ -101,7 +101,7 @@ export default function BookProfessional() {
     const {
       service,
       pricingType,
-      date,
+      scheduledAt,
       description,
       addressLine1,
       city,
@@ -111,11 +111,13 @@ export default function BookProfessional() {
       longitude,
     } = bookingData;
 
+
     const payload = {
       providerServiceId: service.providerServiceId,
-      scheduledAt: new Date(date).toISOString(),
+      scheduledAt, // already ISO string
       pricingType,
     };
+
 
     if (description?.trim()) payload.description = description;
     if (addressLine1) payload.addressLine1 = addressLine1;
@@ -126,7 +128,7 @@ export default function BookProfessional() {
     if (longitude != null) payload.longitude = longitude;
 
     try {
-      await fetch(`${API}/api/customer/bookings`, {
+      const res = await fetch(`${API}/api/customer/bookings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -135,8 +137,21 @@ export default function BookProfessional() {
         body: JSON.stringify(payload),
       });
 
+      if (!res.ok) {
+        const errorText = await res.text();
+
+        if (res.status === 409) {
+          toast.error("This time slot is already booked ❌");
+        } else {
+          toast.error(errorText || "Booking failed");
+        }
+
+        return;
+      }
+
       toast.success("Booking confirmed 🎉");
       setShowSummary(false);
+
     } catch {
       toast.error("Booking failed. Please try again.");
     }
@@ -174,36 +189,43 @@ export default function BookProfessional() {
       </section>
 
       <section className="max-w-6xl mx-auto px-4 md:px-6 pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* LEFT */}
-          <div className="lg:col-span-2 flex flex-col gap-10">
-            <ProfessionalCard service={service} />
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
 
-            <BookingForm
-  service={service}
-  pricingType={pricingType}
-  setPricingType={setPricingType}
-  user={user}
-  address={address}
-  onPreview={(data) => {
-    setBookingData(data);
-    setShowSummary(true);
-  }}
-/>
-
+          {/* LEFT: PROVIDER DETAILS */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-28">
+              <ProfessionalCard service={service} />
+            </div>
           </div>
 
-          {/* SUMMARY DIALOG */}
-          {showSummary && bookingData && (
-            <BookingSummary
-              bookingData={bookingData}
-              onConfirm={handleFinalConfirm}
-              onCancel={() => setShowSummary(false)}
-              onEdit={() => setShowSummary(false)}
+          {/* RIGHT: BOOKING DETAILS */}
+          <div className="lg:col-span-3">
+            <BookingForm
+              service={service}
+              pricingType={pricingType}
+              setPricingType={setPricingType}
+              user={user}
+              address={address}
+              onPreview={(data) => {
+                setBookingData(data);
+                setShowSummary(true);
+              }}
             />
-          )}
+          </div>
+
         </div>
       </section>
+
+
+      {showSummary && bookingData && (
+        <BookingSummary
+          bookingData={bookingData}
+          onConfirm={handleFinalConfirm}
+          onCancel={() => setShowSummary(false)}
+          onEdit={() => setShowSummary(false)}
+        />
+      )}
+
     </div>
   );
 }
