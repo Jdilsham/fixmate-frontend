@@ -33,6 +33,12 @@ import { getCustomerPayment } from "../../../utils/payment";
 import RejectBookingDialog from "../../components/dashboard/bookings/RejectBookingDialog";
 import ReVerificationDialog from "../../components/dashboard/ReVerificationDialog";
 import AvailabilityConfirmDialog from "../../components/dashboard/AvailabilityConfirmDialog";
+import ActivateAccountModal from "../../components/provider-activation/ActivateAccountModal";
+import StepProfessionalInfo from "../../components/provider-activation/StepProfessionalInfo";
+import StepAddress from "../../components/provider-activation/StepAddress";
+import StepDocuments from "../../components/provider-activation/StepDocuments";
+
+
 
 
 import {
@@ -112,7 +118,8 @@ export default function Dashboard() {
 
   const isProvider = role === "SERVICE_PROVIDER";
 
-  const verificationStatus = profile?.verificationStatus;
+  const verificationStatus =
+    profile?.verificationStatus ?? "NOT_SUBMITTED";
 
   const isPendingVerification =
     isProvider && verificationStatus === "PENDING";
@@ -270,6 +277,17 @@ export default function Dashboard() {
 
   const [showAvailabilityDialog, setShowAvailabilityDialog] = useState(false);
   const [pendingAvailability, setPendingAvailability] = useState(null);
+
+  const [showActivateModal, setShowActivateModal] = useState(false);
+
+  // ================= ACTIVATE ACCOUNT FLOW =================
+  const [activateStep, setActivateStep] = useState(1);
+
+  const [activateProfessionalForm, setActivateProfessionalForm] = useState({
+    skill: "",
+    experience: "",
+    description: "",
+  });
 
 
   useEffect(() => {
@@ -647,7 +665,75 @@ const handleUploadWorkPdf = () => {
     }
   };
 
-  
+  const handleActivateProfessionalNext = async () => {
+    try {
+      await updateProfessionalInfo({
+        skill: activateProfessionalForm.skill,
+        experience: activateProfessionalForm.experience,
+        description: activateProfessionalForm.description,
+      });
+
+      toast.success("Professional details saved");
+      setActivateStep(2);
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message ||
+        "Failed to save professional details"
+      );
+    }
+  };
+
+  const handleActivateAddressNext = async () => {
+    try {
+      const payload = {
+        addressLine1: addressForm.addressLine1,
+        addressLine2: addressForm.addressLine2,
+        province: addressForm.province,
+        city: addressForm.city,
+        latitude: addressForm.latitude
+          ? Number(addressForm.latitude)
+          : null,
+        longitude: addressForm.longitude
+          ? Number(addressForm.longitude)
+          : null,
+      };
+
+      if (hasAddress) {
+        await updateProviderAddress(payload);
+      } else {
+        await addProviderAddress(payload);
+        setHasAddress(true);
+      }
+
+      toast.success("Address saved");
+      setActivateStep(3);
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to save address"
+      );
+    }
+  };
+
+  const handleActivateSubmit = async () => {
+    try {
+      await uploadIdFront(idFrontFile);
+      await uploadIdBack(idBackFile);
+      await uploadWorkPdf(workPdf);
+
+      await requestVerification();
+
+      toast.success("Verification request sent");
+      setShowActivateModal(false);
+      setActivateStep(1);
+
+      await reloadProfile();
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message ||
+        "Failed to submit verification"
+      );
+    }
+  };
 
 
   return (
@@ -1200,26 +1286,49 @@ const handleUploadWorkPdf = () => {
 
                         {/* RIGHT SIDE */}
                         <div className="space-y-4">
+                        
                           <div>
-                            <p className="text-muted-foreground text-sm">Account Status</p>
-                              {profile?.verificationStatus === "APPROVED" && (
-                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-600">
-                                  ✓ Verified
-                                </span>
-                              )}
+                            <p className="text-muted-foreground text-sm pb-2">Account Status</p>
 
-                              {profile?.verificationStatus === "PENDING" && (
-                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-600">
-                                  ⏳ Pending Verification
-                                </span>
-                              )}
+                            {/* APPROVED */}
+                            {verificationStatus === "APPROVED" && (
+                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-600">
+                                ✓ Verified
+                              </span>
+                            )}
 
-                              {profile?.verificationStatus === "NOT_SUBMITTED" && (
-                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-gray-500/10 text-gray-600">
-                                  Not Verified
+                            {/* PENDING */}
+                            {verificationStatus === "PENDING" && (
+                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-600">
+                                ⏳ Pending Verification
+                              </span>
+                            )}
+
+                            {/* NOT ACTIVATED */}
+                            {verificationStatus === "NOT_SUBMITTED" && (
+                              <div className="space-y-3 gap-2">
+                                <span className="inline-flex items-center gap-1 px-3 py-1
+                                  rounded-full text-xs font-semibold
+                                  bg-orange-500/15 text-orange-600">
+                                  ⚠ Not Activated
                                 </span>
-                              )}
+
+                                <p className="text-sm text-muted-foreground">
+                                  Your account is not activated yet. Complete verification to start receiving jobs.
+                                </p>
+
+                                <button
+                                  onClick={() => setShowActivateModal(true)}
+                                  className="inline-flex items-center px-4 py-2 rounded-lg
+                                            bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium"
+                                >
+                                  Activate Account
+                                </button>
+                              </div>
+                            )}
                           </div>
+
+
 
                           {role === "SERVICE_PROVIDER" && (
                             <div className="space-y-1">
@@ -1911,7 +2020,42 @@ const handleUploadWorkPdf = () => {
           nextState={pendingAvailability}
         />
 
+        <ActivateAccountModal
+          open={showActivateModal}
+          onClose={() => {
+            setShowActivateModal(false);
+            setActivateStep(1);
+          }}
+        >
+          {/* STEP CONTENT */}
+          {activateStep === 1 && (
+           <StepProfessionalInfo
+              data={activateProfessionalForm}
+              onChange={setActivateProfessionalForm}
+              onNext={handleActivateProfessionalNext}
+            />
+          )}
+          {activateStep === 2 && (
+            <StepAddress
+              data={addressForm}
+              onChange={setAddressForm}
+              hasAddress={hasAddress}
+              onNext={handleActivateAddressNext}
+            />
+          )}
+          {activateStep === 3 && (
+            <StepDocuments
+              idFrontFile={idFrontFile}
+              idBackFile={idBackFile}
+              workPdf={workPdf}
+              setIdFrontFile={setIdFrontFile}
+              setIdBackFile={setIdBackFile}
+              setWorkPdf={setWorkPdf}
+              onSubmit={handleActivateSubmit}
+            />
+          )}
 
+        </ActivateAccountModal>
     </div>
 
               
