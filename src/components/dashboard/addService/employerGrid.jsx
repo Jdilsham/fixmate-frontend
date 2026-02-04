@@ -171,7 +171,10 @@ export default function EmployerGrid({ profile }) {
 
       {open && (
         <AddEmployerModal
-          profile={profile}
+          profile={{
+            fullName: profile.fullName,
+            location: location,
+          }}
           onClose={() => setOpen(false)}
           onSubmit={addService}
           serviceForm={serviceForm}

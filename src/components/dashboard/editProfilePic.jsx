@@ -134,60 +134,75 @@ export default function EditImageModal({ onClose }) {
   /* =======================
      RENDER
   ======================= */
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-black/60"
-        onClick={onClose}
-      />
+return (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    {/* Backdrop */}
+    <div
+      className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    />
 
-      <div className="relative bg-background rounded-2xl p-6 w-[380px] shadow-xl z-10">
-        <h2 className="text-lg font-semibold mb-4 text-center">
+    {/* Modal */}
+    <div className="relative bg-background rounded-3xl p-7 w-[400px] shadow-2xl z-10">
+
+      {/* Header */}
+      <div className="text-center">
+        <h2 className="text-lg font-semibold">
           Edit Profile Picture
         </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Upload or capture a new profile photo
+        </p>
+      </div>
 
-        {/* Preview */}
-        <div className="flex justify-center">
-          {mode === "camera" && (
-            <div className="w-48 h-48 rounded-full overflow-hidden border bg-black">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-
-          {mode === "edit" && (
-            <div className="w-48 h-48 rounded-full overflow-hidden border bg-muted flex items-center justify-center">
-              <img
-                src={image}
-                alt="preview"
-                className="select-none"
-                style={{ transform: `scale(${zoom})` }}
-              />
-            </div>
-          )}
-
-          {mode === "idle" && (
-            <div className="w-48 h-48 rounded-full border bg-muted flex items-center justify-center">
-              <span className="text-sm text-muted-foreground">
-                Choose image source
-              </span>
-            </div>
-          )}
-        </div>
-
-        {error && (
-          <p className="text-sm text-red-500 mt-3 text-center">
-            {error}
-          </p>
+      {/* Preview */}
+      <div className="flex justify-center mt-7">
+        {mode === "camera" && (
+          <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-muted bg-black">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          </div>
         )}
 
-        {/* Controls */}
-        <div className="mt-4 space-y-3">
-          {mode === "edit" && (
+        {mode === "edit" && (
+          <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-muted bg-muted flex items-center justify-center">
+            <img
+              src={image}
+              alt="preview"
+              className="select-none"
+              style={{ transform: `scale(${zoom})` }}
+            />
+          </div>
+        )}
+
+        {mode === "idle" && (
+          <div className="w-48 h-48 rounded-full border-2 border-dashed border-muted/60 bg-muted/40 flex items-center justify-center">
+            <span className="text-sm text-muted-foreground">
+              Choose image source
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <p className="text-sm text-red-500 mt-4 text-center">
+          {error}
+        </p>
+      )}
+
+      {/* Controls */}
+      <div className="mt-7 space-y-4">
+        {mode === "edit" && (
+          <div>
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+              <span>Zoom</span>
+              <span>{Math.round(zoom * 100)}%</span>
+            </div>
             <input
               type="range"
               min="1"
@@ -195,48 +210,58 @@ export default function EditImageModal({ onClose }) {
               step="0.01"
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
-              className="w-full"
+              className="w-full accent-primary"
             />
-          )}
+          </div>
+        )}
 
+        {mode !== "camera" && (
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFile}
+            className="
+              w-full text-sm
+              file:mr-3 file:rounded-full file:border-0
+              file:bg-muted file:px-4 file:py-2
+              file:text-xs file:font-medium
+              hover:file:bg-muted/80
+              cursor-pointer
+            "
+          />
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="mt-8 flex items-center justify-between">
+        <div>
           {mode !== "camera" && (
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFile}
-              className="w-full text-sm"
-            />
+            <Button variant="outline" onClick={startCamera}>
+              Use Camera
+            </Button>
+          )}
+          {mode === "camera" && (
+            <Button onClick={capturePhoto}>
+              Capture
+            </Button>
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-between items-center gap-3 mt-6">
-          <div>
-            {mode !== "camera" && (
-              <Button variant="outline" onClick={startCamera}>
-                Use Camera
-              </Button>
-            )}
-            {mode === "camera" && (
-              <Button onClick={capturePhoto}>
-                Capture
-              </Button>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={!image || saving}
-            >
-              {saving ? "Saving..." : "Save"}
-            </Button>
-          </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!image || saving}
+            className="bg-orange-500 hover:bg-orange-600 text-white"
+          >
+            {saving ? "Saving..." : "Save"}
+          </Button>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
+
 }

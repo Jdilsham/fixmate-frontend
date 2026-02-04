@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { getAuthUser } from "../../../utils/auth";
 import { Eye, CheckCircle, XCircle } from "lucide-react";
+import { Camera } from "lucide-react";
 
 
 import BookingsTable from "../../components/dashboard/bookingTable";
@@ -543,7 +544,9 @@ const handleUploadWorkPdf = () => {
           profilePicture: user?.profilePicture,
           service: user?.service,
           description: user?.description || "No description provided.",
-          location: user?.city || "Not specified",
+          location: addressForm.city
+          ? `${addressForm.city}, ${addressForm.province}` 
+          : "Not specified",
         }
       : null;
 
@@ -941,7 +944,7 @@ const handleUploadWorkPdf = () => {
             )}
 
 
-
+            
             {/* Pending requests */}
             {activeTab === "pendingBooking" && role === "SERVICE_PROVIDER" && (
               <>
@@ -1220,96 +1223,123 @@ const handleUploadWorkPdf = () => {
             {/* PROFILE */}
             {activeTab === "profile" && (
               <>
-                {/* ================= PROFILE HEADER ================= */}
-                <Card className="rounded-3xl border p-8 mb-10">
-                  <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8 items-center">
+              {/* ================= PROFILE HEADER ================= */}
+              <Card className="rounded-3xl border p-8 mb-10">
+                <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8 items-center">
 
-                    {/* LEFT — PROFILE IMAGE */}
-                  <div className="relative w-58 h-58 rounded-full overflow-hidden shadow-lg">
-                    <Avatar.Root className="w-full h-full">
-                      <Avatar.Image
-                        src={user?.profilePicture}
-                        alt="Profile"
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                      <Avatar.Fallback className="flex items-center justify-center w-full h-full rounded-full text-4xl font-bold bg-muted">
-                        {user?.fullName?.[0] || "U"}
-                      </Avatar.Fallback>
-                    </Avatar.Root>
+                  {/* ================= LEFT — PROFILE IMAGE + CONTROLS ================= */}
+                  <div className="flex flex-col items-center gap-3">
 
-                  {/* Availability dot */}
-                  {role === "SERVICE_PROVIDER" && (
-                    <span
-                      className={`absolute bottom-3 right-3 w-5 h-5 rounded-full border-4 border-background ${
-                        isAvailable ? "bg-green-500" : "bg-red-500"
-                      }`}
-                    />
-                  )}
-                </div>
+                    {/* AVATAR */}
+                    <div className="relative w-56 h-56 rounded-full shadow-lg">
+                      <Avatar.Root className="w-full h-full">
+                        <Avatar.Image
+                          src={user?.profilePicture}
+                          alt="Profile"
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                        <Avatar.Fallback className="flex items-center justify-center w-full h-full rounded-full text-4xl font-bold bg-muted">
+                          {user?.fullName?.[0] || "U"}
+                        </Avatar.Fallback>
+                      </Avatar.Root>
 
-                    {/* RIGHT — DETAILS */}
-                    <div className="space-y-6">
+                      {/* Availability dot */}
+                      {role === "SERVICE_PROVIDER" && (
+                        <span
+                          className={`
+                            absolute bottom-2 right-2
+                            w-4 h-4 rounded-full
+                            border-2 border-background
+                            ${isAvailable ? "bg-green-500" : "bg-red-500"}
+                          `}
+                        />
+                      )}
+                    </div>
 
-                      {/* Name + Badges */}
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-3xl font-bold">{user?.fullName}</h2>
+                    {/* Edit Profile Photo Button */}
+                    <button
+                      onClick={() => setEditImageOpen(true)}
+                      className="
+                        inline-flex items-center gap-2
+                        px-4 py-1.5
+                        rounded-full
+                        text-sm font-medium
+                        bg-muted/70
+                        hover:bg-muted
+                        transition
+                        shadow-sm
+                      "
+                    >
+                      <Camera className="w-4 h-4 opacity-80" />
+                      Edit Profile Photo
+                    </button>
 
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted">
-                          {role}
-                        </span>
-                      </div>
+                  </div>
 
-                      {/* DETAILS GRID */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  {/* ================= RIGHT — DETAILS ================= */}
+                  <div className="space-y-6">
 
-                        {/* LEFT SIDE */}
-                        <div className="space-y-4">
+                    {/* Name + Role */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h2 className="text-3xl font-bold">{user?.fullName}</h2>
+
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted">
+                        {role}
+                      </span>
+                    </div>
+
+                    {/* DETAILS GRID */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+
+                      {/* LEFT SIDE */}
+                      <div className="space-y-4">
+                        {role === "SERVICE_PROVIDER" && (
                           <div>
                             <p className="text-muted-foreground text-sm">Skill</p>
                             <p className="font-medium">{user?.skill || "Not set"}</p>
                           </div>
+                        )}
 
-                          <div>
-                            <p className="text-muted-foreground text-sm">Location</p>
-                            <p className="font-medium">
-                              {addressForm.city
-                                ? `${addressForm.city}, ${addressForm.province}`
-                                : "Not set"}
-                            </p>
-                          </div>
-
-                          <div>
-                            <p className="text-muted-foreground text-sm">Phone</p>
-                            <p className="font-medium">{user?.phone || "Not set"}</p>
-                          </div>
+                        <div>
+                          <p className="text-muted-foreground text-sm">Location</p>
+                          <p className="font-medium">
+                            {addressForm.city
+                              ? `${addressForm.city}, ${addressForm.province}`
+                              : "Not set"}
+                          </p>
                         </div>
 
-                        {/* RIGHT SIDE */}
-                        <div className="space-y-4">
-                        
-                          <div>
-                            <p className="text-muted-foreground text-sm pb-2">Account Status</p>
+                        <div>
+                          <p className="text-muted-foreground text-sm">Phone</p>
+                          <p className="font-medium">{user?.phone || "Not set"}</p>
+                        </div>
+                      </div>
 
-                            {/* APPROVED */}
+                      {/* RIGHT SIDE */}
+                      {role === "SERVICE_PROVIDER" && (
+                        <div className="space-y-4">
+
+                          {/* Account Status */}
+                          <div>
+                            <p className="text-muted-foreground text-sm pb-2">
+                              Account Status
+                            </p>
+
                             {verificationStatus === "APPROVED" && (
                               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-600">
                                 ✓ Verified
                               </span>
                             )}
 
-                            {/* PENDING */}
                             {verificationStatus === "PENDING" && (
                               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-600">
                                 ⏳ Pending Verification
                               </span>
                             )}
 
-                            {/* NOT ACTIVATED */}
                             {verificationStatus === "NOT_SUBMITTED" && (
-                              <div className="space-y-3 gap-2">
-                                <span className="inline-flex items-center gap-1 px-3 py-1
-                                  rounded-full text-xs font-semibold
-                                  bg-orange-500/15 text-orange-600">
+                              <div className="space-y-3">
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/15 text-orange-600">
                                   ⚠ Not Activated
                                 </span>
 
@@ -1319,8 +1349,7 @@ const handleUploadWorkPdf = () => {
 
                                 <button
                                   onClick={() => setShowActivateModal(true)}
-                                  className="inline-flex items-center px-4 py-2 rounded-lg
-                                            bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium"
+                                  className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium"
                                 >
                                   Activate Account
                                 </button>
@@ -1328,13 +1357,12 @@ const handleUploadWorkPdf = () => {
                             )}
                           </div>
 
-
-
-                          {role === "SERVICE_PROVIDER" && (
-                            <div className="space-y-1">
-                              {/* Label + Toggle SAME LINE */}
-                              <div className="flex items-center gap-3">
-                              <p className="text-muted-foreground text-sm">Availability</p>
+                          {/* Availability */}
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                              <p className="text-muted-foreground text-sm">
+                                Availability
+                              </p>
 
                               <button
                                 onClick={handleAvailabilityToggle}
@@ -1351,21 +1379,21 @@ const handleUploadWorkPdf = () => {
                                 />
                               </button>
                             </div>
-                              {/* Helper text BELOW */}
-                              {!canToggleAvailability && (
-                                <p className="text-xs text-muted-foreground">
-                                  Verify your account to change availability
-                                </p>
-                              )}
-                            </div>
 
-                          )}
+                            {!canToggleAvailability && (
+                              <p className="text-xs text-muted-foreground">
+                                Verify your account to change availability
+                              </p>
+                            )}
+                          </div>
+
                         </div>
-
-                      </div>
+                      )}
                     </div>
                   </div>
-                </Card>
+
+                </div>
+              </Card>
 
                 
                 {/* VERIFICATION STATUS BANNER (SERVICE PROVIDER ONLY) */}
@@ -1699,6 +1727,7 @@ const handleUploadWorkPdf = () => {
 
 
                   {/* ================= WORK PROOF (PDF) ================= */}
+                  {role === "SERVICE_PROVIDER" && (
                     <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-stretch">
 
                       {/* LEFT — Upload Card */}
@@ -1777,8 +1806,9 @@ const handleUploadWorkPdf = () => {
                           </div>
                         </div>
                       )}
+                    
                     </div>
-
+                  )}
 
                     {/* ================= ADDRESS ================= */}
                     <Card className="rounded-2xl border p-6 space-y-5">
