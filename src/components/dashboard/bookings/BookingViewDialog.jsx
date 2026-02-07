@@ -1,7 +1,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 
-export default function BookingViewDialog({ open, onClose, booking, mode }) {
+export default function BookingViewDialog({
+  open,
+  onClose,
+  booking,
+  mode,
+  onManage,
+}) {
   if (!booking) return null;
 
   const isProvider = mode === "PROVIDER";
@@ -117,6 +123,17 @@ export default function BookingViewDialog({ open, onClose, booking, mode }) {
               )}
             </>
           )}
+        </div>
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={() => {
+              onClose(false);
+              onManage?.(booking);
+            }}
+            className="rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600"
+          >
+            Manage Booking
+          </button>
         </div>
       </DialogContent>
     </Dialog>

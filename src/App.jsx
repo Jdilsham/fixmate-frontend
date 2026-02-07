@@ -13,7 +13,7 @@ import ProviderDashboard from "./pages/provider/Dashboard";
 import { Toaster } from "react-hot-toast";
 import BookProfessional from "./pages/BookProfessional";
 import AdminDashboard from "./pages/admin/dashboard";
-
+import ManageBookingPage from "./components/dashboard/bookings/ManageBookingPage";
 
 
 function App() {
@@ -50,8 +50,6 @@ function App() {
 
            {/* BOOKING */}
           <Route path="/book/:providerServiceId" element={<BookProfessional />} />
-
-
 
           {/* 404 */}
           <Route path="*" element={<h1>404 not found</h1>} />
