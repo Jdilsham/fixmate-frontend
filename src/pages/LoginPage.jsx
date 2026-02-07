@@ -32,7 +32,7 @@ async function handleLogin() {
     //  Decode JWT safely
     const decoded = jwtDecode(token);
     const role = decoded.role; // SERVICE_PROVIDER or CUSTOMER
-
+ 
     localStorage.setItem("token", token);
     localStorage.setItem("role", role);
 

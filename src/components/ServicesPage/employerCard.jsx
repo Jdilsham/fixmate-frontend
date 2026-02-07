@@ -150,7 +150,7 @@ export default function EmployerCard({ employer, onToggleActive }) {
       {/* CUSTOMER CTA */}
       {showViewProfile && (
         <button
-          onClick={() => navigate(`/provider/${providerServiceId}`)}
+          onClick={() => navigate(`/book/${providerServiceId}`)}
           className="
             mt-4
             w-full py-3
