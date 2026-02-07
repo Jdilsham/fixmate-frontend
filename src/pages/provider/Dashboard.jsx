@@ -1422,6 +1422,19 @@ const handleFinalizeFromPopup = async (payload) => {
                 )}
 
                 {/* JOB TIMER */}
+                {managedBooking?.status === "IN_PROGRESS" && jobStartedAt && (
+                  <div className="mt-6 flex items-center justify-between rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">
+                      Job in progress
+                    </p>
+
+                    <p className="text-lg font-semibold">
+                      ⏱ {Math.floor(elapsedSeconds / 60)} min {elapsedSeconds % 60} sec
+                    </p>
+                  </div>
+                )}
+                
+                {/* JOB TIMER */}
                 {managedBooking?.status === "IN_PROGRESS" && (
                   <div className="mt-8 flex justify-end">
                     <Button

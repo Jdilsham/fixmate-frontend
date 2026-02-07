@@ -15,19 +15,24 @@ export default function EndWorkDialog({
   onFinalize,
 }) {
   const [finalAmount, setFinalAmount] = useState("");
+  const [hourlyRate, setHourlyRate] = useState("");
 
   useEffect(() => {
-    if (!open) setFinalAmount("");
+    if (!open) {
+      setFinalAmount("");
+      setHourlyRate("");
+    }
   }, [open]);
 
   if (!booking) return null;
 
+  const pricingType = booking.paymentType?.toUpperCase();
   const workedHours = Number((elapsedSeconds / 3600).toFixed(2));
   const workedMinutes = Math.floor(elapsedSeconds / 60);
 
   const estimatedTotal =
-    booking.paymentType === "HOURLY_RATE"
-      ? booking.hourlyRate * workedHours
+    pricingType === "HOURLY"
+      ? (hourlyRate * workedHours).toFixed(2)
       : null;
 
   return (
@@ -48,12 +53,12 @@ export default function EndWorkDialog({
 
           <p>
             <span className="text-muted-foreground">Pricing Type:</span>{" "}
-            <strong>{booking.paymentType}</strong>
+            <strong>{pricingType}</strong>
           </p>
         </div>
 
         {/* FIXED PRICE */}
-        {booking.paymentType === "FIXED_PRICE" && (
+        {pricingType === "FIXED" && (
           <div className="mt-4 space-y-2">
             <label className="text-sm font-medium">
               Final Amount (Rs.)
@@ -69,12 +74,17 @@ export default function EndWorkDialog({
         )}
 
         {/* HOURLY RATE */}
-        {booking.paymentType === "HOURLY_RATE" && (
-          <div className="mt-4 space-y-2 text-sm">
-            <p>
-              <span className="text-muted-foreground">Hourly Rate:</span>{" "}
-              <strong>Rs. {booking.hourlyRate}</strong>
-            </p>
+        {pricingType === "HOURLY" && (
+          <div className="mt-4 space-y-3 text-sm">
+            <div>
+              <label className="font-medium">Hourly Rate (Rs.)</label>
+              <input
+                type="number"
+                value={hourlyRate}
+                onChange={(e) => setHourlyRate(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 mt-1"
+              />
+            </div>
 
             <p>
               <span className="text-muted-foreground">Hours Worked:</span>{" "}
@@ -83,7 +93,7 @@ export default function EndWorkDialog({
 
             <p>
               <span className="text-muted-foreground">Estimated Total:</span>{" "}
-              <strong>Rs. {estimatedTotal.toFixed(2)}</strong>
+              <strong>Rs. {estimatedTotal || "0.00"}</strong>
             </p>
           </div>
         )}
@@ -97,13 +107,21 @@ export default function EndWorkDialog({
           <Button
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() => {
-              if (booking.paymentType === "FIXED_PRICE") {
+              if (pricingType === "FIXED") {
+                if (!finalAmount || Number(finalAmount) <= 0) {
+                  alert("Enter valid final amount");
+                  return;
+                }
+                onFinalize({ finalAmount: Number(finalAmount) });
+              }
+
+              if (pricingType === "HOURLY") {
+                if (!hourlyRate || Number(hourlyRate) <= 0) {
+                  alert("Enter valid hourly rate");
+                  return;
+                }
                 onFinalize({
-                  finalAmount: Number(finalAmount),
-                });
-              } else {
-                onFinalize({
-                  hourlyRate: booking.hourlyRate,
+                  hourlyRate: Number(hourlyRate),
                   hoursWorked: workedHours,
                 });
               }
