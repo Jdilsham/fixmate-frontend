@@ -109,6 +109,10 @@ export default function Dashboard() {
   const [dateBookings, setDateBookings] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
 
+  // ================= CUSTOMER CALENDAR (READ-ONLY) =================
+  const [customerSelectedDate, setCustomerSelectedDate] = useState(null);
+  const [customerDateBookings, setCustomerDateBookings] = useState([]);
+  const [customerCalendarLoading, setCustomerCalendarLoading] = useState(false);
 
   const [isAvailable, setIsAvailable] = useState(false);
   const [editImageOpen, setEditImageOpen] = useState(false);
@@ -558,16 +562,44 @@ const handleUploadWorkPdf = () => {
 
 
   const loadBookingsForDate = async (day) => {
-  if (!day || !user?.id) return;
+    if (!day || !user?.id) return;
+
+      try {
+        setCalendarLoading(true);
+
+        const allBookings = await getProviderBookings(user.id);
+
+        const selectedDay = day.toISOString().split("T")[0];
+
+        const filtered = allBookings.filter((b) => {
+          if (!b.scheduledAt) return false;
+
+          const bookingDay = new Date(b.scheduledAt)
+            .toISOString()
+            .split("T")[0];
+
+          return bookingDay === selectedDay;
+        });
+
+        setDateBookings(filtered);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load bookings for selected date");
+      } finally {
+        setCalendarLoading(false);
+      }
+  };
+
+  // ================= CUSTOMER DATE BOOKINGS =================
+  const loadCustomerBookingsForDate = (day) => {
+    if (!day) return;
 
     try {
-      setCalendarLoading(true);
-
-      const allBookings = await getProviderBookings(user.id);
+      setCustomerCalendarLoading(true);
 
       const selectedDay = day.toISOString().split("T")[0];
 
-      const filtered = allBookings.filter((b) => {
+      const filtered = customerBookings.filter((b) => {
         if (!b.scheduledAt) return false;
 
         const bookingDay = new Date(b.scheduledAt)
@@ -577,14 +609,14 @@ const handleUploadWorkPdf = () => {
         return bookingDay === selectedDay;
       });
 
-      setDateBookings(filtered);
+      setCustomerDateBookings(filtered);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to load bookings for selected date");
+      toast.error("Failed to load bookings");
     } finally {
-      setCalendarLoading(false);
+      setCustomerCalendarLoading(false);
     }
   };
+
 
   const busyDates = new Set(
     providerBookings
@@ -594,6 +626,17 @@ const handleUploadWorkPdf = () => {
           new Date(b.scheduledAt).toISOString().split("T")[0]
       )
   );
+
+  // ================= CUSTOMER BUSY DATES =================
+  const customerBusyDates = new Set(
+    customerBookings
+      .filter((b) => b.scheduledAt)
+      .map(
+        (b) =>
+          new Date(b.scheduledAt).toISOString().split("T")[0]
+      )
+  );
+
 
 
   const handleViewBooking = (booking) => {
@@ -1088,136 +1131,134 @@ const handleUploadWorkPdf = () => {
 
             {/* CUSTOMER - MY BOOKINGS */}
             {activeTab === "myBookings" && role === "CUSTOMER" && (
-              <Card className="p-4 rounded-2xl bg-background">
-                <h2 className="text-lg font-semibold mb-1">My Bookings</h2>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Track all your service requests and their current status
-                </p>
+              <>
+                <h2 className="text-lg font-semibold mb-4">My Bookings</h2>
 
-                {customerBookingsLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="h-10 rounded-lg bg-muted animate-pulse"
-                      />
-                    ))}
-                  </div>
-                ) : customerBookings.length === 0 ? (
-                  <div className="text-center py-10 space-y-2">
-                    <p className="text-lg font-medium">No bookings yet</p>
-                    <p className="text-sm text-muted-foreground">
-                      Once you book a service, it will appear here.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left border-b">
-                          <th className="py-2">Service</th>
-                          <th>Provider</th>
-                          <th>Date</th>
-                          <th>Status</th>
-                          <th>Amount</th>
-                          <th className="text-center">Action</th>
-                        </tr>
-                      </thead>
+                <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-6">
 
-                      <tbody>
-                      {customerBookings.map((b) => (
-                        <tr
-                          key={b.bookingId}
-                          className="
-                            border-b
-                            hover:bg-muted/60
-                            transition
-                            duration-200
-                            last:border-b-0
-                          "
-                        >
+                  {/* LEFT — Calendar */}
+                  <Card className="p-4 rounded-2xl flex items-center justify-center">
+                    <Calendar
+                      mode="single"
+                      selected={customerSelectedDate}
+                      onSelect={(day) => {
+                        setCustomerSelectedDate(day);
+                        setCustomerDateBookings([]);
+                        loadCustomerBookingsForDate(day);
+                      }}
+                      modifiers={{
+                        busy: (date) =>
+                          customerBusyDates.has(
+                            date.toISOString().split("T")[0]
+                          ),
+                      }}
+                      modifiersClassNames={{
+                        busy:
+                          "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-blue-500",
+                      }}
+                      className="rounded-xl border"
+                    />
+                  </Card>
 
+                  {/* RIGHT — Bookings */}
+                  <Card className="p-6 rounded-2xl">
+                    {!customerSelectedDate && (
+                      <p className="text-muted-foreground">
+                        Select a date to view your bookings
+                      </p>
+                    )}
 
-                          <td className="py-3">{b.serviceName}</td>
+                    {customerCalendarLoading && (
+                      <p className="text-sm text-muted-foreground">
+                        Loading bookings...
+                      </p>
+                    )}
 
-                          <td>{b.providerName || "Not assigned"}</td>
+                    {customerSelectedDate &&
+                      !customerCalendarLoading &&
+                      customerDateBookings.length === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          No bookings for this date
+                        </p>
+                      )}
 
-                          <td>
-                            {new Date(b.scheduledAt).toLocaleDateString("en-LK", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </td>
+                    {customerDateBookings.length > 0 && (
+                      <div className="space-y-3">
+                        {customerDateBookings.map((b) => (
+                          <div
+                            key={b.bookingId}
+                            className="flex items-center justify-between rounded-xl border p-4 hover:bg-muted/40 transition"
+                          >
+                            <div>
+                              <p className="font-medium">{b.serviceName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {b.providerName || "Provider not assigned"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(b.scheduledAt).toLocaleTimeString("en-LK", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            </div>
 
-                          <td className="px-2 text-center">
-                            <span
-                              className={`inline-flex items-center justify-center
-                                min-w-[110px] px-3 py-1
-                                rounded-full text-xs font-semibold tracking-wide
-                                ${
+                            <div className="flex items-center gap-2">
+                              {/* STATUS */}
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-semibold ${
                                   b.status === "PENDING"
-                                    ? "bg-yellow-500/20 text-yellow-400"
+                                    ? "bg-yellow-500/20 text-yellow-500"
                                     : b.status === "ACCEPTED"
-                                    ? "bg-green-500/20 text-green-400"
+                                    ? "bg-green-500/20 text-green-500"
                                     : b.status === "PAYMENT_PENDING"
-                                    ? "bg-blue-500/20 text-blue-400"
+                                    ? "bg-blue-500/20 text-blue-500"
                                     : b.status === "COMPLETED"
-                                    ? "bg-emerald-500/20 text-emerald-400"
-                                    : b.status === "REJECTED"
-                                    ? "bg-red-500/20 text-red-400"
+                                    ? "bg-emerald-500/20 text-emerald-500"
                                     : "bg-muted text-muted-foreground"
                                 }`}
-                            >
-                              {b.status.replace("_", " ")}
-                            </span>
-                          </td>
+                              >
+                                {b.status.replace("_", " ")}
+                              </span>
 
-
-                          <td>
-                            {b.amount ? `Rs. ${b.amount}` : "To be decided"}
-                          </td>
-
-                          <td className="flex justify-center gap-2 py-2">
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => {
-                                setSelectedBooking(b);
-                                setViewOpen(true);
-                              }}
-                            >
-                              View
-                            </Button>
-
-                            {b.status === "PAYMENT_PENDING" && b.status !== "REJECTED" && (
+                              {/* VIEW */}
                               <Button
-                                size="sm"
-                                onClick={async () => {
-                                  try {
-                                    const payment = await getCustomerPayment(b.bookingId);
-                                    setPaymentInfo(payment);
-                                    setPaymentOpen(true);
-                                  } catch (err) {
-                                    console.error("PAYMENT LOAD ERROR:", err);
-                                    toast.error("Failed to load payment info");
-                                  }
+                                size="icon"
+                                variant="secondary"
+                                onClick={() => {
+                                  setSelectedBooking(b);
+                                  setViewOpen(true);
                                 }}
                               >
-                                Pay
+                                <Eye className="w-4 h-4" />
                               </Button>
-                            )}
-                          </td>
 
-                        </tr>
-                      ))}
-                    </tbody>
-
-                    </table>
-                  </div>
-                )}
-              </Card>
+                              {/* PAY */}
+                              {b.status === "PAYMENT_PENDING" && (
+                                <Button
+                                  size="sm"
+                                  onClick={async () => {
+                                    try {
+                                      const payment = await getCustomerPayment(b.bookingId);
+                                      setPaymentInfo(payment);
+                                      setPaymentOpen(true);
+                                    } catch {
+                                      toast.error("Failed to load payment info");
+                                    }
+                                  }}
+                                >
+                                  Pay
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                </div>
+              </>
             )}
+
 
 
             {/* PROFILE */}
