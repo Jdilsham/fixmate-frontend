@@ -15,12 +15,10 @@ export default function EndWorkDialog({
   onFinalize,
 }) {
   const [finalAmount, setFinalAmount] = useState("");
-  const [hourlyRate, setHourlyRate] = useState("");
 
   useEffect(() => {
     if (!open) {
       setFinalAmount("");
-      setHourlyRate("");
     }
   }, [open]);
 
@@ -30,6 +28,7 @@ export default function EndWorkDialog({
   const workedHours = Number((elapsedSeconds / 3600).toFixed(2));
   const workedMinutes = Math.floor(elapsedSeconds / 60);
 
+  const hourlyRate = booking.hourlyRate;
   const estimatedTotal =
     pricingType === "HOURLY"
       ? (hourlyRate * workedHours).toFixed(2)
@@ -76,15 +75,10 @@ export default function EndWorkDialog({
         {/* HOURLY RATE */}
         {pricingType === "HOURLY" && (
           <div className="mt-4 space-y-3 text-sm">
-            <div>
-              <label className="font-medium">Hourly Rate (Rs.)</label>
-              <input
-                type="number"
-                value={hourlyRate}
-                onChange={(e) => setHourlyRate(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 mt-1"
-              />
-            </div>
+            <p>
+              <span className="text-muted-foreground">Hourly Rate:</span>{" "}
+              <strong>Rs. {hourlyRate}</strong>
+            </p>
 
             <p>
               <span className="text-muted-foreground">Hours Worked:</span>{" "}
@@ -93,7 +87,9 @@ export default function EndWorkDialog({
 
             <p>
               <span className="text-muted-foreground">Estimated Total:</span>{" "}
-              <strong>Rs. {estimatedTotal || "0.00"}</strong>
+              <strong className="text-green-500">
+                Rs. {estimatedTotal}
+              </strong>
             </p>
           </div>
         )}
@@ -120,8 +116,8 @@ export default function EndWorkDialog({
                   alert("Enter valid hourly rate");
                   return;
                 }
-                onFinalize({
-                  hourlyRate: Number(hourlyRate),
+               onFinalize({
+                  hourlyRate: booking.hourlyRate,
                   hoursWorked: workedHours,
                 });
               }
