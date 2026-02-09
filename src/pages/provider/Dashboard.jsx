@@ -38,6 +38,7 @@ import ActivateAccountModal from "../../components/provider-activation/ActivateA
 import StepProfessionalInfo from "../../components/provider-activation/StepProfessionalInfo";
 import StepAddress from "../../components/provider-activation/StepAddress";
 import StepDocuments from "../../components/provider-activation/StepDocuments";
+import StartJobConfirmDialog from "../../components/dashboard/bookings/StartJobConfirmDialog";
 import EndWorkDialog from "../../components/dashboard/bookings/EndWorkDialog";
 import { getBookingStatusView } from "../../../utils/bookingStatus";
 
@@ -300,30 +301,60 @@ export default function Dashboard() {
 
   const [managedBooking, setManagedBooking] = useState(null);
   const [startingJob, setStartingJob] = useState(false);
-  const [jobStartedAt, setJobStartedAt] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [endWorkOpen, setEndWorkOpen] = useState(false);
+  const [startConfirmOpen, setStartConfirmOpen] = useState(false);
 
   useEffect(() => {
-    if (!jobStartedAt) return;
+    if (!managedBooking?.startedAt) return;
+
+    const startTime = new Date(managedBooking.startedAt).getTime();
 
     const interval = setInterval(() => {
-      const seconds =
-        Math.floor((Date.now() - jobStartedAt) / 1000);
+      const seconds = Math.floor((Date.now() - startTime) / 1000);
       setElapsedSeconds(seconds);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [jobStartedAt]);
+  }, [managedBooking?.startedAt]);
 
 
   useEffect(() => {
-    if (role === "SERVICE_PROVIDER" && user?.id) {
-      getProviderBookings(user.id)
-        .then(setProviderBookings)
-        .catch(() => toast.error("Failed to load bookings"));
+      if (role === "SERVICE_PROVIDER" && user?.id) {
+        getProviderBookings(user.id)
+          .then(setProviderBookings)
+          .catch(() => toast.error("Failed to load bookings"));
+      }
+    }, [role, user?.id]);
+
+  useEffect(() => {
+    if (!providerBookings.length) return;
+
+    const activeJobRaw = localStorage.getItem("activeJob");
+    if (!activeJobRaw) return;
+
+    const activeJob = JSON.parse(activeJobRaw);
+
+    const booking = providerBookings.find(
+      (b) => b.bookingId === activeJob.bookingId
+    );
+
+    if (!booking) {
+      localStorage.removeItem("activeJob");
+      return;
     }
-  }, [role, user?.id]);
+
+    // restore booking into manage view
+    setManagedBooking({
+      ...booking,
+      status: "IN_PROGRESS",
+      startedAt: activeJob.startedAt,
+    });
+
+    // ensure correct tab
+    setActiveTab("managebookings");
+  }, [providerBookings]);
+
 
 
   useEffect(() => {
@@ -819,59 +850,68 @@ const handleStartJob = async () => {
       }
     );
 
-    // update local booking state
+    const startedAt = new Date().toISOString();
+
     setManagedBooking((prev) => ({
       ...prev,
       status: "IN_PROGRESS",
+      startedAt,
     }));
 
-    setJobStartedAt(Date.now());
+    localStorage.setItem(
+      "activeJob",
+      JSON.stringify({
+        bookingId: managedBooking.bookingId,
+        providerServiceId: managedBooking.providerServiceId,
+        startedAt,
+      })
+    );
 
     toast.success("Job started");
   } catch (err) {
-    console.error(err);
     toast.error("Failed to start job");
   } finally {
     setStartingJob(false);
   }
 };
 
-const handleFinalizeFromPopup = async (payload) => {
-  if (!managedBooking?.bookingId) {
-    toast.error("Invalid booking");
-    return;
-  }
+  const handleFinalizeFromPopup = async (payload) => {
+    if (!managedBooking?.bookingId) {
+      toast.error("Invalid booking");
+      return;
+    }
 
-  try {
-    await fetch(
-      `${API}/api/provider/bookings/${managedBooking.bookingId}/finalize?providerServiceId=${managedBooking.providerServiceId}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getAuthUser()?.token}`,
-        },
-        body: JSON.stringify(payload),
-      }
-    );
+    try {
+      await fetch(
+        `${API}/api/provider/bookings/${managedBooking.bookingId}/finalize?providerServiceId=${managedBooking.providerServiceId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAuthUser()?.token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
-    // stop timer
-    setJobStartedAt(null);
-    setElapsedSeconds(0);
+      localStorage.removeItem("activeJob");
 
-    // update booking UI
-    setManagedBooking((prev) => ({
-      ...prev,
-      status: "COMPLETED",
-    }));
+      setManagedBooking((prev) => ({
+        ...prev,
+        status: "COMPLETED",
+        finalAmount: payload.amount,
+        workedSeconds: elapsedSeconds,
+      }));
 
-    setEndWorkOpen(false);
-    toast.success("Job finalized successfully");
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to finalize job");
-  }
-};
+      setEndWorkOpen(false);
+      toast.success("Job completed. Ready for payment");
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to finalize job");
+    }
+  };
+
 
   const handleRequestPayment = async (booking) => {
     try {
@@ -1380,110 +1420,105 @@ const handleFinalizeFromPopup = async (payload) => {
               </>
             )}
 
-            {/* MANAGE BOOKING (SERVICE PROVIDER) */}
             {activeTab === "managebookings" && role === "SERVICE_PROVIDER" && (
-              <Card className="p-6 rounded-2xl border bg-card">
+            <Card className="p-6 rounded-2xl border bg-card">
 
-                {/* NO BOOKING SELECTED */}
-                {!managedBooking && (
-                  <div className="text-center py-12">
-                    <p className="text-lg font-medium">
-                      No booking selected
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Please select a booking to manage from Bookings or Calendar.
-                    </p>
+              {/* NO BOOKING SELECTED */}
+              {!managedBooking && (
+                <div className="text-center py-12">
+                  <p className="text-lg font-medium">No booking selected</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Please select a booking to manage from Bookings or Calendar.
+                  </p>
+                </div>
+              )}
+
+              {/* BOOKING DETAILS */}
+              {managedBooking && (
+                <>
+                  {/* HEADER */}
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold">Manage Booking</h2>
+
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted">
+                      {managedBooking.status}
+                    </span>
                   </div>
-                )}
 
-                {/* BOOKING DETAILS */}
-                {managedBooking && (
-                  <>
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold">
-                        Manage Booking
-                      </h2>
+                  {/* DETAILS GRID */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
 
-                      <span className="px-3 py-2 rounded-full text-xs font-semibold bg-muted">
-                        {managedBooking.status}
-                      </span>
-                    </div>
+                    <Detail label="Customer">{managedBooking.customerName}</Detail>
+                    <Detail label="Service">{managedBooking.serviceTitle}</Detail>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <Detail label="Scheduled At">
+                      {new Date(managedBooking.scheduledAt).toLocaleString()}
+                    </Detail>
 
-                      <Detail label="Customer">
-                        {managedBooking.customerName}
+                    <Detail label="Pricing Type">
+                      {managedBooking.paymentType}
+                    </Detail>
+
+                    {managedBooking.paymentType === "HOURLY" && (
+                      <Detail label="Hourly Rate">
+                        Rs. {managedBooking.hourlyRate ?? "—"}
                       </Detail>
+                    )}
 
-                      <Detail label="Service">
-                        {managedBooking.serviceTitle}
-                      </Detail>
+                    <Detail label="Phone">{managedBooking.customerPhone}</Detail>
 
-                      <Detail label="Scheduled At">
-                        {new Date(managedBooking.scheduledAt).toLocaleString()}
-                      </Detail>
-
-                      <Detail label="Pricing Type">
-                        {managedBooking.paymentType}
-                      </Detail>
-
-                      {/* SHOW ONLY IF HOURLY */}
-                      {managedBooking.paymentType === "HOURLY" && (
-                        <Detail label="Hourly Rate">
-                          Rs. {managedBooking.hourlyRate ?? "—"}
-                        </Detail>
-                      )}
-
-                      <Detail label="Phone">
-                        {managedBooking.customerPhone}
-                      </Detail>
-                      
-
-                      <Detail label="Notes">
-                        {managedBooking.description || "—"}
-                      </Detail>
-                    </div>
-                  </>
-                )}
-                {/* START JOB */}
-                {managedBooking?.status === "ACCEPTED" && (
-                  <div className="mt-8 flex justify-end">
-                    <Button
-                      onClick={handleStartJob}
-                      disabled={startingJob}
-                      className="bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      {startingJob ? "Starting..." : "Start Job"}
-                    </Button>
+                    <Detail label="Notes">
+                      {managedBooking.description || "—"}
+                    </Detail>
                   </div>
-                )}
+                </>
+              )}
 
-                {/* JOB TIMER */}
-                {managedBooking?.status === "IN_PROGRESS" && jobStartedAt && (
+              {/* START JOB (only ACCEPTED) */}
+              {managedBooking?.status === "ACCEPTED" && (
+                <div className="mt-8 flex justify-end">
+                  <Button
+                    onClick={() => setStartConfirmOpen(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Start Job
+                  </Button>
+                </div>
+              )}
+
+              {managedBooking?.status === "IN_PROGRESS" &&
+                managedBooking?.startedAt && (
                   <div className="mt-6 flex items-center justify-between rounded-lg border p-4">
-                    <p className="text-sm text-muted-foreground">
-                      Job in progress
-                    </p>
-
+                    <p className="text-sm text-muted-foreground">Job in progress</p>
                     <p className="text-lg font-semibold">
                       ⏱ {Math.floor(elapsedSeconds / 60)} min {elapsedSeconds % 60} sec
                     </p>
                   </div>
-                )}
-                
-                {/* JOB TIMER */}
-                {managedBooking?.status === "IN_PROGRESS" && (
-                  <div className="mt-8 flex justify-end">
-                    <Button
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                      onClick={() => setEndWorkOpen(true)}
-                    >
-                      End Work
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            )}
+              )}
+
+              {/* END WORK */}
+              {managedBooking?.status === "IN_PROGRESS" && (
+                <div className="mt-8 flex justify-end">
+                  <Button
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => setEndWorkOpen(true)}
+                  >
+                    End Work
+                  </Button>
+                </div>
+              )}
+              <StartJobConfirmDialog
+                open={startConfirmOpen}
+                onClose={() => setStartConfirmOpen(false)}
+                loading={startingJob}
+                onConfirm={async () => {
+                  await handleStartJob();
+                  setStartConfirmOpen(false);
+                }}
+              />
+            </Card>
+          )}
+
 
 
             {/* PROFILE */}

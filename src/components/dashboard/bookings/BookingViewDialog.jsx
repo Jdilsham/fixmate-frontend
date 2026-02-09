@@ -14,10 +14,10 @@ export default function BookingViewDialog({
 
   const isProvider = mode === "PROVIDER";
   const status = getBookingStatusView(booking);
-
+ 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Booking Details</DialogTitle>
         </DialogHeader>
@@ -40,7 +40,7 @@ export default function BookingViewDialog({
           </div>
         )}
 
-        <div className="space-y-4 text-sm">
+        <div className="space-y-4 text-sm overflow-y-auto pr-2">
           {/* STATUS */}
           <Row label="Status">
             <span
@@ -134,11 +134,20 @@ export default function BookingViewDialog({
           {/* MANAGE BOOKING (before finalize) */}
           {!booking.paymentStatus && !booking.paymentAmount && (
             <button
+              disabled={booking.status === "PENDING"}
               onClick={() => {
+                if (booking.status === "PENDING") return;
                 onClose(false);
                 onManage?.(booking);
               }}
-              className="rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600"
+              className={`
+                rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition
+                ${
+                  booking.status === "PENDING"
+                    ? "bg-gray-500 cursor-not-allowed opacity-60"
+                    : "bg-orange-500 hover:bg-orange-600 shadow-md hover:shadow-orange-500/30"
+                }
+              `}
             >
               Manage Booking
             </button>
@@ -182,7 +191,7 @@ function Row({ label, value, children }) {
   return (
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right">
+      <span className="font-medium text-right break-words whitespace-normal max-w-[60%]">
         {children ?? value ?? "—"}
       </span>
     </div>
