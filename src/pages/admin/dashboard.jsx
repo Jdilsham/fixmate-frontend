@@ -4,6 +4,9 @@ import AdminStats from "../../components/adminDashboard/adminStat";
 import PendingProvidersTable from "../../components/adminDashboard/pendingProviderTable";
 import { useState } from "react";
 
+import UserManagementTable from "../../components/adminDashboard/UserManagementTable";
+import ServiceCategoryManager from "../../components/adminDashboard/serviceCategory";
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
 
@@ -24,9 +27,9 @@ export default function AdminDashboard() {
 
             {activeTab === "approval" && <PendingProvidersTable />}
 
-            {activeTab === "users" && <div>Users coming soon 👀</div>}
+            {activeTab === "users" && <UserManagementTable />}
 
-            {activeTab === "services" && <div>Services coming soon 🔧</div>}
+            {activeTab === "services" && <ServiceCategoryManager />}
 
             {activeTab === "settings" && <div>Settings coming soon ⚙️</div>}
           

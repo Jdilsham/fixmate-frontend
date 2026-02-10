@@ -1,7 +1,10 @@
-
 import { useEffect, useState } from "react";
-import { Table, Badge, Button, useToast } from "@shadcn/ui";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import { Ban, CheckCircle, User as UserIcon } from "lucide-react";
+import toast from "react-hot-toast";
+
+const API = import.meta.env.VITE_BACKEND_URL;
 
 export default function UserManagementTable() {
   const [users, setUsers] = useState([]);
@@ -9,7 +12,7 @@ export default function UserManagementTable() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("/api/admin/users", {
+      const response = await fetch(`${API}/api/admin/users`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = await response.json();
@@ -21,12 +24,19 @@ export default function UserManagementTable() {
     }
   };
 
-  const handleToggleBan = async (userId) => {
+  const handleToggleBan = async (userId , userRole) => {
+    if (userRole === "ADMIN") {
+      toast.error("Cannot ban an admin user");
+      return;
+    } // Prevent banning admins
     try {
-      const response = await fetch(`/api/admin/users/${userId}/toggle-ban`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const response = await fetch(
+        `${API}/api/admin/users/${userId}/toggle-ban`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
+      );
       if (response.ok) {
         fetchUsers(); // Refresh list
       }
@@ -35,7 +45,9 @@ export default function UserManagementTable() {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   if (loading) return <div>Loading users...</div>;
 
@@ -58,30 +70,41 @@ export default function UserManagementTable() {
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-b hover:bg-muted/30 transition-colors">
-                <td className="p-4">{user.firstName} {user.lastName}</td>
+              <tr
+                key={user.id}
+                className="border-b hover:bg-muted/30 transition-colors"
+              >
+                <td className="p-4">
+                  {user.firstName} {user.lastName}
+                </td>
                 <td className="p-4 text-muted-foreground">{user.email}</td>
                 <td className="p-4">
                   <Badge variant="outline">{user.role}</Badge>
                 </td>
                 <td className="p-4">
                   {user.banned ? (
-                    <span className="text-destructive flex items-center gap-1"><Ban className="w-3 h-3"/> Banned</span>
+                    <span className="text-destructive flex items-center gap-1">
+                      <Ban className="w-3 h-3" /> Banned
+                    </span>
                   ) : (
-                    <span className="text-green-600 flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Active</span>
+                    <span className="text-green-600 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Active
+                    </span>
                   )}
                 </td>
                 <td className="p-4 text-muted-foreground">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
                 <td className="p-4 text-right">
-                  <Button 
-                    variant={user.banned ? "outline" : "destructive"} 
+                  {user.role !== "ADMIN" && (
+                    <Button
+                    variant={user.banned ? "outline" : "destructive"}
                     size="sm"
-                    onClick={() => handleToggleBan(user.id)}
+                    onClick={() => handleToggleBan(user.id, user.role)}
                   >
                     {user.banned ? "Unban" : "Ban User"}
                   </Button>
+                  )}
                 </td>
               </tr>
             ))}
