@@ -1,14 +1,23 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
+import { getBookingStatusView } from "../../../../utils/bookingStatus";
 
-export default function BookingViewDialog({ open, onClose, booking, mode }) {
+export default function BookingViewDialog({
+  open,
+  onClose,
+  booking,
+  mode,
+  onManage,
+  onRequestPayment,
+}) {
   if (!booking) return null;
 
   const isProvider = mode === "PROVIDER";
-
+  const status = getBookingStatusView(booking);
+ 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Booking Details</DialogTitle>
         </DialogHeader>
@@ -31,21 +40,13 @@ export default function BookingViewDialog({ open, onClose, booking, mode }) {
           </div>
         )}
 
-        <div className="space-y-4 text-sm">
+        <div className="space-y-4 text-sm overflow-y-auto pr-2">
           {/* STATUS */}
           <Row label="Status">
             <span
-              className={`px-2 py-1 rounded text-xs font-medium ${
-                booking.status === "PENDING"
-                  ? "bg-yellow-500/20 text-yellow-400"
-                  : booking.status === "ACCEPTED"
-                  ? "bg-green-500/20 text-green-400"
-                  : booking.status === "COMPLETED"
-                  ? "bg-blue-500/20 text-blue-400"
-                  : "bg-muted text-muted-foreground"
-              }`}
+              className={`px-2 py-1 rounded text-xs font-medium ${status.className}`}
             >
-              {booking.status}
+              {status.label}
             </span>
           </Row>
 
@@ -73,6 +74,17 @@ export default function BookingViewDialog({ open, onClose, booking, mode }) {
           {isProvider && (
             <>
               <Row label="Pricing Type" value={booking.paymentType} />
+
+              {booking.paymentType === "HOURLY" && (
+                <Row
+                  label="Hourly Price"
+                  value={
+                    booking.hourlyRate
+                      ? `Rs. ${booking.hourlyRate}`
+                      : "—"
+                  }
+                />
+              )}
 
               <Row
                 label="Amount"
@@ -118,6 +130,58 @@ export default function BookingViewDialog({ open, onClose, booking, mode }) {
             </>
           )}
         </div>
+        <div className="mt-6 flex justify-end">
+          {/* MANAGE BOOKING (before finalize) */}
+          {!booking.paymentStatus && !booking.paymentAmount && (
+            <button
+              disabled={booking.status === "PENDING"}
+              onClick={() => {
+                if (booking.status === "PENDING") return;
+                onClose(false);
+                onManage?.(booking);
+              }}
+              className={`
+                rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition
+                ${
+                  booking.status === "PENDING"
+                    ? "bg-gray-500 cursor-not-allowed opacity-60"
+                    : "bg-orange-500 hover:bg-orange-600 shadow-md hover:shadow-orange-500/30"
+                }
+              `}
+            >
+              Manage Booking
+            </button>
+          )}
+
+          {/* REQUEST PAYMENT (amount set, not requested yet) */}
+          {!booking.paymentStatus && booking.paymentAmount && (
+            <button
+              onClick={() => {
+                onClose(false);
+                onRequestPayment?.(booking);
+              }}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+            >
+              Request Payment
+            </button>
+          )}
+
+          {/* PAYMENT REQUESTED */}
+          {booking.paymentStatus === "REQUESTED" && (
+            <span className="text-sm font-semibold text-blue-500">
+              Payment Requested
+            </span>
+          )}
+
+          {/* PAYMENT PAID / CONFIRMED */}
+          {(booking.paymentStatus === "PAID" ||
+            booking.paymentStatus === "CONFIRMED") && (
+            <span className="text-sm font-semibold text-green-500">
+              Payment Completed
+            </span>
+          )}
+        </div>
+        
       </DialogContent>
     </Dialog>
   );
@@ -127,7 +191,7 @@ function Row({ label, value, children }) {
   return (
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right">
+      <span className="font-medium text-right break-words whitespace-normal max-w-[60%]">
         {children ?? value ?? "—"}
       </span>
     </div>

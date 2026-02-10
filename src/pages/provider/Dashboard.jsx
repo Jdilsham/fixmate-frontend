@@ -38,6 +38,9 @@ import ActivateAccountModal from "../../components/provider-activation/ActivateA
 import StepProfessionalInfo from "../../components/provider-activation/StepProfessionalInfo";
 import StepAddress from "../../components/provider-activation/StepAddress";
 import StepDocuments from "../../components/provider-activation/StepDocuments";
+import StartJobConfirmDialog from "../../components/dashboard/bookings/StartJobConfirmDialog";
+import EndWorkDialog from "../../components/dashboard/bookings/EndWorkDialog";
+import { getBookingStatusView } from "../../../utils/bookingStatus";
 
 
 
@@ -72,8 +75,9 @@ const ROLE_CONFIG = {
       { id: "dashboard", label: "Dashboard", icon: Home },
       { id: "services", label: "Services", icon: Briefcase },
       { id: "calendar", label: "Calendar", icon: CalendarIcon },
-      { id: "pendingBooking", label: "Pending Bookings", icon: ListCheck },
-      { id: "profile", label: "Profile", icon: Settings },
+      { id: "pendingBooking", label: "Bookings", icon: ListCheck },
+      { id: "managebookings", label: "Manage Bookings", icon: ListCheck },
+      { id: "profile", label: "Profile", icon: Settings }
     ],
   },
   CUSTOMER: {
@@ -295,13 +299,62 @@ export default function Dashboard() {
   });
 
 
+  const [managedBooking, setManagedBooking] = useState(null);
+  const [startingJob, setStartingJob] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [endWorkOpen, setEndWorkOpen] = useState(false);
+  const [startConfirmOpen, setStartConfirmOpen] = useState(false);
+
   useEffect(() => {
-    if (role === "SERVICE_PROVIDER" && user?.id) {
-      getProviderBookings(user.id)
-        .then(setProviderBookings)
-        .catch(() => toast.error("Failed to load bookings"));
+    if (!managedBooking?.startedAt) return;
+
+    const startTime = new Date(managedBooking.startedAt).getTime();
+
+    const interval = setInterval(() => {
+      const seconds = Math.floor((Date.now() - startTime) / 1000);
+      setElapsedSeconds(seconds);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [managedBooking?.startedAt]);
+
+
+  useEffect(() => {
+      if (role === "SERVICE_PROVIDER" && user?.id) {
+        getProviderBookings(user.id)
+          .then(setProviderBookings)
+          .catch(() => toast.error("Failed to load bookings"));
+      }
+    }, [role, user?.id]);
+
+  useEffect(() => {
+    if (!providerBookings.length) return;
+
+    const activeJobRaw = localStorage.getItem("activeJob");
+    if (!activeJobRaw) return;
+
+    const activeJob = JSON.parse(activeJobRaw);
+
+    const booking = providerBookings.find(
+      (b) => b.bookingId === activeJob.bookingId
+    );
+
+    if (!booking) {
+      localStorage.removeItem("activeJob");
+      return;
     }
-  }, [role, user?.id]);
+
+    // restore booking into manage view
+    setManagedBooking({
+      ...booking,
+      status: "IN_PROGRESS",
+      startedAt: activeJob.startedAt,
+    });
+
+    // ensure correct tab
+    setActiveTab("managebookings");
+  }, [providerBookings]);
+
 
 
   useEffect(() => {
@@ -781,6 +834,122 @@ const handleUploadWorkPdf = () => {
     }
   };
 
+const handleStartJob = async () => {
+  if (!managedBooking) return;
+
+  try {
+    setStartingJob(true);
+
+    await fetch(
+      `${API}/api/provider/bookings/${managedBooking.bookingId}/start?providerServiceId=${managedBooking.providerServiceId}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${getAuthUser()?.token}`,
+        },
+      }
+    );
+
+    const startedAt = new Date().toISOString();
+
+    setManagedBooking((prev) => ({
+      ...prev,
+      status: "IN_PROGRESS",
+      startedAt,
+    }));
+
+    localStorage.setItem(
+      "activeJob",
+      JSON.stringify({
+        bookingId: managedBooking.bookingId,
+        providerServiceId: managedBooking.providerServiceId,
+        startedAt,
+      })
+    );
+
+    toast.success("Job started");
+  } catch (err) {
+    toast.error("Failed to start job");
+  } finally {
+    setStartingJob(false);
+  }
+};
+
+  const handleFinalizeFromPopup = async (payload) => {
+    if (!managedBooking?.bookingId) {
+      toast.error("Invalid booking");
+      return;
+    }
+
+    try {
+      await fetch(
+        `${API}/api/provider/bookings/${managedBooking.bookingId}/finalize?providerServiceId=${managedBooking.providerServiceId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getAuthUser()?.token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      localStorage.removeItem("activeJob");
+
+      setManagedBooking((prev) => ({
+        ...prev,
+        status: "COMPLETED",
+        finalAmount: payload.amount,
+        workedSeconds: elapsedSeconds,
+      }));
+
+      setEndWorkOpen(false);
+      toast.success("Job completed. Ready for payment");
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to finalize job");
+    }
+  };
+
+
+  const handleRequestPayment = async (booking) => {
+    try {
+      await fetch(`${API}/api/provider/payments/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getAuthUser()?.token}`,
+        },
+        body: JSON.stringify({
+          bookingId: booking.bookingId ?? booking.id,
+          amount: booking.paymentAmount,
+          workedTime: `${Math.ceil((booking.workedHours ?? 1))} hours`,
+        }),
+      });
+
+      setProviderBookings((prev) =>
+        prev.map((b) =>
+          b.bookingId === booking.bookingId
+            ? { ...b, status: "PAYMENT_PENDING" }
+            : b
+        )
+      );
+
+      // if currently managing this booking
+      if (managedBooking?.bookingId === booking.bookingId) {
+        setManagedBooking((prev) => ({
+          ...prev,
+          status: "PAYMENT_PENDING",
+        }));
+      }
+
+      toast.success("Payment request sent");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to request payment");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -1037,26 +1206,18 @@ const handleUploadWorkPdf = () => {
                             </td>
 
                             <td className="px-2 py-3 text-center">
-                              <span
-                                className={`inline-flex items-center gap-1 px-3 py-1
-                                  rounded-full text-xs font-semibold
-                                  ${
-                                    b.status === "PENDING"
-                                      ? "bg-yellow-500/20 text-yellow-600"
-                                      : b.status === "ACCEPTED"
-                                      ? "bg-green-500/20 text-green-600"
-                                      : b.status === "REJECTED"
-                                      ? "bg-red-500/20 text-red-600"
-                                      : "bg-muted text-muted-foreground"
-                                  }
-                                `}
-                              >
-                                {b.status === "PENDING" && <Eye className="w-3 h-3" />}
-                                {b.status === "ACCEPTED" && <CheckCircle className="w-3 h-3" />}
-                                {b.status === "REJECTED" && <XCircle className="w-3 h-3" />}
+                              {(() => {
+                                  const status = getBookingStatusView(b);
 
-                                {formatStatus(b.status)}
-                              </span>
+                                  return (
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-3 py-1
+                                        rounded-full text-xs font-semibold ${status.className}`}
+                                    >
+                                      {status.label}
+                                    </span>
+                                  );
+                                })()}
                             </td>
 
 
@@ -1258,6 +1419,105 @@ const handleUploadWorkPdf = () => {
                 </div>
               </>
             )}
+
+            {activeTab === "managebookings" && role === "SERVICE_PROVIDER" && (
+            <Card className="p-6 rounded-2xl border bg-card">
+
+              {/* NO BOOKING SELECTED */}
+              {!managedBooking && (
+                <div className="text-center py-12">
+                  <p className="text-lg font-medium">No booking selected</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Please select a booking to manage from Bookings or Calendar.
+                  </p>
+                </div>
+              )}
+
+              {/* BOOKING DETAILS */}
+              {managedBooking && (
+                <>
+                  {/* HEADER */}
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold">Manage Booking</h2>
+
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted">
+                      {managedBooking.status}
+                    </span>
+                  </div>
+
+                  {/* DETAILS GRID */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+
+                    <Detail label="Customer">{managedBooking.customerName}</Detail>
+                    <Detail label="Service">{managedBooking.serviceTitle}</Detail>
+
+                    <Detail label="Scheduled At">
+                      {new Date(managedBooking.scheduledAt).toLocaleString()}
+                    </Detail>
+
+                    <Detail label="Pricing Type">
+                      {managedBooking.paymentType}
+                    </Detail>
+
+                    {managedBooking.paymentType === "HOURLY" && (
+                      <Detail label="Hourly Rate">
+                        Rs. {managedBooking.hourlyRate ?? "—"}
+                      </Detail>
+                    )}
+
+                    <Detail label="Phone">{managedBooking.customerPhone}</Detail>
+
+                    <Detail label="Notes">
+                      {managedBooking.description || "—"}
+                    </Detail>
+                  </div>
+                </>
+              )}
+
+              {/* START JOB (only ACCEPTED) */}
+              {managedBooking?.status === "ACCEPTED" && (
+                <div className="mt-8 flex justify-end">
+                  <Button
+                    onClick={() => setStartConfirmOpen(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Start Job
+                  </Button>
+                </div>
+              )}
+
+              {managedBooking?.status === "IN_PROGRESS" &&
+                managedBooking?.startedAt && (
+                  <div className="mt-6 flex items-center justify-between rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">Job in progress</p>
+                    <p className="text-lg font-semibold">
+                      ⏱ {Math.floor(elapsedSeconds / 60)} min {elapsedSeconds % 60} sec
+                    </p>
+                  </div>
+              )}
+
+              {/* END WORK */}
+              {managedBooking?.status === "IN_PROGRESS" && (
+                <div className="mt-8 flex justify-end">
+                  <Button
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => setEndWorkOpen(true)}
+                  >
+                    End Work
+                  </Button>
+                </div>
+              )}
+              <StartJobConfirmDialog
+                open={startConfirmOpen}
+                onClose={() => setStartConfirmOpen(false)}
+                loading={startingJob}
+                onConfirm={async () => {
+                  await handleStartJob();
+                  setStartConfirmOpen(false);
+                }}
+              />
+            </Card>
+          )}
 
 
 
@@ -2029,6 +2289,15 @@ const handleUploadWorkPdf = () => {
         onClose={() => setViewOpen(false)}
         booking={selectedBooking}
         mode={role === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}
+        onManage={(booking) => {
+          setViewOpen(false);
+          setManagedBooking({
+            ...booking,
+            bookingId: booking.bookingId ?? booking.id,
+          });
+          setActiveTab("managebookings");
+        }}
+        onRequestPayment={handleRequestPayment}
       />
 
       <CustomerPaymentDialog
@@ -2127,6 +2396,15 @@ const handleUploadWorkPdf = () => {
           )}
 
         </ActivateAccountModal>
+
+        <EndWorkDialog
+          open={endWorkOpen}
+          onClose={() => setEndWorkOpen(false)}
+          booking={managedBooking}
+          elapsedSeconds={elapsedSeconds}
+          onFinalize={handleFinalizeFromPopup}
+        />
+
     </div>
 
               
@@ -2161,3 +2439,15 @@ function Input({
   );
 }
 
+function Detail({ label, children }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground mb-1">
+        {label}
+      </p>
+      <p className="font-medium">
+        {children}
+      </p>
+    </div>
+  );
+}
