@@ -2,6 +2,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { format } from "date-fns";
 import { getBookingStatusView } from "../../../../utils/bookingStatus";
 
+const formatPrice = (amount) => {
+  if (amount === null || amount === undefined) return "—";
+  return `Rs. ${Number(amount).toLocaleString("en-LK")}`;
+};
+
 export default function BookingViewDialog({
   open,
   onClose,
@@ -85,16 +90,17 @@ export default function BookingViewDialog({
                   }
                 />
               )}
-
-              <Row
-                label="Amount"
-                value={
-                  booking.paymentAmount
-                    ? `Rs. ${booking.paymentAmount}`
-                    : "To be decided"
-                }
-              />
-
+              <Row label="Amount">
+                {booking.status === "PAYMENT_PENDING" ||
+                booking.status === "PAYMENT_REQUESTED" ||
+                booking.status === "PAID" ? (
+                  <span className="font-semibold text-green-600">
+                    {formatPrice(booking.paymentAmount)}
+                  </span>
+                ) : (
+                  "To be decided"
+                )}
+              </Row>
               <Row label="Phone Number" value={booking.customerPhone} />
               <Row label="Address" value={booking.bookingAddress} />
 
@@ -113,16 +119,22 @@ export default function BookingViewDialog({
           {/* CUSTOMER ONLY */}
           {!isProvider && (
             <>
-              <Row label="Pricing Type" value={booking.pricingType} />
+              <Row
+                label="Pricing Type"
+                value={booking.paymentType ?? booking.pricingType ?? "—"}
+              />
               <Row label="Phone Number" value={booking.phone} />
               <Row label="Address" value={booking.address} />
 
-              <Row
-                label="Amount"
-                value={
-                  booking.amount ? `Rs. ${booking.amount}` : "To be decided"
-                }
-              />
+              <Row label="Amount">
+                {typeof booking.paymentAmount === "number" ? (
+                  <span className="font-semibold text-green-600">
+                    Rs. {booking.paymentAmount}
+                  </span>
+                ) : (
+                  "To be decided"
+                )}
+              </Row>
 
               {booking.description && (
                 <Row label="Additional Notes" value={booking.description} />
