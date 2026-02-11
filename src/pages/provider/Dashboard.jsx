@@ -66,6 +66,11 @@ import {
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
+const formatPrice = (amount) => {
+  if (amount === null || amount === undefined) return "—";
+  return `Rs. ${Number(amount).toLocaleString("en-LK")}`;
+};
+
 /* =======================
    ROLE CONFIG
 ======================= */
@@ -896,12 +901,47 @@ const handleStartJob = async () => {
 
       localStorage.removeItem("activeJob");
 
-      setManagedBooking((prev) => ({
-        ...prev,
-        status: "COMPLETED",
-        finalAmount: payload.amount,
-        workedSeconds: elapsedSeconds,
-      }));
+      setManagedBooking((prev) => {
+        if (!prev) return prev;
+
+        const finalAmount = calculateFinalAmount({
+          paymentType: prev.paymentType,
+          hourlyRate: prev.hourlyRate,
+          fixedPrice: prev.fixedPrice ?? prev.paymentAmount,
+          workedSeconds: elapsedSeconds,
+        });
+
+        setSelectedBooking((sb) =>
+          sb?.bookingId === prev.bookingId
+            ? {
+                ...sb,
+                paymentAmount: finalAmount,
+                workedSeconds: elapsedSeconds,
+                status: "PAYMENT_PENDING",
+              }
+            : sb
+        );
+
+        setProviderBookings((list) =>
+          list.map((b) =>
+            b.bookingId === prev.bookingId
+              ? {
+                  ...b,
+                  paymentAmount: finalAmount,
+                  workedSeconds: elapsedSeconds,
+                  status: "PAYMENT_PENDING",
+                }
+              : b
+          )
+        );
+
+        return {
+          ...prev,
+          status: "PAYMENT_PENDING",
+          paymentAmount: finalAmount,
+          workedSeconds: elapsedSeconds,
+        };
+    });
 
       setEndWorkOpen(false);
       toast.success("Job completed. Ready for payment");
@@ -913,43 +953,53 @@ const handleStartJob = async () => {
   };
 
 
-  const handleRequestPayment = async (booking) => {
-    try {
-      await fetch(`${API}/api/provider/payments/request`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getAuthUser()?.token}`,
-        },
-        body: JSON.stringify({
-          bookingId: booking.bookingId ?? booking.id,
-          amount: booking.paymentAmount,
-          workedTime: `${Math.ceil((booking.workedHours ?? 1))} hours`,
-        }),
-      });
-
-      setProviderBookings((prev) =>
-        prev.map((b) =>
-          b.bookingId === booking.bookingId
-            ? { ...b, status: "PAYMENT_PENDING" }
-            : b
-        )
-      );
-
-      // if currently managing this booking
-      if (managedBooking?.bookingId === booking.bookingId) {
-        setManagedBooking((prev) => ({
-          ...prev,
-          status: "PAYMENT_PENDING",
-        }));
-      }
-
-      toast.success("Payment request sent");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to request payment");
+const handleRequestPayment = async (booking) => {
+  try {
+    await fetch(`${API}/api/provider/payments/request`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getAuthUser()?.token}`,
+      },
+      body: JSON.stringify({
+        bookingId: booking.bookingId ?? booking.id,
+        amount: booking.paymentAmount,
+        workedSeconds: booking.workedSeconds,
+      }),
+    });
+    setProviderBookings((prev) =>
+      prev.map((b) =>
+        b.bookingId === booking.bookingId
+          ? { ...b, status: "PAYMENT_PENDING" }
+          : b
+      )
+    );
+    if (managedBooking?.bookingId === booking.bookingId) {
+      setManagedBooking((prev) => ({
+        ...prev,
+        status: "PAYMENT_REQUESTED",
+      }));
     }
-  };
+
+    toast.success("Payment request sent");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to request payment");
+  }
+};
+
+  function calculateFinalAmount({
+    paymentType,
+    hourlyRate,
+    fixedPrice,
+    workedSeconds,
+  }) {
+    if (paymentType === "HOURLY") {
+      const hours = workedSeconds / 3600;
+      return Math.round(hourlyRate * hours);
+    }
+    return fixedPrice ?? 0;
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -1421,14 +1471,16 @@ const handleStartJob = async () => {
             )}
 
             {activeTab === "managebookings" && role === "SERVICE_PROVIDER" && (
-            <Card className="p-6 rounded-2xl border bg-card">
+            <Card className="p-8 rounded-2xl border bg-card space-y-6">
 
               {/* NO BOOKING SELECTED */}
               {!managedBooking && (
                 <div className="text-center py-12">
-                  <p className="text-lg font-medium">No booking selected</p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Please select a booking to manage from Bookings or Calendar.
+                  <p className="text-lg font-semibold">
+                    No booking selected
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Select a booking to start managing work and payments
                   </p>
                 </div>
               )}
@@ -1438,15 +1490,33 @@ const handleStartJob = async () => {
                 <>
                   {/* HEADER */}
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold">Manage Booking</h2>
+                    <div className="flex flex-col gap-1">
+                      <h2 className="text-2xl font-semibold tracking-tight">
+                        Manage Booking
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Track job progress and manage payment
+                      </p>
+                    </div>
 
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted">
-                      {managedBooking.status}
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide
+                        ${
+                          managedBooking.status === "ACCEPTED"
+                            ? "bg-blue-500/15 text-blue-400"
+                            : managedBooking.status === "IN_PROGRESS"
+                            ? "bg-yellow-500/15 text-yellow-400"
+                            : managedBooking.status === "PAYMENT_PENDING"
+                            ? "bg-green-500/15 text-green-400"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                    >
+                      {managedBooking.status.replace("_", " ")}
                     </span>
                   </div>
 
                   {/* DETAILS GRID */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm rounded-xl bg-muted/20 p-6">
 
                     <Detail label="Customer">{managedBooking.customerName}</Detail>
                     <Detail label="Service">{managedBooking.serviceTitle}</Detail>
@@ -1474,39 +1544,113 @@ const handleStartJob = async () => {
                 </>
               )}
 
-              {/* START JOB (only ACCEPTED) */}
+              {/* START JOB */}
               {managedBooking?.status === "ACCEPTED" && (
                 <div className="mt-8 flex justify-end">
                   <Button
+                    className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
                     onClick={() => setStartConfirmOpen(true)}
-                    className="bg-green-600 hover:bg-green-700 text-white"
                   >
-                    Start Job
+                    ▶ Start Job
                   </Button>
                 </div>
-              )}
-
-              {managedBooking?.status === "IN_PROGRESS" &&
-                managedBooking?.startedAt && (
-                  <div className="mt-6 flex items-center justify-between rounded-lg border p-4">
-                    <p className="text-sm text-muted-foreground">Job in progress</p>
-                    <p className="text-lg font-semibold">
-                      ⏱ {Math.floor(elapsedSeconds / 60)} min {elapsedSeconds % 60} sec
-                    </p>
-                  </div>
               )}
 
               {/* END WORK */}
               {managedBooking?.status === "IN_PROGRESS" && (
-                <div className="mt-8 flex justify-end">
+                <div className="mt-8 flex items-center justify-between">
+                  {/* TIMER */}
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    ⏱
+                    <span>
+                      {Math.floor(elapsedSeconds / 60)} min{" "}
+                      {elapsedSeconds % 60} sec
+                    </span>
+                  </div>
+
+                  {/* END WORK */}
                   <Button
-                    className="bg-red-600 hover:bg-red-700 text-white"
+                    className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
                     onClick={() => setEndWorkOpen(true)}
                   >
-                    End Work
+                    ⏹ End Work
                   </Button>
                 </div>
               )}
+
+              {/* AFTER FINALIZE → JOB SUMMARY + REQUEST PAYMENT */}
+              {managedBooking?.status === "PAYMENT_PENDING" && (
+              <div className="mt-8 rounded-2xl border bg-green-500/10 p-6">
+
+                {/* HEADER */}
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-500">
+                      Job Completed
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Review job summary and request payment
+                    </p>
+                  </div>
+
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold
+                                  bg-green-500/20 text-green-400">
+                    Ready for Payment
+                  </span>
+                </div>
+
+                {/* SUMMARY */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm
+                                rounded-xl bg-background p-4 border">
+
+                  <Detail label="Worked Time">
+                    {Math.floor(managedBooking.workedSeconds / 60)} min
+                  </Detail>
+
+                  {/* HOURLY BREAKDOWN */}
+                  {managedBooking.paymentType === "HOURLY" && (
+                    <>
+                      <Detail label="Hourly Rate">
+                        Rs. {managedBooking.hourlyRate}
+                      </Detail>
+
+                      <Detail label="Final Amount">
+                        <span className="text-2xl font-bold text-green-500">
+                          Rs. {managedBooking.paymentAmount}
+                        </span>
+                      </Detail>
+                    </>
+                  )}
+
+                  {/* FIXED PRICE */}
+                  {managedBooking.paymentType === "FIXED" && (
+                    <>
+                      <Detail label="Pricing Type">
+                        FIXED
+                      </Detail>
+
+                      <Detail label="Final Amount">
+                        <span className="text-2xl font-bold text-green-500">
+                          {formatPrice(managedBooking.paymentAmount)}
+                        </span>
+                      </Detail>
+                    </>
+                  )}
+                </div>
+
+                {/* CTA */}
+                <div className="mt-6 flex justify-end">
+                  <Button
+                    size="lg"
+                    className="bg-green-600 hover:bg-green-700 text-white px-8"
+                    onClick={() => handleRequestPayment(managedBooking)}
+                  >
+                    Request Payment
+                  </Button>
+                </div>
+              </div>
+            )}
+
               <StartJobConfirmDialog
                 open={startConfirmOpen}
                 onClose={() => setStartConfirmOpen(false)}
@@ -2291,10 +2435,15 @@ const handleStartJob = async () => {
         mode={role === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}
         onManage={(booking) => {
           setViewOpen(false);
-          setManagedBooking({
-            ...booking,
-            bookingId: booking.bookingId ?? booking.id,
-          });
+          setManagedBooking((prev) =>
+            prev
+              ? prev
+              : {
+                  ...booking,
+                  bookingId: booking.bookingId ?? booking.id,
+                }
+          );
+          setSelectedBooking((prev) => prev ?? booking);
           setActiveTab("managebookings");
         }}
         onRequestPayment={handleRequestPayment}
@@ -2441,11 +2590,11 @@ function Input({
 
 function Detail({ label, children }) {
   return (
-    <div>
-      <p className="text-xs text-muted-foreground mb-1">
+    <div className="space-y-1">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="font-medium">
+      <p className="text-sm font-semibold text-foreground">
         {children}
       </p>
     </div>

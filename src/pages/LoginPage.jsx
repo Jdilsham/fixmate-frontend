@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 import GoogleLoginButton from "@/components/LoginSignup/GoogleLoginButton";
 import { jwtDecode } from "jwt-decode";
 
-
 const API = import.meta.env.VITE_BACKEND_URL;
 
 //Fix for ROLE_ prefix in roles
@@ -20,37 +19,36 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-async function handleLogin() {
-  try {
-    const response = await axios.post(`${API}/api/auth/login`, {
-      email,
-      password,
-    });
+  async function handleLogin() {
+    try {
+      const response = await axios.post(`${API}/api/auth/login`, {
+        email,
+        password,
+      });
 
-    // const token = response.data;
-    const { token } = response.data;
-    //  Decode JWT safely
-    const decoded = jwtDecode(token);
-    const role = decoded.role; // SERVICE_PROVIDER or CUSTOMER
- 
-    localStorage.setItem("token", token);
-    localStorage.setItem("role", role);
+      // const token = response.data;
+      const { token } = response.data;
+      //  Decode JWT safely
+      const decoded = jwtDecode(token);
+      const role = decoded.role; // SERVICE_PROVIDER or CUSTOMER
 
-    toast.success("Login successful!");
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
 
-    if (role === "SERVICE_PROVIDER") {
-      navigate("/provider/dashboard");
-    } else {
-      navigate("/");
+      toast.success("Login successful!");
+
+      if (role === "SERVICE_PROVIDER") {
+        navigate("/provider/dashboard");
+      } else if (role === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Invalid credentials");
     }
-
-  } catch (error) {
-    console.error(error);
-    toast.error("Invalid credentials");
   }
-}
-
-
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background px-4">
@@ -132,8 +130,6 @@ async function handleLogin() {
 
           {/* TEMPORARILY DISABLED FOR DEPLOYMENT */}
           {/* <GoogleLoginButton /> */}
-
-                  
 
           {/* Footer */}
           <p className="text-center text-sm text-muted-foreground">
