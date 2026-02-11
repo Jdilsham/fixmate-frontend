@@ -41,6 +41,7 @@ import StepDocuments from "../../components/provider-activation/StepDocuments";
 import StartJobConfirmDialog from "../../components/dashboard/bookings/StartJobConfirmDialog";
 import EndWorkDialog from "../../components/dashboard/bookings/EndWorkDialog";
 import { getBookingStatusView } from "../../../utils/bookingStatus";
+import { formatWorkedTime, calculateFinalAmount } from "../../../utils/time";
 
 
 
@@ -309,19 +310,65 @@ export default function Dashboard() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [endWorkOpen, setEndWorkOpen] = useState(false);
   const [startConfirmOpen, setStartConfirmOpen] = useState(false);
+  const [finalElapsedSeconds, setFinalElapsedSeconds] = useState(null);
 
   useEffect(() => {
-    if (!managedBooking?.startedAt) return;
+    if (!managedBooking) return;
+
+    if (endWorkOpen) return;
+
+    // Only run timer for valid states
+    if (!["IN_PROGRESS", "PAYMENT_PENDING"].includes(managedBooking.status)) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    if (!managedBooking.startedAt) return;
 
     const startTime = new Date(managedBooking.startedAt).getTime();
 
-    const interval = setInterval(() => {
-      const seconds = Math.floor((Date.now() - startTime) / 1000);
+    const updateTimer = () => {
+      const seconds = Math.max(
+        0,
+        Math.floor((Date.now() - startTime) / 1000)
+      );
+
       setElapsedSeconds(seconds);
-    }, 1000);
+
+      localStorage.setItem(
+        "elapsedSeconds",
+        JSON.stringify({
+          bookingId: managedBooking.bookingId,
+          seconds,
+        })
+      );
+    };
+
+    // run immediately
+    updateTimer();
+
+    const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [managedBooking?.startedAt]);
+  }, [managedBooking?.status, managedBooking?.startedAt, endWorkOpen]);
+
+
+  useEffect(() => {
+    if (!managedBooking) return;
+
+    const cached = localStorage.getItem("elapsedSeconds");
+    if (!cached) return;
+
+    try {
+      const { bookingId, seconds } = JSON.parse(cached);
+
+      if (bookingId === managedBooking.bookingId) {
+        setElapsedSeconds(seconds);
+      }
+    } catch {
+      localStorage.removeItem("elapsedSeconds");
+    }
+  }, [managedBooking?.bookingId]);
 
 
   useEffect(() => {
@@ -331,6 +378,38 @@ export default function Dashboard() {
           .catch(() => toast.error("Failed to load bookings"));
       }
     }, [role, user?.id]);
+
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
+
+    if (!providerBookings || providerBookings.length === 0) return;
+
+    const raw = localStorage.getItem("pendingPaymentBooking");
+    if (!raw) return;
+
+    try {
+      const { bookingId } = JSON.parse(raw);
+
+      const booking = providerBookings.find(
+        (b) => b.bookingId === bookingId
+      );
+
+      if (!booking) {
+        return;
+      }
+
+      setManagedBooking({
+        ...booking,
+        status: "PAYMENT_PENDING",
+      });
+
+      setSelectedBooking(booking);
+      setActiveTab("managebookings");
+    } catch (err) {
+      console.error(err);
+    }
+  }, [providerBookings, role]);
+    
 
   useEffect(() => {
     if (!providerBookings.length) return;
@@ -346,6 +425,7 @@ export default function Dashboard() {
 
     if (!booking) {
       localStorage.removeItem("activeJob");
+      localStorage.removeItem("elapsedSeconds");
       return;
     }
 
@@ -904,12 +984,14 @@ const handleStartJob = async () => {
       setManagedBooking((prev) => {
         if (!prev) return prev;
 
-        const finalAmount = calculateFinalAmount({
-          paymentType: prev.paymentType,
-          hourlyRate: prev.hourlyRate,
-          fixedPrice: prev.fixedPrice ?? prev.paymentAmount,
-          workedSeconds: elapsedSeconds,
-        });
+        const finalAmount =
+          prev.paymentType === "FIXED"
+            ? payload.finalAmount
+            : calculateFinalAmount({
+                paymentType: prev.paymentType,
+                hourlyRate: prev.hourlyRate,
+                workedSeconds: elapsedSeconds,
+              });
 
         setSelectedBooking((sb) =>
           sb?.bookingId === prev.bookingId
@@ -943,6 +1025,13 @@ const handleStartJob = async () => {
         };
     });
 
+      localStorage.setItem(
+        "pendingPaymentBooking",
+        JSON.stringify({
+          bookingId: managedBooking.bookingId,
+        })
+      );
+
       setEndWorkOpen(false);
       toast.success("Job completed. Ready for payment");
 
@@ -953,53 +1042,44 @@ const handleStartJob = async () => {
   };
 
 
-const handleRequestPayment = async (booking) => {
-  try {
-    await fetch(`${API}/api/provider/payments/request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getAuthUser()?.token}`,
-      },
-      body: JSON.stringify({
-        bookingId: booking.bookingId ?? booking.id,
-        amount: booking.paymentAmount,
-        workedSeconds: booking.workedSeconds,
-      }),
-    });
-    setProviderBookings((prev) =>
-      prev.map((b) =>
-        b.bookingId === booking.bookingId
-          ? { ...b, status: "PAYMENT_PENDING" }
-          : b
-      )
-    );
-    if (managedBooking?.bookingId === booking.bookingId) {
-      setManagedBooking((prev) => ({
-        ...prev,
-        status: "PAYMENT_REQUESTED",
-      }));
-    }
+  const handleRequestPayment = async (booking) => {
+    try {
+      await fetch(`${API}/api/provider/payments/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getAuthUser()?.token}`,
+        },
+        body: JSON.stringify({
+          bookingId: booking.bookingId ?? booking.id,
+          amount: booking.paymentAmount,
+          workedSeconds: booking.workedSeconds,
+        }),
+      });
 
-    toast.success("Payment request sent");
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to request payment");
-  }
-};
+      localStorage.removeItem("pendingPaymentBooking");
 
-  function calculateFinalAmount({
-    paymentType,
-    hourlyRate,
-    fixedPrice,
-    workedSeconds,
-  }) {
-    if (paymentType === "HOURLY") {
-      const hours = workedSeconds / 3600;
-      return Math.round(hourlyRate * hours);
+      setProviderBookings((prev) =>
+        prev.map((b) =>
+          b.bookingId === booking.bookingId
+            ? { ...b, status: "PAYMENT_PENDING" }
+            : b
+        )
+      );
+
+      if (managedBooking?.bookingId === booking.bookingId) {
+        setManagedBooking((prev) => ({
+          ...prev,
+          status: "PAYMENT_REQUESTED",
+        }));
+      }
+
+      toast.success("Payment request sent");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to request payment");
     }
-    return fixedPrice ?? 0;
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -1563,15 +1643,17 @@ const handleRequestPayment = async (booking) => {
                   <div className="flex items-center gap-2 text-sm font-medium">
                     ⏱
                     <span>
-                      {Math.floor(elapsedSeconds / 60)} min{" "}
-                      {elapsedSeconds % 60} sec
+                      {formatWorkedTime(elapsedSeconds)}
                     </span>
                   </div>
 
                   {/* END WORK */}
                   <Button
                     className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
-                    onClick={() => setEndWorkOpen(true)}
+                    onClick={() => {
+                      setFinalElapsedSeconds(elapsedSeconds); // freeze time here
+                      setEndWorkOpen(true);
+                    }}
                   >
                     ⏹ End Work
                   </Button>
@@ -1604,7 +1686,7 @@ const handleRequestPayment = async (booking) => {
                                 rounded-xl bg-background p-4 border">
 
                   <Detail label="Worked Time">
-                    {Math.floor(managedBooking.workedSeconds / 60)} min
+                    {formatWorkedTime(managedBooking.workedSeconds)}
                   </Detail>
 
                   {/* HOURLY BREAKDOWN */}
@@ -1624,14 +1706,12 @@ const handleRequestPayment = async (booking) => {
 
                   {/* FIXED PRICE */}
                   {managedBooking.paymentType === "FIXED" && (
-                    <>
-                      <Detail label="Pricing Type">
-                        FIXED
-                      </Detail>
+  <>
+                      <Detail label="Pricing Type">FIXED</Detail>
 
                       <Detail label="Final Amount">
                         <span className="text-2xl font-bold text-green-500">
-                          {formatPrice(managedBooking.paymentAmount)}
+                          Rs. {managedBooking.paymentAmount ?? "—"}
                         </span>
                       </Detail>
                     </>
@@ -2441,6 +2521,8 @@ const handleRequestPayment = async (booking) => {
               : {
                   ...booking,
                   bookingId: booking.bookingId ?? booking.id,
+                  scheduledAt: booking.scheduledAt,
+                  startedAt: booking.startedAt ?? null,
                 }
           );
           setSelectedBooking((prev) => prev ?? booking);
@@ -2550,7 +2632,7 @@ const handleRequestPayment = async (booking) => {
           open={endWorkOpen}
           onClose={() => setEndWorkOpen(false)}
           booking={managedBooking}
-          elapsedSeconds={elapsedSeconds}
+          elapsedSeconds={finalElapsedSeconds ?? elapsedSeconds}
           onFinalize={handleFinalizeFromPopup}
         />
 

@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { getBookingStatusView } from "../../../../utils/bookingStatus";
+import { formatWorkedTime } from "../../../../utils/time";
 
 const formatPrice = (amount) => {
   if (amount === null || amount === undefined) return "—";
@@ -91,9 +92,7 @@ export default function BookingViewDialog({
                 />
               )}
               <Row label="Amount">
-                {booking.status === "PAYMENT_PENDING" ||
-                booking.status === "PAYMENT_REQUESTED" ||
-                booking.status === "PAID" ? (
+                {typeof booking.paymentAmount === "number" ? (
                   <span className="font-semibold text-green-600">
                     {formatPrice(booking.paymentAmount)}
                   </span>
