@@ -95,11 +95,48 @@ const ROLE_CONFIG = {
   },
 };
 
+  // ================= BOOKING SORT ORDER =================
+  const BOOKING_STATUS_PRIORITY = {
+    PENDING: 1,
+    ACCEPTED: 2,
+    IN_PROGRESS: 3,
+    PAYMENT_PENDING: 4,
+    COMPLETED: 5,
+    REJECTED: 6,
+  };
+
+  const sortBookings = (bookings = []) => {
+    return [...bookings].sort((a, b) => {
+      //status priority
+      const statusDiff =
+        (BOOKING_STATUS_PRIORITY[a.status] ?? 99) -
+        (BOOKING_STATUS_PRIORITY[b.status] ?? 99);
+
+      if (statusDiff !== 0) return statusDiff;
+
+      //newest first
+      const dateA = new Date(a.scheduledAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.scheduledAt || b.createdAt || 0).getTime();
+
+      return dateB - dateA;
+    });
+  };
+
+  const filterBookingsByStatus = (bookings = [], status) => {
+    if (status === "ALL") return bookings;
+    return bookings.filter((b) => b.status === status);
+  };
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [authUser, setAuthUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [bookingStatusFilter, setBookingStatusFilter] = useState(() => {
+    return localStorage.getItem("bookingStatusFilter") || "ALL";
+  });
+
 
 
   const [activeTab, setActiveTab] = useState(() => {
@@ -458,6 +495,10 @@ export default function Dashboard() {
           });
       }
   }, [role]);
+
+  useEffect(() => {
+    localStorage.setItem("bookingStatusFilter", bookingStatusFilter);
+  }, [bookingStatusFilter]);
 
 
   const handleSaveProfile = async () => {
@@ -1291,17 +1332,73 @@ const handleStartJob = async () => {
             {activeTab === "pendingBooking" && role === "SERVICE_PROVIDER" && (
               <>
                 <Card className="p-6 rounded-2xl bg-card border shadow-md">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">
-                    Pending Bookings
-                  </h2>
 
-                  <span className="text-sm text-muted-foreground">
-                    {providerBookings.length} total
-                  </span>
-                </div>
+                  <div className="flex items-center mb-6">
+                    {/* Left title */}
+                    <h2 className="text-xl font-semibold">
+                      Pending Bookings
+                    </h2>
 
+                    {/* Right controls */}
+                    <div className="ml-auto flex items-center gap-3">
+                      {/* Filter */}
+                      <div className="relative">
+                        <select
+                          value={bookingStatusFilter}
+                          onChange={(e) => setBookingStatusFilter(e.target.value)}
+                          className="
+                            appearance-none
+                            rounded-full
+                            px-5 py-2 pr-10
+                            text-sm font-semibold
 
+                            bg-background
+                            text-foreground
+                            border border-border
+                            shadow-sm
+
+                            hover:bg-muted
+                            focus:outline-none
+                            focus:ring-2 focus:ring-primary/40
+
+                            transition
+                            cursor-pointer
+
+                            [&>option]:bg-background
+                            [&>option]:text-foreground
+                          "
+                        >
+                          <option value="ALL">All Bookings</option>
+                          <option value="PENDING">Pending</option>
+                          <option value="ACCEPTED">Accepted</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="PAYMENT_PENDING">Payment Pending</option>
+                          <option value="COMPLETED">Completed</option>
+                          <option value="REJECTED">Rejected</option>
+                        </select>
+
+                        {/* Chevron */}
+                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                          ▼
+                        </span>
+                      </div>
+
+                      {/* Count badge */}
+                      <span
+                        className="
+                          px-3 py-1
+                          rounded-full
+                          text-xs font-semibold
+
+                          bg-muted
+                          text-muted-foreground
+                          border border-border
+                        "
+                      >
+                        {filterBookingsByStatus(providerBookings, bookingStatusFilter).length} bookings
+                      </span>
+                    </div>
+                  </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -1317,102 +1414,103 @@ const handleStartJob = async () => {
 
 
                       <tbody>
-                        {providerBookings.map((b) => (
-                          <tr
-                            key={b.bookingId}
-                            className="border-b hover:bg-muted/40 transition"
-                          >
+                        {(() => {
+                          const filtered = filterBookingsByStatus(
+                            providerBookings,
+                            bookingStatusFilter
+                          );
+                          const sorted = sortBookings(filtered);
 
-                            <td className="py-3 px-2 font-medium">
-                              {b.customerName}
-                            </td>
+                          if (sorted.length === 0) {
+                            return (
+                              <tr>
+                                <td
+                                  colSpan={5}
+                                  className="py-6 text-center text-muted-foreground"
+                                >
+                                  No bookings found for{" "}
+                                  <strong>{bookingStatusFilter}</strong>
+                                </td>
+                              </tr>
+                            );
+                          }
 
-                           <td className="px-2 py-3 text-muted-foreground">
-                              {b.customerPhone}
-                            </td>
+                          return sorted.map((b) => (
+                            <tr
+                              key={b.bookingId}
+                              className="border-b hover:bg-muted/40 transition"
+                            >
+                              <td className="py-3 px-2 font-medium">{b.customerName}</td>
 
-                            <td className="px-2 py-3 text-muted-foreground">
-                              {b.bookingAddress}
-                            </td>
+                              <td className="px-2 py-3 text-muted-foreground">
+                                {b.customerPhone}
+                              </td>
 
-                            <td className="px-2 py-3 text-center">
-                              {(() => {
+                              <td className="px-2 py-3 text-muted-foreground">
+                                {b.bookingAddress}
+                              </td>
+
+                              <td className="px-2 py-3 text-center">
+                                {(() => {
                                   const status = getBookingStatusView(b);
-
                                   return (
                                     <span
-                                      className={`inline-flex items-center gap-1 px-3 py-1
-                                        rounded-full text-xs font-semibold ${status.className}`}
+                                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${status.className}`}
                                     >
                                       {status.label}
                                     </span>
                                   );
                                 })()}
-                            </td>
+                              </td>
 
+                              <td className="px-2 py-3">
+                                <div className="flex justify-center items-center gap-2">
+                                  <Button
+                                    size="icon"
+                                    variant="secondary"
+                                    onClick={() => {
+                                      setSelectedBooking(b);
+                                      setViewOpen(true);
+                                    }}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
 
-
-
-                            <td className="px-2 py-3">
-                              <div className="flex justify-center items-center gap-2">
-
-                                {/* View */}
-                                <Button
-                                  size="icon"
-                                  variant="secondary"
-                                  title="View booking"
-                                  onClick={() => {
-                                    setSelectedBooking(b);
-                                    setViewOpen(true);
-                                  }}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-
-                                {/* Approve / Reject only when pending */}
-                                {b.status === "PENDING" && (
-                                  <>
-                                    <Button
-                                      size="icon"
-                                      title="Approve booking"
-                                      className="bg-green-600 hover:bg-green-700 text-white"
-                                      onClick={async () => {
-                                        try {
-                                          await confirmBooking(b.bookingId, b.providerServiceId);
-                                          toast.success("Booking approved");
-
-                                          const updated = await getProviderBookings(user.id);
-                                          setProviderBookings(updated);
-                                        } catch (err) {
-                                          toast.error(
-                                            err?.response?.data?.message || "Failed to approve booking"
+                                  {b.status === "PENDING" && (
+                                    <>
+                                      <Button
+                                        size="icon"
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                        onClick={async () => {
+                                          await confirmBooking(
+                                            b.bookingId,
+                                            b.providerServiceId
                                           );
-                                        }
-                                      }}
-                                    >
-                                      <CheckCircle className="w-4 h-4" />
-                                    </Button>
+                                          const updated =
+                                            await getProviderBookings(user.id);
+                                          setProviderBookings(updated);
+                                        }}
+                                      >
+                                        <CheckCircle className="w-4 h-4" />
+                                      </Button>
 
-                                    <Button
-                                      size="icon"
-                                      variant="destructive"
-                                      title="Reject booking"
-                                      onClick={() => {
-                                        setRejectBooking(b);
-                                        setRejectOpen(true);
-                                      }}
-                                    >
-                                      <XCircle className="w-4 h-4" />
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            </td>
-
-
-
-                          </tr>
-                        ))}
+                                      <Button
+                                        size="icon"
+                                        variant="destructive"
+                                        onClick={() => {
+                                          setRejectBooking(b);
+                                          setRejectOpen(true);
+                                        }}
+                                      >
+                                        <XCircle className="w-4 h-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ));
+                        })()}
                       </tbody>
                     </table>
                   </div>
