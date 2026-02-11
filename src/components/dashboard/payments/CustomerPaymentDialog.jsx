@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { initiatePayHereSandbox } from "../../../../utils/payment";
 import toast from "react-hot-toast";
 
+
 export default function CustomerPaymentDialog({ open, onClose, paymentInfo }) {
   if (!paymentInfo) return null;
 
@@ -37,7 +38,6 @@ export default function CustomerPaymentDialog({ open, onClose, paymentInfo }) {
       toast.error("Payment initiation failed");
     }
   };
-
 
 
   return (

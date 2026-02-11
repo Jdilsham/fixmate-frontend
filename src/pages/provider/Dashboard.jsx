@@ -42,7 +42,7 @@ import StartJobConfirmDialog from "../../components/dashboard/bookings/StartJobC
 import EndWorkDialog from "../../components/dashboard/bookings/EndWorkDialog";
 import { getBookingStatusView } from "../../../utils/bookingStatus";
 import { formatWorkedTime, calculateFinalAmount } from "../../../utils/time";
-
+import CustomerManageBooking from "../../components/dashboard/bookings/CustomerManageBooking";
 
 
 
@@ -331,6 +331,8 @@ export default function Dashboard() {
   const [pendingAvailability, setPendingAvailability] = useState(null);
 
   const [showActivateModal, setShowActivateModal] = useState(false);
+
+  const [customerManageBookingOpen, setCustomerManageBookingOpen] = useState(false);
 
   // ================= ACTIVATE ACCOUNT FLOW =================
   const [activateStep, setActivateStep] = useState(1);
@@ -1154,6 +1156,22 @@ const handleStartJob = async () => {
 
         <main className="flex-1 min-w-0">
           <div className="bg-card border rounded-2xl p-6">
+
+            {/* CUSTOMER MANAGE BOOKING (OVERRIDES TABS) */}
+            {role === "CUSTOMER" && customerManageBookingOpen && (
+              <CustomerManageBooking
+                booking={selectedBooking}
+                onBack={() => {
+                  setCustomerManageBookingOpen(false);
+                  setSelectedBooking(null);
+                  setActiveTab("myBookings");
+                }}
+              />
+            )}
+
+            {!(role === "CUSTOMER" && customerManageBookingOpen) && (
+            <>
+
             {/* DASHBOARD */}
             {activeTab === "dashboard" && (
               <>
@@ -2594,7 +2612,8 @@ const handleStartJob = async () => {
                   </div>               
               </>
             )}
-            
+          </>
+          )}
           </div>
         </main>
       </div>
@@ -2613,19 +2632,23 @@ const handleStartJob = async () => {
         mode={role === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}
         onManage={(booking) => {
           setViewOpen(false);
-          setManagedBooking((prev) =>
-            prev
-              ? prev
-              : {
-                  ...booking,
-                  bookingId: booking.bookingId ?? booking.id,
-                  scheduledAt: booking.scheduledAt,
-                  startedAt: booking.startedAt ?? null,
-                }
-          );
-          setSelectedBooking((prev) => prev ?? booking);
-          setActiveTab("managebookings");
-        }}
+          setSelectedBooking(booking);
+            if (role === "CUSTOMER") {
+              setCustomerManageBookingOpen(true);
+            } else {
+              setManagedBooking((prev) =>
+                prev
+                  ? prev
+                  : {
+                      ...booking,
+                      bookingId: booking.bookingId ?? booking.id,
+                      scheduledAt: booking.scheduledAt,
+                      startedAt: booking.startedAt ?? null,
+                    }
+              );
+              setActiveTab("managebookings");
+            }
+          }}
         onRequestPayment={handleRequestPayment}
       />
 
