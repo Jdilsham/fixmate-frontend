@@ -44,6 +44,7 @@ import { getBookingStatusView } from "../../../utils/bookingStatus";
 import { formatWorkedTime, calculateFinalAmount } from "../../../utils/time";
 import CustomerManageBooking from "../../components/dashboard/bookings/CustomerManageBooking";
 import { getProviderPaymentByBooking, confirmProviderPayment } from "../../../utils/payment";
+import ProviderManageBooking from "../../components/dashboard/bookings/ProviderManageBooking";
 
 
 
@@ -513,6 +514,37 @@ export default function Dashboard() {
     }
   }, [providerBookings, role]);
     
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
+    if (!managedBooking?.bookingId) return;
+
+    let alive = true;
+
+    (async () => {
+      try {
+        // 1) always keep booking details fresh
+        const updated = await getProviderBookings(user.id);
+        if (!alive) return;
+
+        setProviderBookings(updated);
+
+        const latest = updated.find(b => b.bookingId === managedBooking.bookingId);
+        if (latest) setManagedBooking(prev => (prev ? { ...prev, ...latest } : prev));
+
+        // 2) if payment pending, sync payment info
+        if (latest?.status === "PAYMENT_PENDING") {
+          const p = await getProviderPaymentByBooking(managedBooking.bookingId);
+          if (!alive) return;
+          setProviderPaymentInfo(p);
+        }
+      } catch (e) {
+        // keep quiet to avoid toast spam
+        console.warn("sync managed booking failed", e);
+      }
+    })();
+
+    return () => { alive = false; };
+  }, [role, user?.id, managedBooking?.bookingId]);
 
   useEffect(() => {
     if (!providerBookings.length) return;
@@ -1348,7 +1380,55 @@ const handleStartJob = async () => {
               />
             )}
 
-            {!(role === "CUSTOMER" && customerManageBookingOpen) && (
+            {/* PROVIDER MANAGE BOOKING (OVERRIDES TABS) */}
+            {role === "SERVICE_PROVIDER" && activeTab === "managebookings" && (
+              <ProviderManageBooking
+                booking={managedBooking}
+                providerPaymentInfo={providerPaymentInfo}
+                providerPaymentLoading={providerPaymentLoading}
+                elapsedSeconds={elapsedSeconds}
+                onBack={() => {
+                  setActiveTab("pendingBooking"); // only navigation, no logic changed
+                }}
+                onStart={() => setStartConfirmOpen(true)}
+                onEnd={() => {
+                  setFinalElapsedSeconds(elapsedSeconds);
+                  setEndWorkOpen(true);
+                }}
+                onRequestPayment={async () => {
+                  await handleRequestPayment(managedBooking);
+
+                  // keep your existing refresh pattern (same logic you already do in UI)
+                  try {
+                    const p = await getProviderPaymentByBooking(managedBooking.bookingId);
+                    setProviderPaymentInfo(p);
+                  } catch {}
+
+                  await refreshManagedBooking(managedBooking.bookingId);
+                }}
+                onConfirmCash={async () => {
+                  await confirmProviderPayment(
+                    providerPaymentInfo.paymentId ?? providerPaymentInfo.id
+                  );
+                  toast.success("Payment confirmed");
+
+                  const updated = await getProviderBookings(user.id);
+                  setProviderBookings(updated);
+
+                  const p = await getProviderPaymentByBooking(managedBooking.bookingId);
+                  setProviderPaymentInfo(p);
+
+                  setManagedBooking((prev) =>
+                    prev ? { ...prev, status: "COMPLETED" } : prev
+                  );
+                }}
+              />
+            )}
+
+            {!(
+              (role === "CUSTOMER" && customerManageBookingOpen) ||
+              (role === "SERVICE_PROVIDER" && activeTab === "managebookings")
+            ) && (
             <>
 
             {/* DASHBOARD */}
@@ -1528,89 +1608,77 @@ const handleStartJob = async () => {
             {/* Pending requests */}
             {activeTab === "pendingBooking" && role === "SERVICE_PROVIDER" && (
               <>
-                <Card className="p-6 rounded-2xl bg-card border shadow-md">
-
-                  <div className="flex items-center mb-6">
-                    {/* Left title */}
-                    <h2 className="text-xl font-semibold">
-                      Pending Bookings
-                    </h2>
-
-                    {/* Right controls */}
-                    <div className="ml-auto flex items-center gap-3">
-                      {/* Filter */}
-                      <div className="relative">
-                        <select
-                          value={bookingStatusFilter}
-                          onChange={(e) => setBookingStatusFilter(e.target.value)}
-                          className="
-                            appearance-none
-                            rounded-full
-                            px-5 py-2 pr-10
-                            text-sm font-semibold
-
-                            bg-background
-                            text-foreground
-                            border border-border
-                            shadow-sm
-
-                            hover:bg-muted
-                            focus:outline-none
-                            focus:ring-2 focus:ring-primary/40
-
-                            transition
-                            cursor-pointer
-
-                            [&>option]:bg-background
-                            [&>option]:text-foreground
-                          "
-                        >
-                          <option value="ALL">All Bookings</option>
-                          <option value="PENDING">Pending</option>
-                          <option value="ACCEPTED">Accepted</option>
-                          <option value="IN_PROGRESS">In Progress</option>
-                          <option value="PAYMENT_PENDING">Payment Pending</option>
-                          <option value="COMPLETED">Completed</option>
-                          <option value="REJECTED">Rejected</option>
-                        </select>
-
-                        {/* Chevron */}
-                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
-                          ▼
-                        </span>
+                <Card className="p-0 overflow-hidden rounded-3xl border bg-card shadow-sm">
+                  {/* Header */}
+                  <div className="px-6 py-5 border-b bg-card">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div>
+                        <h2 className="text-2xl font-semibold tracking-tight">
+                          Bookings
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          View requests, accept/reject pending ones, and manage accepted jobs.
+                        </p>
                       </div>
 
-                      {/* Count badge */}
-                      <span
-                        className="
-                          px-3 py-1
-                          rounded-full
-                          text-xs font-semibold
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Filter */}
+                        <div className="relative">
+                          <select
+                            value={bookingStatusFilter}
+                            onChange={(e) => setBookingStatusFilter(e.target.value)}
+                            className="
+                              appearance-none
+                              rounded-full
+                              px-5 py-2 pr-10
+                              text-sm font-medium
+                              bg-background
+                              text-foreground
+                              border border-border
+                              shadow-sm
+                              hover:bg-muted
+                              focus:outline-none focus:ring-2 focus:ring-primary/40
+                              transition
+                              cursor-pointer
+                            "
+                          >
+                            <option value="ALL">All</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="ACCEPTED">Accepted</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="PAYMENT_PENDING">Payment Pending</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="REJECTED">Rejected</option>
+                          </select>
 
-                          bg-muted
-                          text-muted-foreground
-                          border border-border
-                        "
-                      >
-                        {filterBookingsByStatus(providerBookings, bookingStatusFilter).length} bookings
-                      </span>
+                          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                            ▼
+                          </span>
+                        </div>
+
+                        {/* Count */}
+                        <span className="inline-flex items-center gap-2 rounded-full border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
+                          <span className="w-2 h-2 rounded-full bg-primary/60" />
+                          {filterBookingsByStatus(providerBookings, bookingStatusFilter).length} bookings
+                        </span>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Table */}
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead>
+                      <thead className="sticky top-0 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/70">
                         <tr className="border-b text-muted-foreground">
-                          <th className="py-3 px-2 font-medium">Customer</th>
-                          <th className="px-2 font-medium">Phone</th>
-                          <th className="px-2 font-medium">Address</th>
-                          <th className="px-2 font-medium text-center">Status</th>
-                          <th className="px-2 text-center font-medium">Actions</th>
+                          <th className="py-4 px-4 font-medium text-left">Customer</th>
+                          <th className="py-4 px-4 font-medium text-left">Phone</th>
+                          <th className="py-4 px-4 font-medium text-left">Address</th>
+                          <th className="py-4 px-4 font-medium text-center">Status</th>
+                          <th className="py-4 px-4 font-medium text-center">Actions</th>
                         </tr>
                       </thead>
 
-
-
-                      <tbody>
+                      <tbody className="divide-y divide-border">
                         {(() => {
                           const filtered = filterBookingsByStatus(
                             providerBookings,
@@ -1621,118 +1689,189 @@ const handleStartJob = async () => {
                           if (sorted.length === 0) {
                             return (
                               <tr>
-                                <td
-                                  colSpan={5}
-                                  className="py-6 text-center text-muted-foreground"
-                                >
-                                  No bookings found for{" "}
-                                  <strong>{bookingStatusFilter}</strong>
+                                <td colSpan={5} className="py-10 text-center">
+                                  <p className="text-base font-semibold">No bookings found</p>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    Try changing the filter.
+                                  </p>
                                 </td>
                               </tr>
                             );
                           }
-
                           return sorted.map((b) => (
-                            <tr
-                              key={b.bookingId}
-                              className="border-b hover:bg-muted/40 transition"
-                            >
-                              <td className="py-3 px-2 font-medium">{b.customerName}</td>
-
-                              <td className="px-2 py-3 text-muted-foreground">
-                                {b.customerPhone}
-                              </td>
-
-                              <td className="px-2 py-3 text-muted-foreground">
-                                {b.bookingAddress}
-                              </td>
-
-                              <td className="px-2 py-3 text-center">
-                                {(() => {
-                                  const status = getBookingStatusView(b);
-                                  return (
-                                    <span
-                                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${status.className}`}
+                            <tr key={b.bookingId} className="border-0">
+                              <td colSpan={5} className="px-4 py-2">
+                                <div
+                                  className="
+                                    group
+                                    grid grid-cols-1 md:grid-cols-[260px_160px_1fr_140px_220px]
+                                    items-center
+                                    gap-4
+                                    rounded-2xl
+                                    border
+                                    bg-background/60
+                                    px-4 py-4
+                                    shadow-sm
+                                    hover:shadow-md
+                                    hover:-translate-y-[1px]
+                                    transition
+                                  "
+                                >
+                                  {/* Customer */}
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div
+                                      className="
+                                        w-10 h-10 rounded-full
+                                        bg-muted
+                                        border
+                                        flex items-center justify-center
+                                        text-xs font-bold
+                                      "
                                     >
-                                      {status.label}
+                                      {(b.customerName || "C")[0]?.toUpperCase()}
+                                    </div>
+
+                                    <div className="min-w-0">
+                                      <p className="font-semibold truncate">{b.customerName}</p>
+                                      <p className="text-xs text-muted-foreground truncate">
+                                        Booking #{b.bookingId}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Phone */}
+                                  <div className="text-sm">
+                                    <span className="md:hidden text-xs uppercase tracking-wide text-muted-foreground block">
+                                      Phone
                                     </span>
-                                  );
-                                })()}
-                              </td>
+                                    <span className="font-medium text-foreground/90">
+                                      {b.customerPhone}
+                                    </span>
+                                  </div>
 
-                              <td className="px-2 py-3">
-                                <div className="flex justify-center items-center gap-2">
-                                  <Button
-                                    size="icon"
-                                    variant="secondary"
-                                    title="View booking"
-                                    onClick={() => {
-                                      setSelectedBooking(b);
-                                      setViewOpen(true);
-                                    }}
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </Button>
+                                  {/* Address */}
+                                  <div className="min-w-0">
+                                    <span className="md:hidden text-xs uppercase tracking-wide text-muted-foreground block">
+                                      Address
+                                    </span>
+                                    <p className="text-sm text-muted-foreground truncate" title={b.bookingAddress}>
+                                      {b.bookingAddress}
+                                    </p>
+                                  </div>
 
-                                  <Button
-                                    size="sm"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                    onClick={() => {
-                                      localStorage.setItem(
-                                        MANAGED_KEY,
-                                        JSON.stringify({
-                                          bookingId: b.bookingId,
-                                          providerServiceId: b.providerServiceId,
-                                        })
+                                  {/* Status */}
+                                  <div className="flex md:justify-center">
+                                    {(() => {
+                                      const status = getBookingStatusView(b);
+                                      return (
+                                        <span
+                                          className={`
+                                            inline-flex items-center gap-1
+                                            rounded-full
+                                            px-3 py-1
+                                            text-xs font-semibold
+                                            border border-border/60
+                                            ${status.className}
+                                          `}
+                                        >
+                                          {status.label}
+                                        </span>
                                       );
+                                    })()}
+                                  </div>
 
-                                      setManagedBooking({
-                                        ...b,
-                                        bookingId: b.bookingId ?? b.id,
-                                        scheduledAt: b.scheduledAt,
-                                        startedAt: b.startedAt ?? null,
-                                      });
-
-                                      setActiveTab("managebookings");
-                                    }}
-                                  >
-                                    Manage
-                                  </Button>
-
-                                  {b.status === "PENDING" && (
-                                    <>
+                                  {/* Actions */}
+                                  <div className="flex md:justify-end">
+                                    <div
+                                      className="
+                                        inline-flex items-center gap-2
+                                        rounded-full
+                                        border
+                                        bg-muted/30
+                                        p-1.5
+                                        shadow-sm
+                                      "
+                                    >
+                                      {/* VIEW - always */}
                                       <Button
                                         size="icon"
-                                        className="bg-green-600 hover:bg-green-700 text-white"
-                                        onClick={async () => {
-                                          await confirmBooking(
-                                            b.bookingId,
-                                            b.providerServiceId
-                                          );
-                                          const updated =
-                                            await getProviderBookings(user.id);
-                                          setProviderBookings(updated);
-                                        }}
-                                      >
-                                        <CheckCircle className="w-4 h-4" />
-                                      </Button>
-
-                                      <Button
-                                        size="icon"
-                                        variant="destructive"
+                                        variant="secondary"
+                                        className="rounded-full"
+                                        title="View booking"
                                         onClick={() => {
-                                          setRejectBooking(b);
-                                          setRejectOpen(true);
+                                          setSelectedBooking(b);
+                                          setViewOpen(true);
                                         }}
                                       >
-                                        <XCircle className="w-4 h-4" />
+                                        <Eye className="w-4 h-4" />
                                       </Button>
-                                    </>
-                                  )}
+
+                                      {/* PENDING: Accept + Reject (NO Manage) */}
+                                      {b.status === "PENDING" && (
+                                        <>
+                                          <Button
+                                            size="icon"
+                                            title="Accept booking"
+                                            className="rounded-full bg-green-600 hover:bg-green-700 text-white"
+                                            onClick={async () => {
+                                              await confirmBooking(b.bookingId, b.providerServiceId);
+                                              toast.success("Booking accepted");
+                                              const updated = await getProviderBookings(user.id);
+                                              setProviderBookings(updated);
+                                            }}
+                                          >
+                                            <CheckCircle className="w-4 h-4" />
+                                          </Button>
+
+                                          <Button
+                                            size="icon"
+                                            variant="destructive"
+                                            className="rounded-full"
+                                            title="Reject booking"
+                                            onClick={() => {
+                                              setRejectBooking(b);
+                                              setRejectOpen(true);
+                                            }}
+                                          >
+                                            <XCircle className="w-4 h-4" />
+                                          </Button>
+                                        </>
+                                      )}
+
+                                      {/* NOT PENDING: Manage */}
+                                      {b.status !== "PENDING" && (
+                                        <Button
+                                          size="sm"
+                                          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-4"
+                                          onClick={() => {
+                                            localStorage.setItem(
+                                              MANAGED_KEY,
+                                              JSON.stringify({
+                                                bookingId: b.bookingId,
+                                                providerServiceId: b.providerServiceId,
+                                              })
+                                            );
+
+                                            setManagedBooking({
+                                              ...b,
+                                              bookingId: b.bookingId ?? b.id,
+                                              scheduledAt: b.scheduledAt,
+                                              startedAt: b.startedAt ?? null,
+                                            });
+
+                                            setActiveTab("managebookings");
+                                          }}
+                                        >
+                                          Manage
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               </td>
                             </tr>
                           ));
+                          
                         })()}
                       </tbody>
                     </table>
@@ -1979,264 +2118,7 @@ const handleStartJob = async () => {
               </>
             )}
 
-            {activeTab === "managebookings" && role === "SERVICE_PROVIDER" && (
-            <Card className="p-8 rounded-2xl border bg-card space-y-6">
-
-              {/* NO BOOKING SELECTED */}
-              {!managedBooking && (
-                <div className="text-center py-12">
-                  <p className="text-lg font-semibold">
-                    No booking selected
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Select a booking to start managing work and payments
-                  </p>
-                </div>
-              )}
-
-              {/* BOOKING DETAILS */}
-              {managedBooking && (
-                <>
-                  {/* HEADER */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex flex-col gap-1">
-                      <h2 className="text-2xl font-semibold tracking-tight">
-                        Manage Booking
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        Track job progress and manage payment
-                      </p>
-                    </div>
-
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide
-                        ${
-                          managedBooking.status === "ACCEPTED"
-                            ? "bg-blue-500/15 text-blue-400"
-                            : managedBooking.status === "IN_PROGRESS"
-                            ? "bg-yellow-500/15 text-yellow-400"
-                            : managedBooking.status === "PAYMENT_PENDING"
-                            ? "bg-green-500/15 text-green-400"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                    >
-                      {managedBooking.status.replace("_", " ")}
-                    </span>
-                  </div>
-
-                  {/* DETAILS GRID */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm rounded-xl bg-muted/20 p-6">
-
-                    <Detail label="Customer">{managedBooking.customerName}</Detail>
-                    <Detail label="Service">{managedBooking.serviceTitle}</Detail>
-
-                    <Detail label="Scheduled At">
-                      {new Date(managedBooking.scheduledAt).toLocaleString()}
-                    </Detail>
-
-                    <Detail label="Pricing Type">
-                      {managedBooking.paymentType}
-                    </Detail>
-
-                    {managedBooking.paymentType === "HOURLY" && (
-                      <Detail label="Hourly Rate">
-                        Rs. {managedBooking.hourlyRate ?? "—"}
-                      </Detail>
-                    )}
-
-                    <Detail label="Phone">{managedBooking.customerPhone}</Detail>
-
-                    <Detail label="Notes">
-                      {managedBooking.description || "—"}
-                    </Detail>
-                  </div>
-                </>
-              )}
-
-              {/* START JOB */}
-              {managedBooking?.status === "ACCEPTED" && (
-                <div className="mt-8 flex justify-end">
-                  <Button
-                    className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-                    onClick={() => setStartConfirmOpen(true)}
-                  >
-                    ▶ Start Job
-                  </Button>
-                </div>
-              )}
-
-              {/* END WORK */}
-              {managedBooking?.status === "IN_PROGRESS" && (
-                <div className="mt-8 flex items-center justify-between">
-                  {/* TIMER */}
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    ⏱
-                    <span>
-                      {formatWorkedTime(elapsedSeconds)}
-                    </span>
-                  </div>
-
-                  {/* END WORK */}
-                  <Button
-                    className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
-                    onClick={() => {
-                      setFinalElapsedSeconds(elapsedSeconds); // freeze time here
-                      setEndWorkOpen(true);
-                    }}
-                  >
-                    ⏹ End Work
-                  </Button>
-                </div>
-              )}
-
-              {/* AFTER FINALIZE → JOB SUMMARY + REQUEST PAYMENT */}
-              {managedBooking?.status === "PAYMENT_PENDING" && (
-              <div className="mt-8 rounded-2xl border bg-green-500/10 p-6">
-
-                {/* HEADER */}
-                <div className="flex items-center justify-between mb-5">
-                  <div>
-                    <h3 className="text-lg font-semibold text-green-500">
-                      Job Completed
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Review job summary and request payment
-                    </p>
-                  </div>
-
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold
-                                  bg-green-500/20 text-green-400">
-                    Ready for Payment
-                  </span>
-                </div>
-
-                {/* SUMMARY */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm
-                                rounded-xl bg-background p-4 border">
-
-                  <Detail label="Worked Time">
-                    {formatWorkedTime(managedBooking.workedSeconds)}
-                  </Detail>
-
-                  {/* HOURLY BREAKDOWN */}
-                  {managedBooking.paymentType === "HOURLY" && (
-                    <>
-                      <Detail label="Hourly Rate">
-                        Rs. {managedBooking.hourlyRate}
-                      </Detail>
-
-                      <Detail label="Final Amount">
-                        <span className="text-2xl font-bold text-green-500">
-                          Rs. {managedBooking.paymentAmount}
-                        </span>
-                      </Detail>
-                    </>
-                  )}
-
-                  {/* FIXED PRICE */}
-                  {managedBooking.paymentType === "FIXED" && (
-  <>
-                      <Detail label="Pricing Type">FIXED</Detail>
-
-                      <Detail label="Final Amount">
-                        <span className="text-2xl font-bold text-green-500">
-                          Rs. {managedBooking.paymentAmount ?? "—"}
-                        </span>
-                      </Detail>
-                    </>
-                  )}
-                </div>
-
-                {/* CTA */}
-                <div className="mt-6 flex justify-end gap-2">
-
-                  {/* 1) If no payment created yet -> Request Payment */}
-                  {!(providerPaymentInfo?.paymentId ?? providerPaymentInfo?.id) && (
-                    <Button
-                      size="lg"
-                      className="bg-green-600 hover:bg-green-700 text-white px-8"
-                      onClick={async () => {
-                        await handleRequestPayment(managedBooking);
-
-                        try {
-                          const p = await getProviderPaymentByBooking(managedBooking.bookingId);
-                          setProviderPaymentInfo(p);
-                        } catch (e) {
-                          console.warn("Payment requested, but payment fetch failed (will retry):", e);
-                        }
-                        await refreshManagedBooking(managedBooking.bookingId);
-                      }}
-                    >
-                      Request Payment
-                    </Button>
-                  )}
-
-                  {(providerPaymentInfo?.paymentId ?? providerPaymentInfo?.id) &&
-                    ["REQUESTED", "PROCESSING"].includes(
-                      providerPaymentInfo?.paymentStatus ?? providerPaymentInfo?.status
-                    ) && (
-                      <Button size="lg" variant="outline" disabled className="px-8">
-                        ⏳ Waiting for customer payment
-                      </Button>
-                  )}
-
-                  {/* If customer selected CASH -> provider must confirm */}
-                  {providerPaymentInfo?.paymentMethod === "CASH" &&
-                    (providerPaymentInfo?.paymentStatus ?? providerPaymentInfo?.status) === "CASH_WAITING_CONFIRMATION" && (
-                      <Button
-                        size="lg"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-                        onClick={async () => {
-                          try {
-                           await confirmProviderPayment(
-                              providerPaymentInfo.paymentId ?? providerPaymentInfo.id
-                            );
-                            toast.success("Payment confirmed");
-
-                            const updated = await getProviderBookings(user.id);
-                            setProviderBookings(updated);
-
-                            const p = await getProviderPaymentByBooking(managedBooking.bookingId);
-                            setProviderPaymentInfo(p);
-
-                            setManagedBooking((prev) => (prev ? { ...prev, status: "COMPLETED" } : prev));
-                          } catch (e) {
-                            console.error(e);
-                            toast.error("Failed to confirm payment");
-                          }
-                        }}
-                      >
-                        Confirm Cash Received
-                      </Button>
-                    )}
-
-                  {/* 4) If paid/confirmed */}
-                  {["CONFIRMED", "SUCCESS", "PAID"].includes(providerPaymentInfo?.paymentStatus) && (
-                    <Button size="lg" variant="outline" disabled className="px-8">
-                      Payment Received ✅
-                    </Button>
-                  )}
-                </div>
-
-                {providerPaymentLoading && (
-                  <p className="text-xs text-muted-foreground mt-3 text-right">
-                    Loading payment info...
-                  </p>
-                )}
-              </div>
-            )}
-
-              <StartJobConfirmDialog
-                open={startConfirmOpen}
-                onClose={() => setStartConfirmOpen(false)}
-                loading={startingJob}
-                onConfirm={async () => {
-                  await handleStartJob();
-                  setStartConfirmOpen(false);
-                }}
-              />
-            </Card>
-          )}
+            
 
 
 
@@ -3144,6 +3026,18 @@ const handleStartJob = async () => {
           booking={managedBooking}
           elapsedSeconds={finalElapsedSeconds ?? elapsedSeconds}
           onFinalize={handleFinalizeFromPopup}
+        />
+        <StartJobConfirmDialog
+          open={startConfirmOpen}
+          onClose={() => setStartConfirmOpen(false)}
+          booking={managedBooking}
+          onConfirm={async () => {
+            setStartConfirmOpen(false);
+            await handleStartJob();
+
+            // optional but recommended (keeps state synced with backend)
+            await refreshManagedBooking(managedBooking.bookingId);
+          }}
         />
 
     </div>
