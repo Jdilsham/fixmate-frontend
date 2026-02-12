@@ -43,6 +43,7 @@ import EndWorkDialog from "../../components/dashboard/bookings/EndWorkDialog";
 import { getBookingStatusView } from "../../../utils/bookingStatus";
 import { formatWorkedTime, calculateFinalAmount } from "../../../utils/time";
 import CustomerManageBooking from "../../components/dashboard/bookings/CustomerManageBooking";
+import { getProviderPaymentByBooking, confirmProviderPayment } from "../../../utils/payment";
 
 
 
@@ -71,6 +72,8 @@ const formatPrice = (amount) => {
   if (amount === null || amount === undefined) return "—";
   return `Rs. ${Number(amount).toLocaleString("en-LK")}`;
 };
+
+const MANAGED_KEY = "activeManagedBooking";
 
 /* =======================
    ROLE CONFIG
@@ -137,8 +140,6 @@ export default function Dashboard() {
     return localStorage.getItem("bookingStatusFilter") || "ALL";
   });
 
-
-
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem("dashboardActiveTab") || "dashboard";
   });
@@ -193,6 +194,9 @@ export default function Dashboard() {
 
   const [paymentInfo, setPaymentInfo] = useState(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
+
+  const [providerPaymentInfo, setProviderPaymentInfo] = useState(null);
+  const [providerPaymentLoading, setProviderPaymentLoading] = useState(false);
 
 
   const [profileForm, setProfileForm] = useState({
@@ -319,6 +323,10 @@ export default function Dashboard() {
   const [customerBookings, setCustomerBookings] = useState([]);
   const [customerBookingsLoading, setCustomerBookingsLoading] = useState(false);
 
+  // CUSTOMER MyBookings UI helpers (customer only)
+  const [customerStatusFilter, setCustomerStatusFilter] = useState("ALL");
+  const [customerSearch, setCustomerSearch] = useState("");
+
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectBooking, setRejectBooking] = useState(null);
 
@@ -350,6 +358,15 @@ export default function Dashboard() {
   const [endWorkOpen, setEndWorkOpen] = useState(false);
   const [startConfirmOpen, setStartConfirmOpen] = useState(false);
   const [finalElapsedSeconds, setFinalElapsedSeconds] = useState(null);
+
+
+  const refreshManagedBooking = async (bookingId) => {
+    const updated = await getProviderBookings(user.id);     // refetch list
+    setProviderBookings(updated);
+
+    const latest = updated.find(b => b.bookingId === bookingId);
+    if (latest) setManagedBooking(prev => ({ ...prev, ...latest }));
+  };
 
   useEffect(() => {
     if (!managedBooking) return;
@@ -420,6 +437,53 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (role !== "SERVICE_PROVIDER") return;
+    if (!providerBookings || providerBookings.length === 0) return;
+
+    const raw = localStorage.getItem(MANAGED_KEY); // "activeManagedBooking"
+    if (!raw) return;
+
+    try {
+      const { bookingId } = JSON.parse(raw);
+      if (!bookingId) return;
+
+      const booking = providerBookings.find((b) => b.bookingId === bookingId);
+
+      if (!booking) {
+        localStorage.removeItem(MANAGED_KEY);
+        return;
+      }
+
+      setManagedBooking((prev) =>
+        prev
+          ? prev
+          : {
+              ...booking,
+              bookingId: booking.bookingId ?? booking.id,
+              scheduledAt: booking.scheduledAt,
+              startedAt: booking.startedAt ?? null,
+            }
+      );
+
+      setActiveTab("managebookings");
+    } catch (e) {
+      localStorage.removeItem(MANAGED_KEY);
+    }
+  }, [role, providerBookings]);
+
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
+    if (!managedBooking?.bookingId) return;
+
+    if (["COMPLETED", "REJECTED"].includes(managedBooking.status)) {
+      localStorage.removeItem(MANAGED_KEY); // activeManagedBooking
+      localStorage.removeItem("activeJob");
+      localStorage.removeItem("elapsedSeconds");
+      localStorage.removeItem("pendingPaymentBooking");
+    }
+  }, [role, managedBooking?.status, managedBooking?.bookingId]);
+
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
 
     if (!providerBookings || providerBookings.length === 0) return;
 
@@ -478,6 +542,35 @@ export default function Dashboard() {
     // ensure correct tab
     setActiveTab("managebookings");
   }, [providerBookings]);
+
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
+    if (!managedBooking?.bookingId) return;
+
+    if (managedBooking.status !== "PAYMENT_PENDING") {
+      setProviderPaymentInfo(null);
+      return;
+    }
+
+    let alive = true;
+
+    (async () => {
+      try {
+        setProviderPaymentLoading(true);
+        const data = await getProviderPaymentByBooking(managedBooking.bookingId);
+        if (alive) setProviderPaymentInfo(data);
+      } catch (e) {
+        // don't spam backend — just keep current UI state
+        console.warn("Failed to fetch provider payment:", e);
+      } finally {
+        if (alive) setProviderPaymentLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [role, managedBooking?.bookingId, managedBooking?.status]);
 
 
 
@@ -740,6 +833,69 @@ const handleUploadWorkPdf = () => {
     .toLowerCase()
     .replaceAll("_", " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const CUSTOMER_STATUS_PRIORITY = {
+    PAYMENT_PENDING: 1,
+    ACCEPTED: 2,
+    PENDING: 3,
+    IN_PROGRESS: 4,
+    COMPLETED: 5,
+    REJECTED: 6,
+  };
+
+  const sortCustomerBookings = (bookings = []) => {
+    return [...bookings].sort((a, b) => {
+      const statusDiff =
+        (CUSTOMER_STATUS_PRIORITY[a.status] ?? 99) -
+        (CUSTOMER_STATUS_PRIORITY[b.status] ?? 99);
+
+      if (statusDiff !== 0) return statusDiff;
+
+      const dateA = new Date(a.scheduledAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.scheduledAt || b.createdAt || 0).getTime();
+
+      return dateB - dateA;
+    });
+  };
+
+  const filterCustomerBookings = (bookings = []) => {
+    let list = [...bookings];
+
+    // status filter
+    if (customerStatusFilter !== "ALL") {
+      list = list.filter((b) => b.status === customerStatusFilter);
+    }
+
+    const q = customerSearch.trim().toLowerCase();
+    if (q) {
+      list = list.filter((b) => {
+        const service = (b.serviceName || "").toLowerCase();
+        const provider = (b.providerName || "").toLowerCase();
+        return service.includes(q) || provider.includes(q);
+      });
+    }
+
+    return sortCustomerBookings(list);
+  };
+
+const customerStatusBadgeClass = (status) => {
+  switch (status) {
+    case "PENDING":
+      return "bg-yellow-500/20 text-yellow-500";
+    case "ACCEPTED":
+      return "bg-green-500/20 text-green-500";
+    case "IN_PROGRESS":
+      return "bg-orange-500/20 text-orange-500";
+    case "PAYMENT_PENDING":
+      return "bg-blue-500/20 text-blue-500";
+    case "COMPLETED":
+      return "bg-emerald-500/20 text-emerald-500";
+    case "REJECTED":
+      return "bg-red-500/20 text-red-500";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+};
 
 
   const loadBookingsForDate = async (day) => {
@@ -1087,7 +1243,7 @@ const handleStartJob = async () => {
 
   const handleRequestPayment = async (booking) => {
     try {
-      await fetch(`${API}/api/provider/payments/request`, {
+      const res = await fetch(`${API}/api/provider/payments/request`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1100,27 +1256,50 @@ const handleStartJob = async () => {
         }),
       });
 
-      localStorage.removeItem("pendingPaymentBooking");
+      let created = null;
+      try {
+        created = await res.json();
+      } catch {
+
+      }
+
+      if (!res.ok) {
+        throw new Error(created?.message || "Failed to request payment");
+      }
+
+      setProviderPaymentInfo(
+        created ?? {
+          paymentId: true, 
+          paymentStatus: "REQUESTED",
+          paymentMethod: null,
+        }
+      );
+
+      toast.success("Payment request sent");
+
+      try {
+        const p = await getProviderPaymentByBooking(booking.bookingId ?? booking.id);
+        setProviderPaymentInfo(p);
+      } catch (e) {
+        console.warn("Payment created, but failed to fetch payment info:", e);
+      }
 
       setProviderBookings((prev) =>
         prev.map((b) =>
-          b.bookingId === booking.bookingId
+          b.bookingId === (booking.bookingId ?? booking.id)
             ? { ...b, status: "PAYMENT_PENDING" }
             : b
         )
       );
 
-      if (managedBooking?.bookingId === booking.bookingId) {
-        setManagedBooking((prev) => ({
-          ...prev,
-          status: "PAYMENT_REQUESTED",
-        }));
+      if (managedBooking?.bookingId === (booking.bookingId ?? booking.id)) {
+        setManagedBooking((prev) => (prev ? { ...prev, status: "PAYMENT_PENDING" } : prev));
       }
 
-      toast.success("Payment request sent");
+      localStorage.removeItem("pendingPaymentBooking");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to request payment");
+      toast.error(err?.message || "Failed to request payment");
     }
   };
 
@@ -1486,12 +1665,38 @@ const handleStartJob = async () => {
                                   <Button
                                     size="icon"
                                     variant="secondary"
+                                    title="View booking"
                                     onClick={() => {
                                       setSelectedBooking(b);
                                       setViewOpen(true);
                                     }}
                                   >
                                     <Eye className="w-4 h-4" />
+                                  </Button>
+
+                                  <Button
+                                    size="sm"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    onClick={() => {
+                                      localStorage.setItem(
+                                        MANAGED_KEY,
+                                        JSON.stringify({
+                                          bookingId: b.bookingId,
+                                          providerServiceId: b.providerServiceId,
+                                        })
+                                      );
+
+                                      setManagedBooking({
+                                        ...b,
+                                        bookingId: b.bookingId ?? b.id,
+                                        scheduledAt: b.scheduledAt,
+                                        startedAt: b.startedAt ?? null,
+                                      });
+
+                                      setActiveTab("managebookings");
+                                    }}
+                                  >
+                                    Manage
                                   </Button>
 
                                   {b.status === "PENDING" && (
@@ -1539,130 +1744,238 @@ const handleStartJob = async () => {
             {/* CUSTOMER - MY BOOKINGS */}
             {activeTab === "myBookings" && role === "CUSTOMER" && (
               <>
-                <h2 className="text-lg font-semibold mb-4">My Bookings</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-6">
-
-                  {/* LEFT — Calendar */}
-                  <Card className="p-4 rounded-2xl flex items-center justify-center">
-                    <Calendar
-                      mode="single"
-                      selected={customerSelectedDate}
-                      onSelect={(day) => {
-                        setCustomerSelectedDate(day);
-                        setCustomerDateBookings([]);
-                        loadCustomerBookingsForDate(day);
-                      }}
-                      modifiers={{
-                        busy: (date) =>
-                          customerBusyDates.has(
-                            date.toISOString().split("T")[0]
-                          ),
-                      }}
-                      modifiersClassNames={{
-                        busy:
-                          "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-blue-500",
-                      }}
-                      className="rounded-xl border"
-                    />
-                  </Card>
-
-                  {/* RIGHT — Bookings */}
-                  <Card className="p-6 rounded-2xl">
-                    {!customerSelectedDate && (
-                      <p className="text-muted-foreground">
-                        Select a date to view your bookings
-                      </p>
-                    )}
-
-                    {customerCalendarLoading && (
+                {/* Header */}
+                <div className="flex flex-col gap-4 mb-4">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-semibold">My Bookings</h2>
                       <p className="text-sm text-muted-foreground">
-                        Loading bookings...
+                        View your requests and complete payments when required
                       </p>
-                    )}
+                    </div>
 
-                    {customerSelectedDate &&
-                      !customerCalendarLoading &&
-                      customerDateBookings.length === 0 && (
-                        <p className="text-sm text-muted-foreground">
-                          No bookings for this date
-                        </p>
-                      )}
+                    {/* Controls */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setCustomerSearch("");
+                          setCustomerStatusFilter("ALL");
+                        }}
+                        className="sm:order-3"
+                      >
+                        Clear
+                      </Button>
 
-                    {customerDateBookings.length > 0 && (
-                      <div className="space-y-3">
-                        {customerDateBookings.map((b) => (
-                          <div
-                            key={b.bookingId}
-                            className="flex items-center justify-between rounded-xl border p-4 hover:bg-muted/40 transition"
+                      {/* Search */}
+                      <input
+                        value={customerSearch}
+                        onChange={(e) => setCustomerSearch(e.target.value)}
+                        placeholder="Search by service or provider..."
+                        className="
+                          w-full sm:w-64
+                          rounded-full border
+                          bg-background
+                          px-4 py-2
+                          text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary/40
+                        "
+                      />
+
+                      {/* Status Filter */}
+                      <div className="relative">
+                        <select
+                          value={customerStatusFilter}
+                          onChange={(e) => setCustomerStatusFilter(e.target.value)}
+                          className="
+                            w-full sm:w-auto
+                            appearance-none
+                            rounded-full
+                            px-5 py-2 pr-10
+                            text-sm font-semibold
+                            bg-background
+                            text-foreground
+                            border border-border
+                            shadow-sm
+                            hover:bg-muted
+                            focus:outline-none
+                            focus:ring-2 focus:ring-primary/40
+                            transition
+                            cursor-pointer
+                          "
+                        >
+                          <option value="ALL">All</option>
+                          <option value="PENDING">Pending</option>
+                          <option value="ACCEPTED">Accepted</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="PAYMENT_PENDING">Payment Pending</option>
+                          <option value="COMPLETED">Completed</option>
+                          <option value="REJECTED">Rejected</option>
+                        </select>
+
+                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                          ▼
+                        </span>
+                      </div>
+
+                      {/* Count */}
+                      <span className="px-3 py-2 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border sm:self-center">
+                        {filterCustomerBookings(customerBookings).length} bookings
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Quick Summary (Customer only) - moved BELOW header */}
+                  {!customerBookingsLoading && (
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: "Payment Pending", status: "PAYMENT_PENDING", cls: "bg-blue-500/15 text-blue-500 border-blue-500/20" },
+                        { label: "Pending", status: "PENDING", cls: "bg-yellow-500/15 text-yellow-500 border-yellow-500/20" },
+                        { label: "Accepted", status: "ACCEPTED", cls: "bg-green-500/15 text-green-500 border-green-500/20" },
+                        { label: "Completed", status: "COMPLETED", cls: "bg-emerald-500/15 text-emerald-500 border-emerald-500/20" },
+                      ].map((x) => {
+                        const count = (customerBookings || []).filter((b) => b.status === x.status).length;
+
+                        return (
+                          <button
+                            key={x.status}
+                            onClick={() => setCustomerStatusFilter(x.status)}
+                            className={`px-3 py-2 rounded-full text-xs font-semibold border transition hover:opacity-90 ${x.cls}`}
+                            title="Click to filter"
+                            type="button"
                           >
-                            <div>
-                              <p className="font-medium">{b.serviceName}</p>
-                              <p className="text-sm text-muted-foreground">
+                            {x.label}: {count}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        type="button"
+                        onClick={() => setCustomerStatusFilter("ALL")}
+                        className="px-3 py-2 rounded-full text-xs font-semibold border bg-muted text-muted-foreground hover:bg-muted/80 transition"
+                        title="Show all"
+                      >
+                        All: {customerBookings?.length ?? 0}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Loading */}
+                {customerBookingsLoading && (
+                  <Card className="p-6 rounded-2xl">
+                    <p className="text-sm text-muted-foreground">Loading your bookings...</p>
+                  </Card>
+                )}
+
+                {/* Empty */}
+                {!customerBookingsLoading &&
+                  filterCustomerBookings(customerBookings).length === 0 && (
+                    <Card className="p-10 rounded-2xl text-center">
+                      <p className="text-lg font-semibold">No bookings found</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Try changing filters or search keywords
+                      </p>
+                    </Card>
+                  )}
+
+                {/* List */}
+                {!customerBookingsLoading &&
+                  filterCustomerBookings(customerBookings).length > 0 && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {filterCustomerBookings(customerBookings).map((b) => (
+                        <Card
+                          key={b.bookingId}
+                          className="p-5 rounded-2xl border hover:shadow-md transition"
+                        >
+                          {/* Top Row */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-base font-semibold truncate">
+                                {b.serviceName}
+                              </p>
+                              <p className="text-sm text-muted-foreground truncate">
                                 {b.providerName || "Provider not assigned"}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(b.scheduledAt).toLocaleTimeString("en-LK", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
+                            </div>
+
+                            <span
+                              className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${customerStatusBadgeClass(
+                                b.status
+                              )}`}
+                            >
+                              {b.status.replaceAll("_", " ")}
+                            </span>
+                          </div>
+
+                          {/* Details */}
+                          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div className="rounded-xl bg-muted/30 p-3">
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Scheduled
+                              </p>
+                              <p className="font-semibold">
+                                {b.scheduledAt
+                                  ? new Date(b.scheduledAt).toLocaleString("en-LK", {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "2-digit",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })
+                                  : "—"}
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                              {/* STATUS */}
-                              <span
-                                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  b.status === "PENDING"
-                                    ? "bg-yellow-500/20 text-yellow-500"
-                                    : b.status === "ACCEPTED"
-                                    ? "bg-green-500/20 text-green-500"
-                                    : b.status === "PAYMENT_PENDING"
-                                    ? "bg-blue-500/20 text-blue-500"
-                                    : b.status === "COMPLETED"
-                                    ? "bg-emerald-500/20 text-emerald-500"
-                                    : "bg-muted text-muted-foreground"
-                                }`}
-                              >
-                                {b.status.replace("_", " ")}
-                              </span>
-
-                              {/* VIEW */}
-                              <Button
-                                size="icon"
-                                variant="secondary"
-                                onClick={() => {
-                                  setSelectedBooking(b);
-                                  setViewOpen(true);
-                                }}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-
-                              {/* PAY */}
-                              {b.status === "PAYMENT_PENDING" && (
-                                <Button
-                                  size="sm"
-                                  onClick={async () => {
-                                    try {
-                                      const payment = await getCustomerPayment(b.bookingId);
-                                      setPaymentInfo(payment);
-                                      setPaymentOpen(true);
-                                    } catch {
-                                      toast.error("Failed to load payment info");
-                                    }
-                                  }}
-                                >
-                                  Pay
-                                </Button>
-                              )}
+                            <div className="rounded-xl bg-muted/30 p-3">
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Amount
+                              </p>
+                              <p className="font-semibold">
+                                {formatPrice(b.paymentAmount)}
+                              </p>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </Card>
-                </div>
+
+                          {/* Actions */}
+                          <div className="mt-5 flex items-center justify-end gap-2">
+                            {/* VIEW (same behavior as your old code) */}
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                setSelectedBooking(b);
+                                setViewOpen(true);
+                              }}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View
+                            </Button>
+
+                            {/* PAY (same behavior as your old code) */}
+                            {b.status === "PAYMENT_PENDING" && (
+                              <Button
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                onClick={async () => {
+                                  try {
+                                    const payment = await getCustomerPayment(b.bookingId);
+                                    setPaymentInfo(payment);
+                                    setPaymentOpen(true);
+                                  } catch {
+                                    toast.error("Failed to load payment info");
+                                  }
+                                }}
+                              >
+                                Pay Now
+                              </Button>
+                            )}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
               </>
             )}
 
@@ -1835,15 +2148,81 @@ const handleStartJob = async () => {
                 </div>
 
                 {/* CTA */}
-                <div className="mt-6 flex justify-end">
-                  <Button
-                    size="lg"
-                    className="bg-green-600 hover:bg-green-700 text-white px-8"
-                    onClick={() => handleRequestPayment(managedBooking)}
-                  >
-                    Request Payment
-                  </Button>
+                <div className="mt-6 flex justify-end gap-2">
+
+                  {/* 1) If no payment created yet -> Request Payment */}
+                  {!(providerPaymentInfo?.paymentId ?? providerPaymentInfo?.id) && (
+                    <Button
+                      size="lg"
+                      className="bg-green-600 hover:bg-green-700 text-white px-8"
+                      onClick={async () => {
+                        await handleRequestPayment(managedBooking);
+
+                        try {
+                          const p = await getProviderPaymentByBooking(managedBooking.bookingId);
+                          setProviderPaymentInfo(p);
+                        } catch (e) {
+                          console.warn("Payment requested, but payment fetch failed (will retry):", e);
+                        }
+                        await refreshManagedBooking(managedBooking.bookingId);
+                      }}
+                    >
+                      Request Payment
+                    </Button>
+                  )}
+
+                  {(providerPaymentInfo?.paymentId ?? providerPaymentInfo?.id) &&
+                    ["REQUESTED", "PROCESSING"].includes(
+                      providerPaymentInfo?.paymentStatus ?? providerPaymentInfo?.status
+                    ) && (
+                      <Button size="lg" variant="outline" disabled className="px-8">
+                        ⏳ Waiting for customer payment
+                      </Button>
+                  )}
+
+                  {/* If customer selected CASH -> provider must confirm */}
+                  {providerPaymentInfo?.paymentMethod === "CASH" &&
+                    (providerPaymentInfo?.paymentStatus ?? providerPaymentInfo?.status) === "CASH_WAITING_CONFIRMATION" && (
+                      <Button
+                        size="lg"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                        onClick={async () => {
+                          try {
+                           await confirmProviderPayment(
+                              providerPaymentInfo.paymentId ?? providerPaymentInfo.id
+                            );
+                            toast.success("Payment confirmed");
+
+                            const updated = await getProviderBookings(user.id);
+                            setProviderBookings(updated);
+
+                            const p = await getProviderPaymentByBooking(managedBooking.bookingId);
+                            setProviderPaymentInfo(p);
+
+                            setManagedBooking((prev) => (prev ? { ...prev, status: "COMPLETED" } : prev));
+                          } catch (e) {
+                            console.error(e);
+                            toast.error("Failed to confirm payment");
+                          }
+                        }}
+                      >
+                        Confirm Cash Received
+                      </Button>
+                    )}
+
+                  {/* 4) If paid/confirmed */}
+                  {["CONFIRMED", "SUCCESS", "PAID"].includes(providerPaymentInfo?.paymentStatus) && (
+                    <Button size="lg" variant="outline" disabled className="px-8">
+                      Payment Received ✅
+                    </Button>
+                  )}
                 </div>
+
+                {providerPaymentLoading && (
+                  <p className="text-xs text-muted-foreground mt-3 text-right">
+                    Loading payment info...
+                  </p>
+                )}
               </div>
             )}
 
@@ -2633,22 +3012,32 @@ const handleStartJob = async () => {
         onManage={(booking) => {
           setViewOpen(false);
           setSelectedBooking(booking);
-            if (role === "CUSTOMER") {
-              setCustomerManageBookingOpen(true);
-            } else {
-              setManagedBooking((prev) =>
-                prev
-                  ? prev
-                  : {
-                      ...booking,
-                      bookingId: booking.bookingId ?? booking.id,
-                      scheduledAt: booking.scheduledAt,
-                      startedAt: booking.startedAt ?? null,
-                    }
-              );
-              setActiveTab("managebookings");
-            }
-          }}
+
+          if (role === "CUSTOMER") {
+            setCustomerManageBookingOpen(true);
+          } else {
+            localStorage.setItem(
+              "activeManagedBooking",
+              JSON.stringify({
+                bookingId: booking.bookingId ?? booking.id,
+                providerServiceId: booking.providerServiceId,
+              })
+            );
+
+            setManagedBooking((prev) =>
+              prev
+                ? prev
+                : {
+                    ...booking,
+                    bookingId: booking.bookingId ?? booking.id,
+                    scheduledAt: booking.scheduledAt,
+                    startedAt: booking.startedAt ?? null,
+                  }
+            );
+
+            setActiveTab("managebookings");
+          }
+        }}
         onRequestPayment={handleRequestPayment}
       />
 

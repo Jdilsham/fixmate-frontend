@@ -145,60 +145,7 @@ export default function BookingViewDialog({
             </>
           )}
         </div>
-        <div className="mt-6 flex justify-end">
-          {/* MANAGE BOOKING (before finalize) */}
-          {booking.status !== "REJECTED" &&
-            !booking.paymentStatus &&
-            !booking.paymentAmount && (
-            <button
-              disabled={booking.status === "PENDING"}
-              onClick={() => {
-                if (booking.status === "PENDING") return;
-                onClose(false);
-                onManage?.(booking);
-              }}
-              className={`
-                rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition
-                ${
-                  booking.status === "PENDING"
-                    ? "bg-gray-500 cursor-not-allowed opacity-60"
-                    : "bg-orange-500 hover:bg-orange-600 shadow-md hover:shadow-orange-500/30"
-                }
-              `}
-            >
-              Manage Booking
-            </button>
-          )}
 
-          {/* REQUEST PAYMENT (amount set, not requested yet) */}
-          {!booking.paymentStatus && booking.paymentAmount && (
-            <button
-              onClick={() => {
-                onClose(false);
-                onRequestPayment?.(booking);
-              }}
-              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-            >
-              Request Payment
-            </button>
-          )}
-
-          {/* PAYMENT REQUESTED */}
-          {booking.paymentStatus === "REQUESTED" && (
-            <span className="text-sm font-semibold text-blue-500">
-              Payment Requested
-            </span>
-          )}
-
-          {/* PAYMENT PAID / CONFIRMED */}
-          {(booking.paymentStatus === "PAID" ||
-            booking.paymentStatus === "CONFIRMED") && (
-            <span className="text-sm font-semibold text-green-500">
-              Payment Completed
-            </span>
-          )}
-        </div>
-        
       </DialogContent>
     </Dialog>
   );
