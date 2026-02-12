@@ -1,6 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   NavigationMenu,
@@ -17,45 +16,22 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import DarkmodeToggle from "./darkmodeToggle";
-import { Menu } from "lucide-react";
+import {
+  Menu,
+  Wrench,
+  LayoutDashboard,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
 
-  const [initials, setInitials] = useState("U");
-
-  //Fetch user using token
-  // useEffect(() => {
-  //   const fetchUser = async () => {
-  //     try {
-  //       if (!token) return;
-
-  //       const res = await axios.get(`${API}/api/auth/login`, {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
-
-  //       const user = res.data;
-
-  //       // handle different backend casing styles
-  //       const first = user.firstName || user.firstname || user.first_name || "";
-
-  //       const last = user.lastName || user.lastname || user.last_name || "";
-
-  //       const i = ((first[0] || "") + (last[0] || "")).toUpperCase();
-
-  //       setInitials(i || "U");
-  //     } catch (err) {
-  //       console.error("Could not fetch user", err);
-  //     }
-  //   };
-
-  //   fetchUser();
-  // }, [token]);
+  const [initials] = useState("U");
 
   const navLinks = [
     { label: "Home", path: "/" },
@@ -71,120 +47,199 @@ export default function Header() {
     navigate("/login");
   }
 
+  const isActive = (path) => {
+    if (path === "/") return location.pathname === "/";
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <motion.header
-      initial={{ y: -20, opacity: 0 }}
+      initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur"
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="sticky top-0 z-50 w-full"
     >
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-        {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          className="cursor-pointer text-2xl font-semibold text-primary"
-        >
-          FixMate
-        </div>
+      <div className="border-b border-border/60 bg-background/70 backdrop-blur-xl">
+        {/* ✅ relative container so nav can be centered */}
+        <div className="relative mx-auto flex h-20 max-w-7xl items-center px-4 sm:px-6">
+          {/* ✅ Left (Logo) */}
+          <div className="flex flex-1 items-center">
+            <button
+              onClick={() => navigate("/")}
+              className="group flex items-center gap-3 rounded-xl px-2 py-1 transition hover:bg-accent/40"
+            >
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 transition group-hover:scale-[1.02]">
+                <Wrench className="h-5 w-5" />
+              </span>
 
-        {/* Navigation */}
-        <NavigationMenu className="hidden md:flex">
-          <NavigationMenuList className="space-x-8">
-            {navLinks.map((link) => (
-              <NavigationMenuItem key={link.label}>
-                <button
-                  onClick={() => navigate(link.path)}
-                  className="text-base font-medium text-foreground transition-colors hover:text-accent"
-                >
-                  {link.label}
-                </button>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
-
-        <div className="flex items-center gap-3">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu />
-              </Button>
-            </SheetTrigger>
-
-            <SheetContent side="right" className="pt-10">
-              <div className="flex flex-col gap-6">
-                {navLinks.map((link) => (
-                  <Button
-                    key={link.label}
-                    onClick={() => navigate(link.path)}
-                    className="text-lg font-medium text-left"
-                  >
-                    {link.label}
-                  </Button>
-                ))}
-
-                {!isLoggedIn && (
-                  <>
-                    <Button onClick={() => navigate("/login")}>Login</Button>
-                    <Button onClick={() => navigate("/signup")}>Sign Up</Button>
-                  </>
-                )}
+              <div className="leading-tight text-left">
+                <div className="text-xl font-semibold tracking-tight">
+                  Fix<span className="text-primary">Mate</span>
+                </div>
+                <div className="hidden text-[12px] text-muted-foreground sm:block">
+                  Fast • Verified • Reliable
+                </div>
               </div>
-            </SheetContent>
-          </Sheet>
+            </button>
+          </div>
 
-          {!isLoggedIn ? (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/login")}
-                className="hidden sm:inline-flex"
-              >
-                Login
-              </Button>
+          {/* ✅ Center Nav (desktop) */}
+          <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
+            <NavigationMenu>
+              <NavigationMenuList className="flex items-center gap-1">
+                {navLinks.map((link) => (
+                  <NavigationMenuItem key={link.label}>
+                    <button
+                      onClick={() => navigate(link.path)}
+                      className={[
+                        "relative rounded-xl px-4 py-2 text-sm font-medium transition",
+                        "text-foreground/80 hover:text-foreground hover:bg-accent/40",
+                        isActive(link.path) ? "text-foreground bg-accent/35" : "",
+                      ].join(" ")}
+                    >
+                      {link.label}
+                      {isActive(link.path) && (
+                        <span className="absolute left-3 right-3 -bottom-[6px] h-[2px] rounded-full bg-primary" />
+                      )}
+                    </button>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
 
-              <Button
-                onClick={() => navigate("/signup")}
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                Sign up
-              </Button>
-            </>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring">
-                  <Avatar>
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem onClick={() => navigate("/provider/dashboard")}>
-                  Dashboard
-                </DropdownMenuItem>
-
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
-                  Settings
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-destructive focus:text-destructive"
+          {/* ✅ Right Side */}
+          <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
+            {/* Mobile Menu */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden rounded-xl"
                 >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
 
-          <DarkmodeToggle />
+              <SheetContent side="right" className="pt-10">
+                <div className="flex flex-col gap-2">
+                  <div className="mb-2 text-sm font-semibold text-muted-foreground">
+                    Navigation
+                  </div>
+
+                  {navLinks.map((link) => (
+                    <Button
+                      key={link.label}
+                      variant={isActive(link.path) ? "secondary" : "ghost"}
+                      onClick={() => navigate(link.path)}
+                      className="justify-start rounded-xl"
+                    >
+                      {link.label}
+                    </Button>
+                  ))}
+
+                  <div className="my-4 h-px bg-border" />
+
+                  {!isLoggedIn ? (
+                    <div className="grid gap-2">
+                      <Button
+                        onClick={() => navigate("/login")}
+                        variant="secondary"
+                      >
+                        Login
+                      </Button>
+                      <Button onClick={() => navigate("/signup")}>Sign Up</Button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => navigate("/provider/dashboard")}
+                      variant="secondary"
+                    >
+                      Go to Dashboard
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {/* Auth buttons / Avatar */}
+            {!isLoggedIn ? (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate("/login")}
+                  className="hidden sm:inline-flex rounded-xl"
+                >
+                  Login
+                </Button>
+
+                <Button onClick={() => navigate("/signup")} className="rounded-xl">
+                  Sign up
+                </Button>
+              </>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring">
+                    <Avatar className="h-10 w-10 ring-2 ring-border/60">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 rounded-2xl border border-border/60 bg-background/95 p-2 shadow-xl backdrop-blur"
+                >
+                  <div className="px-2 py-2">
+                    <div className="text-sm font-semibold leading-none">
+                      Account
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Manage your profile & settings
+                    </div>
+                  </div>
+
+                  <DropdownMenuSeparator className="my-2" />
+
+                  <DropdownMenuItem
+                    onClick={() => navigate("/provider/dashboard")}
+                    className="cursor-pointer rounded-xl px-3 py-2 focus:bg-accent/50"
+                  >
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={() => navigate("/settings")}
+                    className="cursor-pointer rounded-xl px-3 py-2 focus:bg-accent/50"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="my-2" />
+
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="cursor-pointer rounded-xl px-3 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            <DarkmodeToggle />
+          </div>
         </div>
+
+        {/* subtle glow line */}
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
       </div>
     </motion.header>
   );

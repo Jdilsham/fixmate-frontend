@@ -21,7 +21,7 @@ import PaymentCancel from "./pages/payment-cancel";
 function App() {
   return (
     <BrowserRouter>
-      <div className="w-full h-screen ">
+      <div className="w-full min-h-screen">
         <Toaster position="top-center" />
 
         <Routes>

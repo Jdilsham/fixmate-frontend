@@ -1,8 +1,11 @@
+// PublicServiceCard.jsx
 import { useNavigate } from "react-router-dom";
 
-export default function EmployerCard({ employer, onToggleActive }) {
+export default function PublicServiceCard({ service }) {
   const navigate = useNavigate();
-  if (!employer) return null;
+  if (!service) return null;
+
+  console.log("✅ RENDERING PublicServiceCard.jsx", import.meta.url);
 
   const {
     providerServiceId,
@@ -14,32 +17,13 @@ export default function EmployerCard({ employer, onToggleActive }) {
     hourlyRate,
     rating,
     location,
-
-    // provider-only
-    verificationStatus,
-    isActive,
-    isProviderView = false,
-    showViewProfile = true,
-  } = employer;
+  } = service;
 
   const imgSrc = providerProfileImage
     ? providerProfileImage.startsWith("http")
       ? providerProfileImage
       : `${import.meta.env.VITE_BACKEND_URL}${providerProfileImage}`
     : null;
-
-  const status = (verificationStatus || "").toUpperCase();
-
-  const statusPill =
-    status.includes("APPROV")
-      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-      : status.includes("PEND")
-      ? "bg-amber-500/10 text-amber-700 dark:text-amber-300"
-      : status.includes("REJEC")
-      ? "bg-rose-500/10 text-rose-700 dark:text-rose-300"
-      : "bg-slate-900/5 text-slate-700 dark:bg-white/10 dark:text-slate-200";
-
-  const canToggle = isProviderView && status.includes("APPROV") && typeof isActive === "boolean";
 
   return (
     <div
@@ -55,6 +39,7 @@ export default function EmployerCard({ employer, onToggleActive }) {
         overflow-hidden
       "
     >
+      {/* Top */}
       <div className="p-6">
         {/* Header row */}
         <div className="flex items-center gap-4">
@@ -74,12 +59,8 @@ export default function EmployerCard({ employer, onToggleActive }) {
               )}
             </div>
 
-            {/* Online/active dot (visual) */}
-            <span
-              className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ring-2 ring-white dark:ring-slate-950 ${
-                isActive ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
-              }`}
-            />
+            {/* Online dot (visual only) */}
+            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-950" />
           </div>
 
           {/* Provider info */}
@@ -92,7 +73,7 @@ export default function EmployerCard({ employer, onToggleActive }) {
             </p>
 
             {/* Pills row */}
-            <div className="mt-2 flex items-center gap-2 flex-wrap">
+            <div className="mt-2 flex items-center gap-2">
               {/* Rating */}
               <span
                 className="
@@ -125,21 +106,6 @@ export default function EmployerCard({ employer, onToggleActive }) {
                 <span className="text-red-500">📍</span>
                 <span className="truncate">{location || "Unknown"}</span>
               </span>
-
-              {/* Provider-only verification pill */}
-              {isProviderView && verificationStatus && (
-                <span
-                  className={`
-                    inline-flex items-center
-                    px-2.5 py-1 rounded-full
-                    text-xs font-semibold
-                    ${statusPill}
-                  `}
-                  title={verificationStatus}
-                >
-                  {verificationStatus}
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -174,52 +140,26 @@ export default function EmployerCard({ employer, onToggleActive }) {
           <div className="flex items-center justify-between text-sm mt-2">
             <span className="text-slate-600 dark:text-slate-300">Hourly</span>
             <span className="font-semibold text-slate-900 dark:text-white">
-              {hourlyRate ? `Rs. ${Number(hourlyRate).toLocaleString("en-LK")}` : "—"}
+              {hourlyRate ? `Rs. ${hourlyRate}` : "—"}
             </span>
           </div>
         </div>
 
-        {/* Provider-only toggle row */}
-        {canToggle && (
-          <div className="mt-5 flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-900 dark:text-white">
-              Active
-            </span>
-
-            <button
-              type="button"
-              onClick={() => onToggleActive?.(providerServiceId)}
-              className={`relative w-11 h-6 rounded-full transition ${
-                isActive ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
-              }`}
-              title="Toggle service active"
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                  isActive ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
-        )}
-
-        {/* CTA (keep compatible) */}
-        {showViewProfile && (
-          <button
-            onClick={() => navigate(`/book/${providerServiceId}`)}
-            className="
-              mt-6 w-full py-3
-              rounded-2xl
-              bg-slate-800 text-white
-              hover:bg-slate-900
-              font-semibold
-              transition
-              shadow-sm
-            "
-          >
-            View Profile
-          </button>
-        )}
+        {/* CTA */}
+        <button
+          onClick={() => navigate(`/book/${providerServiceId}`)}
+          className="
+            mt-6 w-full py-3
+            rounded-2xl
+            bg-slate-800 text-white
+            hover:bg-slate-900
+            font-semibold
+            transition
+            shadow-sm
+          "
+        >
+          View Profile
+        </button>
       </div>
     </div>
   );

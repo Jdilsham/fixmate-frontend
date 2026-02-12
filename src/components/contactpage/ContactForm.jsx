@@ -4,9 +4,7 @@ import ContactInput from "./ContactInput";
 import ContactTextarea from "./ContactTextarea";
 import ContactButton from "./ContactButton";
 
-
 export default function ContactForm() {
-  // Form state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,96 +14,77 @@ export default function ContactForm() {
 
   const [loading, setLoading] = useState(false);
 
-  // Handle input change
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle submit (NO backend yet)
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Simple validation
-    if (!formData.name || !formData.email || !formData.message) {
-      alert("Please fill all required fields");
-      return;
-    }
-
     setLoading(true);
 
-    // Demo submit action
-    setTimeout(() => {
-      console.log("Contact Form Data:", formData);
-      alert("Message sent successfully ✅");
+    try {
+      // ✅ Replace this with your API call later
+      console.log("CONTACT FORM DATA:", formData);
 
-      // Reset form
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        message: "",
-      });
+      // fake delay (optional)
+      await new Promise((r) => setTimeout(r, 800));
 
+      // clear form
+      setFormData({ name: "", email: "", phone: "", message: "" });
+      alert("Message sent successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Please try again!");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="bg-card p-8 rounded-xl shadow-md w-full max-w-md">
-      <h3 className="text-2xl font-semibold mb-6">Get In Touch</h3>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <ContactLabel text="Name" />
+        <ContactInput
+          name="name"
+          placeholder="Enter your name"
+          value={formData.name}
+          onChange={handleChange}
+        />
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name */}
-        <div>
-          <ContactLabel text="Name" />
-          <ContactInput
-            name="name"
-            placeholder="Enter your name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-        </div>
+      <div>
+        <ContactLabel text="Email" />
+        <ContactInput
+          type="email"
+          name="email"
+          placeholder="Enter your email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+      </div>
 
-        {/* Email */}
-        <div>
-          <ContactLabel text="Email" />
-          <ContactInput
-            type="email"
-            name="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </div>
+      <div>
+        <ContactLabel text="Phone No" />
+        <ContactInput
+          name="phone"
+          placeholder="Enter phone number"
+          value={formData.phone}
+          onChange={handleChange}
+        />
+      </div>
 
-        {/* Phone */}
-        <div>
-          <ContactLabel text="Phone No" />
-          <ContactInput
-            name="phone"
-            placeholder="Enter phone number"
-            value={formData.phone}
-            onChange={handleChange}
-          />
-        </div>
+      <div>
+        <ContactLabel text="Message" />
+        <ContactTextarea
+          name="message"
+          placeholder="Write your message"
+          value={formData.message}
+          onChange={handleChange}
+        />
+      </div>
 
-        {/* Message */}
-        <div>
-          <ContactLabel text="Message" />
-          <ContactTextarea
-            name="message"
-            placeholder="Write your message"
-            value={formData.message}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Submit Button */}
-        <ContactButton text="SEND MESSAGE" loading={loading} />
-      </form>
-    </div>
+      <ContactButton text="SEND MESSAGE" loading={loading} />
+    </form>
   );
 }
