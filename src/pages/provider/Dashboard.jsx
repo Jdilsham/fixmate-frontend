@@ -2339,182 +2339,199 @@ const handleStartJob = async () => {
               </>
             )}
 
-            
-
-
-
             {/* PROFILE */}
             {activeTab === "profile" && (
               <>
               {/* ================= PROFILE HEADER ================= */}
-              <Card className="rounded-3xl border p-8 mb-10">
-                <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8 items-center">
+              <Card className="relative overflow-hidden rounded-3xl border mb-10">
+                {/* soft background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-muted/30" />
+                <div className="relative p-6 md:p-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8 items-center">
+                    {/* LEFT — Avatar */}
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="relative w-40 h-40 md:w-56 md:h-56 rounded-full">
+                        <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-primary/30 to-transparent blur-xl" />
 
-                  {/* ================= LEFT — PROFILE IMAGE + CONTROLS ================= */}
-                  <div className="flex flex-col items-center gap-3">
+                        <div className="relative w-full h-full rounded-full border bg-background shadow-lg overflow-hidden">
+                          <Avatar.Root className="w-full h-full">
+                            <Avatar.Image
+                              src={user?.profilePicture}
+                              alt="Profile"
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                            <Avatar.Fallback className="flex items-center justify-center w-full h-full rounded-full text-4xl font-bold bg-muted">
+                              {user?.fullName?.[0] || "U"}
+                            </Avatar.Fallback>
+                          </Avatar.Root>
 
-                    {/* AVATAR */}
-                    <div className="relative w-56 h-56 rounded-full shadow-lg">
-                      <Avatar.Root className="w-full h-full">
-                        <Avatar.Image
-                          src={user?.profilePicture}
-                          alt="Profile"
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                        <Avatar.Fallback className="flex items-center justify-center w-full h-full rounded-full text-4xl font-bold bg-muted">
-                          {user?.fullName?.[0] || "U"}
-                        </Avatar.Fallback>
-                      </Avatar.Root>
+                          {/* Availability dot */}
+                          {role === "SERVICE_PROVIDER" && (
+                            <span
+                              className={`
+                                absolute bottom-2 right-2
+                                w-4 h-4 rounded-full
+                                border-2 border-background
+                                ${isAvailable ? "bg-green-500" : "bg-red-500"}
+                              `}
+                            />
+                          )}
+                        </div>
+                      </div>
 
-                      {/* Availability dot */}
-                      {role === "SERVICE_PROVIDER" && (
-                        <span
-                          className={`
-                            absolute bottom-2 right-2
-                            w-4 h-4 rounded-full
-                            border-2 border-background
-                            ${isAvailable ? "bg-green-500" : "bg-red-500"}
-                          `}
-                        />
-                      )}
+                      <button
+                        onClick={() => setEditImageOpen(true)}
+                        className="
+                          inline-flex items-center gap-2
+                          px-4 py-2
+                          rounded-full
+                          text-sm font-medium
+                          border bg-background/70
+                          hover:bg-muted
+                          transition
+                          shadow-sm
+                        "
+                      >
+                        <Camera className="w-4 h-4 opacity-80" />
+                        Edit Profile Photo
+                      </button>
                     </div>
 
-                    {/* Edit Profile Photo Button */}
-                    <button
-                      onClick={() => setEditImageOpen(true)}
-                      className="
-                        inline-flex items-center gap-2
-                        px-4 py-1.5
-                        rounded-full
-                        text-sm font-medium
-                        bg-muted/70
-                        hover:bg-muted
-                        transition
-                        shadow-sm
-                      "
-                    >
-                      <Camera className="w-4 h-4 opacity-80" />
-                      Edit Profile Photo
-                    </button>
+                    {/* RIGHT — Details */}
+                    <div className="space-y-6 min-w-0">
+                      {/* Name + Role */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="min-w-0">
+                          <h2 className="text-2xl md:text-3xl font-bold tracking-tight truncate">
+                            {user?.fullName}
+                          </h2>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {role === "SERVICE_PROVIDER"
+                              ? "Manage your provider profile & verification"
+                              : "Manage your profile details"}
+                          </p>
+                        </div>
 
-                  </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-background">
+                            {role}
+                          </span>
 
-                  {/* ================= RIGHT — DETAILS ================= */}
-                  <div className="space-y-6">
+                          {/* Provider status chip (only provider) */}
+                          {role === "SERVICE_PROVIDER" && (
+                            <>
+                              {verificationStatus === "APPROVED" && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-500/10 text-green-700 dark:text-green-300">
+                                  ✓ Verified
+                                </span>
+                              )}
+                              {verificationStatus === "PENDING" && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-yellow-500/10 text-yellow-700 dark:text-yellow-300">
+                                  ⏳ Pending
+                                </span>
+                              )}
+                              {verificationStatus === "NOT_SUBMITTED" && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-orange-500/10 text-orange-700 dark:text-orange-300">
+                                  ⚠ Not Activated
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
 
-                    {/* Name + Role */}
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-3xl font-bold">{user?.fullName}</h2>
-
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted">
-                        {role}
-                      </span>
-                    </div>
-
-                    {/* DETAILS GRID */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-
-                      {/* LEFT SIDE */}
-                      <div className="space-y-4">
+                      {/* Info cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Skill → ONLY for Service Provider */}
                         {role === "SERVICE_PROVIDER" && (
-                          <div>
-                            <p className="text-muted-foreground text-sm">Skill</p>
-                            <p className="font-medium">{user?.skill || "Not set"}</p>
+                          <div className="rounded-2xl border bg-background/70 p-4">
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                              Skill
+                            </p>
+                            <p className="text-sm font-semibold mt-1">
+                              {user?.skill || "Not set"}
+                            </p>
                           </div>
                         )}
 
-                        <div>
-                          <p className="text-muted-foreground text-sm">Location</p>
-                          <p className="font-medium">
+                        {/* Location */}
+                        <div className="rounded-2xl border bg-background/70 p-4">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Location
+                          </p>
+                          <p className="text-sm font-semibold mt-1">
                             {addressForm.city
                               ? `${addressForm.city}, ${addressForm.province}`
                               : "Not set"}
                           </p>
                         </div>
 
-                        <div>
-                          <p className="text-muted-foreground text-sm">Phone</p>
-                          <p className="font-medium">{user?.phone || "Not set"}</p>
+                        {/* Phone */}
+                        <div
+                          className={`rounded-2xl border bg-background/70 p-4 ${
+                            role === "SERVICE_PROVIDER" ? "md:col-span-2" : ""
+                          }`}
+                        >
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Phone
+                          </p>
+                          <p className="text-sm font-semibold mt-1">
+                            {user?.phone || "Not set"}
+                          </p>
                         </div>
                       </div>
 
-                      {/* RIGHT SIDE */}
+                      {/* Availability (provider only) */}
                       {role === "SERVICE_PROVIDER" && (
-                        <div className="space-y-4">
-
-                          {/* Account Status */}
-                          <div>
-                            <p className="text-muted-foreground text-sm pb-2">
-                              Account Status
-                            </p>
-
-                            {verificationStatus === "APPROVED" && (
-                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-600">
-                                ✓ Verified
-                              </span>
-                            )}
-
-                            {verificationStatus === "PENDING" && (
-                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-600">
-                                ⏳ Pending Verification
-                              </span>
-                            )}
-
-                            {verificationStatus === "NOT_SUBMITTED" && (
-                              <div className="space-y-3">
-                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/15 text-orange-600">
-                                  ⚠ Not Activated
-                                </span>
-
-                                <p className="text-sm text-muted-foreground">
-                                  Your account is not activated yet. Complete verification to start receiving jobs.
-                                </p>
-
-                                <button
-                                  onClick={() => setShowActivateModal(true)}
-                                  className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium"
-                                >
-                                  Activate Account
-                                </button>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Availability */}
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                              <p className="text-muted-foreground text-sm">
-                                Availability
+                        <div className="rounded-2xl border bg-background/70 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Availability</p>
+                              <p className="text-xs text-muted-foreground">
+                                {canToggleAvailability
+                                  ? "Turn on/off to receive new jobs"
+                                  : "Verify your account to change availability"}
                               </p>
-
-                              <button
-                                onClick={handleAvailabilityToggle}
-                                disabled={!canToggleAvailability}
-                                className={`relative w-14 h-7 rounded-full transition
-                                  ${isAvailable ? "bg-green-500" : "bg-gray-300"}
-                                  ${!canToggleAvailability ? "opacity-50 cursor-not-allowed" : ""}
-                                `}
-                              >
-                                <span
-                                  className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full transition-transform
-                                    ${isAvailable ? "translate-x-7" : "translate-x-0"}
-                                  `}
-                                />
-                              </button>
                             </div>
 
-                            {!canToggleAvailability && (
-                              <p className="text-xs text-muted-foreground">
-                                Verify your account to change availability
-                              </p>
-                            )}
+                            <button
+                              onClick={handleAvailabilityToggle}
+                              disabled={!canToggleAvailability}
+                              className={`relative w-14 h-7 rounded-full transition
+                                ${isAvailable ? "bg-green-500" : "bg-gray-300"}
+                                ${!canToggleAvailability ? "opacity-50 cursor-not-allowed" : ""}
+                              `}
+                            >
+                              <span
+                                className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full transition-transform
+                                  ${isAvailable ? "translate-x-7" : "translate-x-0"}
+                                `}
+                              />
+                            </button>
                           </div>
+                        </div>
+                      )}
 
+                      {/* Activate button (only when NOT_SUBMITTED) */}
+                      {role === "SERVICE_PROVIDER" && verificationStatus === "NOT_SUBMITTED" && (
+                        <div className="rounded-2xl border bg-orange-500/5 p-4">
+                          <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">
+                            Activate your provider account
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Upload ID + work proof to request verification and start receiving bookings.
+                          </p>
+
+                          <button
+                            onClick={() => setShowActivateModal(true)}
+                            className="mt-3 inline-flex items-center px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium"
+                          >
+                            Activate Account
+                          </button>
                         </div>
                       )}
                     </div>
                   </div>
-
                 </div>
               </Card>
 
@@ -2561,12 +2578,17 @@ const handleStartJob = async () => {
                   )}
 
                   {/* UPDATE PROFILE */}
-                  <h2 className="text-xl font-semibold mb-8">Update Profile</h2>
+                  <div className="mb-8">
+                    <h2 className="text-2xl font-semibold tracking-tight">Update Profile</h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Manage your personal details, documents, and security settings.
+                    </p>
+                  </div>
 
                   <div className="space-y-6">
 
                     {/* ================= BASIC INFORMATION ================= */}
-                    <Card className="rounded-2xl border p-6 space-y-5">
+                    <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-5 shadow-sm">
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-lg font-semibold">Basic Information</h3>
@@ -2576,13 +2598,14 @@ const handleStartJob = async () => {
                         </div>
 
                         {editingSection !== "basic" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSection("basic")}
-                          >
-                            Edit
-                          </Button>
+                         <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full px-4"
+                          onClick={() => setEditingSection("basic")}
+                        >
+                          Edit
+                        </Button>
                         )}
                       </div>
 
@@ -2616,21 +2639,25 @@ const handleStartJob = async () => {
                       </div>
 
                       {editingSection === "basic" && (
-                        <div className="flex gap-3 pt-4">
-                          <Button onClick={handleSaveProfile}>Save Changes</Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => setEditingSection(null)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
+                       <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                        <Button className="rounded-full px-6" onClick={handleSaveProfile}>
+                          Save Changes
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="rounded-full px-6"
+                          onClick={() => setEditingSection(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                       )}
                     </Card>
 
                     {/* ================= PROFESSIONAL INFORMATION ================= */}
                     {role === "SERVICE_PROVIDER" && (
-                      <Card className="rounded-2xl border p-6 space-y-5">
+                      <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-5 shadow-sm">
                         <div className="flex items-center justify-between">
                           <div>
                             <h3 className="text-lg font-semibold">Professional Information</h3>
@@ -2643,6 +2670,7 @@ const handleStartJob = async () => {
                             <Button
                               size="sm"
                               variant="outline"
+                              className="rounded-full px-4"
                               onClick={() => setEditingSection("professional")}
                             >
                               Edit
@@ -2677,21 +2705,37 @@ const handleStartJob = async () => {
                               setProfessionalForm((p) => ({ ...p, description: e.target.value }))
                             }
                             disabled={editingSection !== "professional"}
-                            className={`w-full rounded-lg border px-3 py-2 bg-background ${
-                              editingSection !== "professional"
+                            className={`
+                              w-full
+                              rounded-lg
+                              border
+                              bg-background
+                              px-3 py-2
+                              text-sm
+                              leading-relaxed
+                              focus:outline-none
+                              focus:ring-2 focus:ring-primary/40
+                              transition
+                              ${editingSection !== "professional"
                                 ? "opacity-60 cursor-not-allowed"
                                 : ""
-                            }`}
+                              }
+                            `}
                           />
                         </div>
 
                         {editingSection === "professional" && (
-                          <div className="flex gap-3 pt-4">
-                            <Button onClick={handleSaveProfessionalInfo}>
+                          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                            <Button
+                              className="rounded-full px-6"
+                              onClick={handleSaveProfessionalInfo}
+                            >
                               Save Changes
                             </Button>
+
                             <Button
                               variant="outline"
+                              className="rounded-full px-6"
                               onClick={() => setEditingSection(null)}
                             >
                               Cancel
@@ -2703,7 +2747,7 @@ const handleStartJob = async () => {
 
                     {/* ================= IDENTITY VERIFICATION ================= */}
                     {role === "SERVICE_PROVIDER" && (
-                      <Card className="rounded-2xl border p-6 space-y-6">
+                      <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-6 shadow-sm">
                         <div>
                           <h3 className="text-lg font-semibold">Identity Verification</h3>
                           <p className="text-sm text-muted-foreground">
@@ -2715,7 +2759,7 @@ const handleStartJob = async () => {
                         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-start">
 
                           {/* LEFT — Upload Card */}
-                          <div className="rounded-xl border bg-card p-5 space-y-4">
+                          <div className="rounded-2xl border bg-card/60 p-5 md:p-6 space-y-4 shadow-sm">
                             <div>
                               <label className="text-sm font-semibold">ID Card – Front</label>
                               <p className="text-xs text-muted-foreground">
@@ -2728,18 +2772,20 @@ const handleStartJob = async () => {
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => setIdFrontFile(e.target.files?.[0] || null)}
-                                className="block w-full text-sm
-                                  file:mr-3 file:rounded-md file:border-0
-                                  file:bg-muted file:px-3 file:py-2
-                                  file:text-xs file:font-medium
+                                className="
+                                  block w-full text-sm
+                                  file:mr-3 file:rounded-full file:border-0
+                                  file:bg-muted file:px-4 file:py-2
+                                  file:text-xs file:font-semibold
                                   hover:file:bg-muted/70
-                                  cursor-pointer"
+                                  cursor-pointer
+                                "
                               />
 
                               <Button
                                 onClick={handleUploadIdFront}
                                 disabled={!idFrontFile}
-                                className="shrink-0"
+                                className="shrink-0 rounded-full px-5"
                               >
                                 Upload
                               </Button>
@@ -2756,17 +2802,17 @@ const handleStartJob = async () => {
 
                           {/* RIGHT — Preview Card */}
                           {profile?.idFrontUrl && (
-                            <div className="rounded-xl border bg-muted/40 p-4 shadow-sm">
+                            <div className="rounded-2xl border bg-muted/30 p-5 shadow-sm">
                               <p className="text-xs font-semibold mb-2 text-muted-foreground">
                                 Current ID (Front)
                               </p>
 
-                              <div className="relative overflow-hidden rounded-lg border bg-background">
+                              <div className="relative overflow-hidden rounded-2xl border bg-background">
                               <img
                                 src={`${API}${profile.idFrontUrl}`}
                                 alt="ID Front"
                                 className="
-                                  w-full h-70 object-cover
+                                  w-full h-64 md:h-72 object-cover
                                   rounded-lg
                                   transition-transform duration-300
                                   hover:scale-105
@@ -2797,18 +2843,20 @@ const handleStartJob = async () => {
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => setIdBackFile(e.target.files?.[0] || null)}
-                                className="block w-full text-sm
-                                  file:mr-3 file:rounded-md file:border-0
-                                  file:bg-muted file:px-3 file:py-2
-                                  file:text-xs file:font-medium
+                                className="
+                                  block w-full text-sm
+                                  file:mr-3 file:rounded-full file:border-0
+                                  file:bg-muted file:px-4 file:py-2
+                                  file:text-xs file:font-semibold
                                   hover:file:bg-muted/70
-                                  cursor-pointer"
+                                  cursor-pointer
+                                "
                               />
 
                               <Button
-                                onClick={handleUploadIdBack}
-                                disabled={!idBackFile}
-                                className="shrink-0"
+                                onClick={handleUploadIdFront}
+                                disabled={!idFrontFile}
+                                className="shrink-0 rounded-full px-5"
                               >
                                 Upload
                               </Button>
@@ -2824,17 +2872,17 @@ const handleStartJob = async () => {
 
                           {/* RIGHT — Preview Card */}
                           {profile?.idBackUrl && (
-                            <div className="rounded-xl border bg-muted/40 p-4 shadow-sm">
+                            <div className="rounded-2xl border bg-muted/30 p-5 shadow-sm">
                               <p className="text-xs font-semibold mb-2 text-muted-foreground">
                                 Current ID (Back)
                               </p>
 
-                              <div className="relative overflow-hidden rounded-lg border bg-background">
+                              <div className="relative overflow-hidden rounded-2xl border bg-background">
                                 <img
                                   src={`${API}${profile.idBackUrl}`}
                                   alt="ID Back"
                                   className="
-                                    w-full h-70 object-cover
+                                    w-full h-64 md:h-72 object-cover
                                     rounded-lg
                                     transition-transform duration-300
                                     hover:scale-105
@@ -2852,64 +2900,75 @@ const handleStartJob = async () => {
                   {/* ================= WORK PROOF (PDF) ================= */}
                   {role === "SERVICE_PROVIDER" && (
                     <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-stretch">
-
                       {/* LEFT — Upload Card */}
-                      <div className="rounded-xl border bg-card p-5 space-y-4 h-full flex flex-col justify-between">
-                        <div className="space-y-1">
-                          <label className="text-sm font-semibold">Work Proof (PDF)</label>
+                      <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-5 shadow-sm h-full">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-lg font-semibold">Work Proof (PDF)</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Upload documents that prove your professional experience
+                            </p>
+                          </div>
+
+                          <span className="shrink-0 px-3 py-1 rounded-full text-xs font-semibold border bg-muted/40 text-muted-foreground">
+                            PDF
+                          </span>
+                        </div>
+
+                        {/* Upload input */}
+                        <div className="rounded-2xl border bg-card/50 p-4 space-y-3">
+                          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                            <input
+                              type="file"
+                              accept="application/pdf"
+                              onChange={(e) => setWorkPdf(e.target.files?.[0] || null)}
+                              className="block w-full text-sm
+                                file:mr-3 file:rounded-full file:border-0
+                                file:bg-muted file:px-4 file:py-2
+                                file:text-xs file:font-semibold
+                                hover:file:bg-muted/80
+                                cursor-pointer"
+                            />
+
+                            <Button
+                              onClick={handleUploadWorkPdf}
+                              disabled={!workPdf}
+                              className="shrink-0 rounded-full px-5"
+                            >
+                              Upload
+                            </Button>
+                          </div>
+
+                          {/* helper */}
                           <p className="text-xs text-muted-foreground">
-                            Upload documents that prove your professional experience
-                          </p>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                          <input
-                            type="file"
-                            accept="application/pdf"
-                            onChange={(e) => setWorkPdf(e.target.files?.[0] || null)}
-                            className="block w-full text-sm
-                              file:mr-3 file:rounded-md file:border-0
-                              file:bg-muted file:px-3 file:py-2
-                              file:text-xs file:font-medium
-                              hover:file:bg-muted/70
-                              cursor-pointer"
-                          />
-
-                          <Button
-                            onClick={handleUploadWorkPdf}
-                            disabled={!workPdf}
-                            className="shrink-0"
-                          >
-                            Upload
-                          </Button>
-                        </div>
-
-                        {profile?.workPdfUrl && (
-                          <p className="text-xs flex items-center gap-1
-                            text-amber-700 dark:text-amber-300">
-                            ⚠ Re-uploading will require re-verification
+                            Tip: upload a clear scanned document (letters, certificates, work agreements, etc.)
                           </p>
 
-                        )}
-                      </div>
+                          {profile?.workPdfUrl && (
+                            <div className="text-xs flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-amber-700 dark:text-amber-300">
+                              <span className="text-sm">⚠</span>
+                              <span>Re-uploading will require re-verification</span>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
 
                       {/* RIGHT — Preview Card */}
                       {profile?.workPdfUrl && (
-                        <div className="rounded-xl border bg-muted/40 p-5 shadow-sm h-full flex flex-col justify-center">
+                        <Card className="rounded-3xl border bg-muted/30 p-6 md:p-7 shadow-sm h-full flex flex-col justify-center">
                           <p className="text-xs font-semibold mb-3 text-muted-foreground">
                             Current Work Proof
                           </p>
 
-                          <div className="flex items-center gap-4 rounded-lg border bg-background p-4">
+                          <div className="rounded-2xl border bg-background p-4 flex items-center gap-4">
                             {/* PDF Icon */}
-                            <div className="w-12 h-12 rounded-lg bg-red-500/10 text-red-500
-                                            flex items-center justify-center text-sm font-bold">
+                            <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center text-sm font-extrabold">
                               PDF
                             </div>
 
                             {/* File Info */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
+                              <p className="text-sm font-semibold truncate">
                                 {profile.workPdfUrl.split("/").pop()}
                               </p>
                               <p className="text-xs text-muted-foreground">
@@ -2922,44 +2981,50 @@ const handleStartJob = async () => {
                               href={`${API}${profile.workPdfUrl}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-primary hover:underline"
+                              className="shrink-0 inline-flex items-center justify-center rounded-full border bg-muted px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/80 transition"
                             >
                               View
                             </a>
                           </div>
-                        </div>
+                        </Card>
                       )}
-                    
                     </div>
                   )}
 
-                    {/* ================= ADDRESS ================= */}
-                    <Card className="rounded-2xl border p-6 space-y-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold">Address</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Your service location
-                          </p>
-                        </div>
-
-                        {editingSection !== "address" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSection("address")}
-                          >
-                            {hasAddress ? "Edit" : "Add"}
-                          </Button>
-                        )}
+                  {/* ================= ADDRESS ================= */}
+                  <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-6 shadow-sm">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">Address</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Your service location details
+                        </p>
                       </div>
 
+                      {editingSection !== "address" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full px-4"
+                          onClick={() => setEditingSection("address")}
+                        >
+                          {hasAddress ? "Edit" : "Add"}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Form */}
+                    <div className="rounded-2xl border bg-card/60 p-5 md:p-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
                           label="Address Line 1"
                           value={addressForm.addressLine1}
                           onChange={(e) =>
-                            setAddressForm((p) => ({ ...p, addressLine1: e.target.value }))
+                            setAddressForm((p) => ({
+                              ...p,
+                              addressLine1: e.target.value,
+                            }))
                           }
                           disabled={editingSection !== "address"}
                         />
@@ -2968,7 +3033,10 @@ const handleStartJob = async () => {
                           label="Address Line 2"
                           value={addressForm.addressLine2}
                           onChange={(e) =>
-                            setAddressForm((p) => ({ ...p, addressLine2: e.target.value }))
+                            setAddressForm((p) => ({
+                              ...p,
+                              addressLine2: e.target.value,
+                            }))
                           }
                           disabled={editingSection !== "address"}
                         />
@@ -2977,7 +3045,10 @@ const handleStartJob = async () => {
                           label="Province"
                           value={addressForm.province}
                           onChange={(e) =>
-                            setAddressForm((p) => ({ ...p, province: e.target.value }))
+                            setAddressForm((p) => ({
+                              ...p,
+                              province: e.target.value,
+                            }))
                           }
                           disabled={editingSection !== "address"}
                         />
@@ -2986,88 +3057,107 @@ const handleStartJob = async () => {
                           label="City"
                           value={addressForm.city}
                           onChange={(e) =>
-                            setAddressForm((p) => ({ ...p, city: e.target.value }))
+                            setAddressForm((p) => ({
+                              ...p,
+                              city: e.target.value,
+                            }))
                           }
                           disabled={editingSection !== "address"}
                         />
                       </div>
 
+                      {/* Actions */}
                       {editingSection === "address" && (
-                        <div className="flex gap-3 pt-4">
-                          <Button onClick={handleSaveAddress}>Save Address</Button>
+                        <div className="flex gap-3 pt-5">
+                          <Button className="rounded-full px-6" onClick={handleSaveAddress}>
+                            Save Address
+                          </Button>
+
                           <Button
                             variant="outline"
+                            className="rounded-full px-6"
                             onClick={() => setEditingSection(null)}
                           >
                             Cancel
                           </Button>
                         </div>
                       )}
-                    </Card>
+                    </div>
+                  </Card>
 
-                    {/* ================= CHANGE PASSWORD ================= */}
-                    <Card className="rounded-2xl border p-6 space-y-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold">Change Password</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Update your account password
-                          </p>
-                        </div>
-
-                        {editingSection !== "password" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSection("password")}
-                          >
-                            Edit
-                          </Button>
-                        )}
+                  {/* ================= CHANGE PASSWORD ================= */}
+                  <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-6 shadow-sm">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">Change Password</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Update your account password
+                        </p>
                       </div>
 
-                      <Input
-                        label="Current Password"
-                        type="password"
-                        value={passwordForm.currentPassword}
-                        onChange={(e) =>
-                          setPasswordForm((p) => ({
-                            ...p,
-                            currentPassword: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "password"}
-                      />
+                      {editingSection !== "password" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full px-4"
+                          onClick={() => setEditingSection("password")}
+                        >
+                          Edit
+                        </Button>
+                      )}
+                    </div>
 
-                      <Input
-                        label="New Password"
-                        type="password"
-                        value={passwordForm.newPassword}
-                        onChange={(e) =>
-                          setPasswordForm((p) => ({
-                            ...p,
-                            newPassword: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "password"}
-                      />
+                    {/* Form */}
+                    <div className="rounded-2xl border bg-card/60 p-5 md:p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                          label="Current Password"
+                          type="password"
+                          value={passwordForm.currentPassword}
+                          onChange={(e) =>
+                            setPasswordForm((p) => ({
+                              ...p,
+                              currentPassword: e.target.value,
+                            }))
+                          }
+                          disabled={editingSection !== "password"}
+                        />
 
-                      <Input
-                        label="Confirm New Password"
-                        type="password"
-                        value={passwordForm.confirmPassword}
-                        onChange={(e) =>
-                          setPasswordForm((p) => ({
-                            ...p,
-                            confirmPassword: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "password"}
-                      />
+                        <div className="hidden md:block" />
 
+                        <Input
+                          label="New Password"
+                          type="password"
+                          value={passwordForm.newPassword}
+                          onChange={(e) =>
+                            setPasswordForm((p) => ({
+                              ...p,
+                              newPassword: e.target.value,
+                            }))
+                          }
+                          disabled={editingSection !== "password"}
+                        />
+
+                        <Input
+                          label="Confirm New Password"
+                          type="password"
+                          value={passwordForm.confirmPassword}
+                          onChange={(e) =>
+                            setPasswordForm((p) => ({
+                              ...p,
+                              confirmPassword: e.target.value,
+                            }))
+                          }
+                          disabled={editingSection !== "password"}
+                        />
+                      </div>
+
+                      {/* Actions */}
                       {editingSection === "password" && (
-                        <div className="flex gap-3 pt-4">
+                        <div className="flex flex-col sm:flex-row gap-3 pt-5">
                           <Button
+                            className="rounded-full px-6"
                             onClick={handleChangePassword}
                             disabled={changingPassword}
                           >
@@ -3076,6 +3166,7 @@ const handleStartJob = async () => {
 
                           <Button
                             variant="outline"
+                            className="rounded-full px-6"
                             onClick={() => {
                               setEditingSection(null);
                               setPasswordForm({
@@ -3089,7 +3180,8 @@ const handleStartJob = async () => {
                           </Button>
                         </div>
                       )}
-                    </Card>
+                    </div>
+                  </Card>
 
                   </div>               
               </>
