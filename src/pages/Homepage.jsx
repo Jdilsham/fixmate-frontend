@@ -4,6 +4,7 @@ import ServiceCard from "../components/homepage/serviceCard";
 import QualityCard from "../components/homepage/qualitycard";
 import Footercard from "../components/footer";
 import { useNavigate } from "react-router-dom";
+import PageBackground from "../components/animate-ui/components/backgrounds/PageBackground";
 
 export default function Homepage() {
   const navigate = useNavigate();
@@ -33,19 +34,13 @@ export default function Homepage() {
   );
 
   return (
-    <div className="w-full bg-background text-foreground overflow-x-hidden">
+    <div className="relative w-full min-h-screen text-foreground overflow-x-hidden">
+      <PageBackground opacity="opacity-12" />
       <Header />
 
       {/* ================= HERO (FULL WIDTH DESIGN) ================= */}
       <section className="relative w-full">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-b from-accent/10 via-background to-background" />
-          <div className="absolute -top-28 left-1/2 -translate-x-1/2 h-[560px] w-[1100px] rounded-full bg-accent/20 blur-3xl" />
-          <div className="absolute top-24 left-10 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
-          <div className="absolute top-40 right-10 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
-          <div className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:18px_18px] dark:opacity-[0.08]" />
-        </div>
-
+        
         <div className="w-full px-6 md:px-12 lg:px-16 pt-24 md:pt-28 pb-16">
           <div className="max-w-6xl mx-auto">
             <img src="/fixmate logo.png" alt="FixMate" className="w-44 sm:w-52 md:w-56" />
@@ -94,7 +89,7 @@ export default function Homepage() {
         </div>
 
         {/* divider */}
-        <div className="h-16 bg-gradient-to-b from-transparent to-background" />
+      <div className="h-10" />
       </section>
 
       {/* ================= SERVICES ================= */}

@@ -3,6 +3,7 @@ import Header from "../components/header";
 import Footercard from "../components/footer";
 import EmployerCard from "../components/ServicesPage/employerCard";
 import { useLocation, useNavigate } from "react-router-dom";
+import PageBackground from "../components/animate-ui/components/backgrounds/PageBackground";
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
@@ -27,32 +28,56 @@ const SERVICE_OPTIONS = [
 
 const norm = (v) => String(v ?? "").trim().toLowerCase();
 
+const pickText = (...vals) => {
+  for (const v of vals) {
+    if (!v) continue;
+
+    // already a string
+    if (typeof v === "string") return v;
+
+    // object → try common fields
+    if (typeof v === "object") {
+      if (v.serviceName) return v.serviceName;
+      if (v.name) return v.name;
+      if (v.category) return v.category;
+      if (v.title) return v.title;
+    }
+  }
+  return "";
+};
+
 function getEmployeeServiceKey(emp) {
-  return (
-    emp?.serviceKey ||
-    emp?.serviceType ||
-    emp?.serviceCode ||
-    emp?.service ||
-    emp?.categoryKey ||
-    emp?.serviceCategoryKey ||
-    emp?.providerServiceKey ||
-    emp?.providerService?.serviceKey ||
-    emp?.providerService?.service ||
-    ""
+  return pickText(
+    emp?.serviceKey,
+    emp?.serviceType,
+    emp?.serviceCode,
+    emp?.categoryKey,
+    emp?.serviceCategoryKey,
+    emp?.providerServiceKey,
+
+    emp?.service?.serviceKey,
+    emp?.providerService?.serviceKey
   );
 }
 
 function getEmployeeServiceName(emp) {
-  return (
-    emp?.serviceName ||
-    emp?.category ||
-    emp?.serviceCategory ||
-    emp?.providerServiceName ||
-    emp?.providerService?.serviceName ||
-    emp?.providerService?.category ||
-    ""
+  return pickText(
+    emp?.serviceName,
+    emp?.category,
+    emp?.serviceCategory,
+
+    emp?.service,
+    emp?.service?.serviceName,
+    emp?.serviceCategory?.name,
+
+    emp?.providerService?.serviceName,
+    emp?.providerService?.category,
+    emp?.providerService?.service,
+    emp?.providerService?.service?.serviceName
   );
 }
+
+
 
 function getEmployeeLocationText(emp) {
   return [
@@ -148,6 +173,13 @@ export default function Services() {
     fetchEmployees();
   }, [token]);
 
+  useEffect(() => {
+    if (employees.length) {
+      console.log("SERVICE FOUND IN CARD:", getEmployeeServiceName(employees[0]));
+      console.log("FULL OBJECT:", employees[0]);
+    }
+  }, [employees]);
+
   const filteredEmployees = useMemo(() => {
     const s = norm(service);
     const l = norm(debouncedLocation);
@@ -156,16 +188,10 @@ export default function Services() {
     const sLabel = norm(selected?.label || ""); // "Electrician" -> "electrician"
 
     return (employees || []).filter((emp) => {
-      const empServiceKey = norm(getEmployeeServiceKey(emp));
       const empServiceName = norm(getEmployeeServiceName(emp));
       const empLoc = norm(getEmployeeLocationText(emp));
 
-      const okService =
-        !s ||
-        empServiceKey === s ||
-        empServiceKey.includes(s) ||
-        empServiceName.includes(s) ||
-        (sLabel && empServiceName.includes(sLabel));
+      const okService = !s || empServiceName === s;
       const okLoc = !l || empLoc.includes(l);
 
       return okService && okLoc;
@@ -178,13 +204,12 @@ export default function Services() {
     SERVICE_OPTIONS.find((o) => o.value === service)?.label || "All services";
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
+    <div className="relative min-h-screen text-foreground overflow-x-hidden">
+      <PageBackground opacity="opacity-12" />
+        <Header />
 
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="h-[520px] w-full bg-gradient-to-b from-slate-50 via-white to-background dark:hidden" />
-          <div className="hidden dark:block h-[520px] w-full bg-gradient-to-b from-[#061826] via-[#061826] to-background" />
 
           <div className="absolute -top-10 left-[-120px] h-64 w-64 rounded-full blur-3xl bg-fuchsia-400/25 dark:bg-fuchsia-400/18" />
           <div className="absolute top-10 right-[-140px] h-72 w-72 rounded-full blur-3xl bg-cyan-400/25 dark:bg-cyan-400/18" />
@@ -405,8 +430,8 @@ export default function Services() {
         )}
       </section>
 
-      <section className="bg-background pt-16 pb-24">
-        <Footercard />
+      <section className="pt-16 pb-24">
+          <Footercard />
       </section>
     </div>
   );
