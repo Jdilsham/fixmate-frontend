@@ -138,58 +138,58 @@ export default function BookingViewDialog({
             </Section>
           </div>
 
-{/* ===== Contact & Notes ===== */}
-<Section title="Contact & Notes" subtitle="Communication and extra info">
-  {/* Phone + Address (same row) */}
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <Row
-      label="Phone Number"
-      value={safeText(isProvider ? booking.customerPhone : booking.phone)}
-    />
+          {/* ===== Contact & Notes ===== */}
+          <Section title="Contact & Notes" subtitle="Communication and extra info">
+            {/* Phone + Address (same row) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Row
+                label="Phone Number"
+                value={safeText(isProvider ? booking.customerPhone : booking.phone)}
+              />
 
-    <Row label="Address">
-      <div className="text-sm font-semibold leading-relaxed break-words whitespace-pre-wrap text-right">
-        {safeText(isProvider ? booking.bookingAddress : booking.address)}
-      </div>
-    </Row>
-  </div>
+              <Row label="Address">
+                <div className="text-sm font-semibold leading-relaxed break-words whitespace-pre-wrap text-right">
+                  {safeText(isProvider ? booking.bookingAddress : booking.address)}
+                </div>
+              </Row>
+            </div>
 
- {/* Additional Notes – full width, aligned with rows */}
-<div className="py-2 border-b border-border">
-  <div className="flex justify-between gap-8">
-    <span className="text-sm text-muted-foreground shrink-0 w-[160px]">
-      Additional Notes
-    </span>
+          {/* Additional Notes – full width, aligned with rows */}
+          <div className="py-2 border-b border-border">
+            <div className="flex justify-between gap-8">
+              <span className="text-sm text-muted-foreground shrink-0 w-[160px]">
+                Additional Notes
+              </span>
 
-    <div
-      className="
-        w-full
-        max-w-[80%]
-        rounded-xl
-        border
-        bg-muted/20
-        px-4 py-3
-        text-sm font-medium text-foreground
-        max-h-36
-        overflow-auto
-        whitespace-pre-wrap
-        break-words
-        leading-relaxed
-      "
-    >
-      {safeText(booking.description || "—")}
-    </div>
-  </div>
-</div>
+              <div
+                className="
+                  w-full
+                  max-w-[80%]
+                  rounded-xl
+                  border
+                  bg-muted/20
+                  px-4 py-3
+                  text-sm font-medium text-foreground
+                  max-h-36
+                  overflow-auto
+                  whitespace-pre-wrap
+                  break-words
+                  leading-relaxed
+                "
+              >
+                {safeText(booking.description || "—")}
+              </div>
+            </div>
+          </div>
 
-{/* Location – immediately after, no extra gap */}
-<Row
-  label="Location"
-  value={safeText(
-    `${booking.latitude ?? "—"}, ${booking.longitude ?? "—"}`
-  )}
-/>
-</Section>
+          {/* Location – immediately after, no extra gap */}
+          <Row
+            label="Location"
+            value={safeText(
+              `${booking.latitude ?? "—"}, ${booking.longitude ?? "—"}`
+            )}
+          />
+          </Section>
 
           {/* Tip */}
           <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
