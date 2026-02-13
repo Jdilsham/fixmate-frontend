@@ -5,6 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { getAuthUser } from "../../../utils/auth";
 import { Eye, CheckCircle, XCircle } from "lucide-react";
 import { Camera } from "lucide-react";
+import PageBackground from "../../components/animate-ui/components/backgrounds/PageBackground";
 
 
 import BookingsTable from "../../components/dashboard/bookingTable";
@@ -1359,13 +1360,16 @@ const handleStartJob = async () => {
   };
   
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
+    <div className="relative min-h-screen text-foreground overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <PageBackground />
+      </div>
+
+    <Header />
 
       <div className="max-w-8xl mx-auto px-4 md:px-6 pt-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
         <aside className="hidden lg:block w-64 shrink-0">
-          <div className="bg-card border rounded-2xl p-4 sticky top-24 h-[calc(100vh-140px)] overflow-auto">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
+          <div className="bg-card/60 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-2xl p-4 sticky top-24 h-[calc(100vh-140px)] overflow-auto shadow-lg">            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
               Navigation
             </p>
 
@@ -1389,8 +1393,7 @@ const handleStartJob = async () => {
         </aside>
 
         <main className="flex-1 min-w-0">
-          <div className="bg-card border rounded-2xl p-6">
-
+          <div className="bg-card/55 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-2xl p-6 shadow-lg">
             {/* CUSTOMER MANAGE BOOKING (OVERRIDES TABS) */}
             {role === "CUSTOMER" && customerManageBookingOpen && (
               <CustomerManageBooking
