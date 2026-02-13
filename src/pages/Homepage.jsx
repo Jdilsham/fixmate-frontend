@@ -4,6 +4,7 @@ import ServiceCard from "../components/homepage/serviceCard";
 import QualityCard from "../components/homepage/qualitycard";
 import Footercard from "../components/footer";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import PageBackground from "../components/animate-ui/components/backgrounds/PageBackground";
 
 export default function Homepage() {
@@ -72,10 +73,13 @@ export default function Homepage() {
                       className="w-full bg-transparent outline-none text-base sm:text-lg placeholder:text-muted-foreground/80"
                     />
                   </div>
-
-                  <button className="w-full sm:w-auto px-7 py-3 rounded-xl bg-accent text-accent-foreground font-medium shadow-sm hover:brightness-110 active:scale-[0.98] transition">
+                  <Button
+                    variant="fixmate"
+                    size="lg"
+                    className="w-full sm:w-auto rounded-2xl px-7"
+                  >
                     Find services
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted-foreground">

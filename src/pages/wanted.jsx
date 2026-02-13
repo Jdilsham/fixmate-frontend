@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { Plus } from "lucide-react";
 import Header from "../components/header";
 import Footercard from "../components/footer";
 import JobCard from "../components/wantedPage/jobCard";
-
-// ✅ add background
+import { Button } from "@/components/ui/button";
 import PageBackground from "../components/animate-ui/components/backgrounds/PageBackground";
 
 export default function Wanted() {
@@ -70,24 +70,22 @@ export default function Wanted() {
         </div>
       </section>
 
-      <button
-        className={`
-          fixed bottom-6 right-6 z-50
-          w-14 h-14 rounded-full
-          bg-primary text-primary-foreground
-          text-3xl font-light
-          flex items-center justify-center
-          shadow-lg
-          transition-opacity duration-300
-          ${hideFab ? "opacity-0 pointer-events-none" : "opacity-100"}
-        `}
+      <Button
+        variant="fixmate"
+        size="icon-lg"
+        aria-label="Add wanted notice"
         onClick={() => {
           console.log("Add wanted notice");
         }}
-        aria-label="Add wanted notice"
+        className={`
+          fixed bottom-6 right-6 z-50
+          rounded-2xl
+          transition-all duration-300
+          ${hideFab ? "opacity-0 pointer-events-none" : "opacity-100"}
+        `}
       >
-        <span className="leading-none -translate-y-[2px] font-bold">+</span>
-      </button>
+        <Plus className="h-6 w-6" />
+      </Button>
 
       <section ref={footerRef} className="pt-32 pb-24">
         <Footercard />

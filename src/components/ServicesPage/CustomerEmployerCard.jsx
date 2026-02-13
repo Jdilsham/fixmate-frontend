@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 export default function CustomerEmployerCard({ employer }) {
   const navigate = useNavigate();
@@ -147,31 +148,14 @@ export default function CustomerEmployerCard({ employer }) {
           </div>
 
           {/* CTA */}
-        <button
+          <Button
             onClick={() => navigate(`/book/${providerServiceId}`)}
-            className="
-                mt-6 w-full py-3 rounded-2xl font-semibold transition
-                text-white
-
-                /* LIGHT MODE → ORANGE (KEEP AS IS) */
-                bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600
-                hover:brightness-110
-                shadow-[0_16px_55px_-30px_rgba(249,115,22,0.55)]
-
-                /* DARK MODE → BLUE / CYAN (NO ORANGE AT ALL) */
-                dark:bg-gradient-to-r
-                dark:from-blue-500
-                dark:via-cyan-500
-                dark:to-teal-500
-                dark:hover:brightness-105
-                dark:shadow-none
-                dark:ring-1 dark:ring-white/10
-
-                active:scale-[0.99]
-            "
-            >
+            variant="fixmate"
+            size="lg"
+            className="mt-6 w-full rounded-2xl"
+          >
             View Profile
-            </button>
+          </Button>
 
           {/* micro footer line */}
           <div className="mt-4 text-[11px] text-slate-500 dark:text-slate-400">
