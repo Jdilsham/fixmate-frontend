@@ -35,7 +35,7 @@ export default function Homepage() {
 
   return (
     <div className="relative w-full min-h-screen text-foreground overflow-x-hidden">
-      <PageBackground opacity="opacity-12" />
+      <PageBackground />
       <Header />
 
       {/* ================= HERO (FULL WIDTH DESIGN) ================= */}

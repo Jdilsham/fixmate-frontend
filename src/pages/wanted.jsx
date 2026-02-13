@@ -27,7 +27,7 @@ export default function Wanted() {
 
   return (
     <div className="relative w-full min-h-screen text-foreground overflow-x-hidden">
-      <PageBackground opacity="opacity-12" />
+      <PageBackground />
 
       <Header />
 

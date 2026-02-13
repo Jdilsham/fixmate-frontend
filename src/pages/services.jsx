@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Header from "../components/header";
 import Footercard from "../components/footer";
-import EmployerCard from "../components/ServicesPage/employerCard";
+import CustomerEmployerCard from "../components/ServicesPage/CustomerEmployerCard";
+import CustomerEmployerCardSkeleton from "../components/ServicesPage/CustomerEmployerCardSkeleton";
 import { useLocation, useNavigate } from "react-router-dom";
 import PageBackground from "../components/animate-ui/components/backgrounds/PageBackground";
 
@@ -107,6 +108,16 @@ export default function Services() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
+  // ===== UI glass helpers =====
+  const GLASS =
+    "backdrop-blur-xl border border-black/10 dark:border-white/10 shadow-[0_20px_80px_-55px_rgba(0,0,0,0.55)]";
+
+  const SURFACE =
+    `bg-white/85 dark:bg-white/[0.06] ${GLASS}`;
+
+  const SURFACE_STRONG =
+    `bg-white/90 dark:bg-white/[0.09] ${GLASS}`;
+
   const [service, setService] = useState("");
   const [location, setLocation] = useState("");
   const [debouncedLocation, setDebouncedLocation] = useState("");
@@ -205,7 +216,7 @@ export default function Services() {
 
   return (
     <div className="relative min-h-screen text-foreground overflow-x-hidden">
-      <PageBackground opacity="opacity-12" />
+      <PageBackground />
         <Header />
 
       <div className="relative overflow-hidden">
@@ -216,10 +227,10 @@ export default function Services() {
           <div className="absolute top-40 left-1/2 -translate-x-1/2 h-72 w-[820px] rounded-full blur-3xl bg-gradient-to-r from-blue-400/20 via-indigo-400/18 to-emerald-400/20 dark:from-blue-400/16 dark:to-emerald-400/16" />
 
           <div
-            className="absolute inset-0 h-[520px] opacity-[0.18] dark:opacity-[0.10]"
+            className="absolute inset-0 h-[520px] opacity-[0.10] dark:opacity-[0.06]"
             style={{
               backgroundImage:
-                "radial-gradient(circle at 1px 1px, rgba(0,0,0,0.08) 1px, transparent 0)",
+                "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.10) 1px, transparent 0)",
               backgroundSize: "24px 24px",
             }}
           />
@@ -246,8 +257,8 @@ export default function Services() {
             </div>
 
             <div className="flex gap-3 lg:mt-2">
-              <div className="rounded-3xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-xl px-4 py-3 shadow-sm min-w-[150px]">
-                <div className="flex items-center gap-3">
+              <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
+                  <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-blue-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
                     <span className="text-sm">👥</span>
                   </div>
@@ -260,7 +271,7 @@ export default function Services() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-black/10 dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-xl px-4 py-3 shadow-sm min-w-[150px]">
+              <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
                     <span className="text-sm">🎯</span>
@@ -274,7 +285,7 @@ export default function Services() {
             </div>
           </div>
 
-          <div className="mt-8 rounded-3xl border border-black/10 dark:border-white/10 bg-white/85 dark:bg-white/5 backdrop-blur-xl shadow-[0_20px_80px_-50px_rgba(0,0,0,0.35)]">
+          <div className={`mt-8 rounded-3xl ${SURFACE_STRONG}`}>
             <div className="p-5">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
                 <div className="lg:col-span-4">
@@ -285,7 +296,10 @@ export default function Services() {
                   <select
                     value={service}
                     onChange={(e) => handleServiceChange(e.target.value)}
-                    className="h-12 w-full bg-background/80 text-foreground border border-border rounded-2xl px-4 outline-none focus:ring-2 focus:ring-indigo-500/25 transition"
+                    className="h-12 w-full rounded-2xl px-4 outline-none transition
+                    bg-white/70 dark:bg-white/[0.06]
+                    text-foreground border border-black/10 dark:border-white/10
+                    focus:ring-2 focus:ring-indigo-500/25"
                   >
                     {SERVICE_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -300,7 +314,10 @@ export default function Services() {
                     Location
                   </label>
 
-                  <div className="h-12 flex items-center gap-3 border border-border rounded-2xl px-4 bg-background/80 focus-within:ring-2 focus-within:ring-cyan-500/25 transition">
+                  <div className="h-12 flex items-center gap-3 rounded-2xl px-4 transition
+                    bg-white/70 dark:bg-white/[0.06]
+                    border border-black/10 dark:border-white/10
+                    focus-within:ring-2 focus-within:ring-cyan-500/25">
                     <div className="h-9 w-9 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500/15 to-cyan-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
                       <img src="/search.png" className="h-4 w-4 opacity-80" alt="" />
                     </div>
@@ -371,7 +388,7 @@ export default function Services() {
             provider(s)
           </p>
 
-          <div className="text-xs px-3 py-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5">
+        <div className={`text-xs px-3 py-2 rounded-xl ${SURFACE} dark:text-white/80`}>
             Sort: Recommended
           </div>
         </div>
@@ -379,23 +396,7 @@ export default function Services() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 place-items-center">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="w-full max-w-[320px] rounded-3xl border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur p-5"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-black/10 dark:bg-white/10 animate-pulse" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 w-1/2 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                    <div className="h-3 w-2/3 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                  </div>
-                </div>
-                <div className="mt-5 space-y-3">
-                  <div className="h-5 w-3/4 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                  <div className="h-4 w-2/3 bg-black/10 dark:bg-white/10 rounded animate-pulse" />
-                  <div className="h-11 w-full bg-black/10 dark:bg-white/10 rounded-2xl animate-pulse" />
-                </div>
-              </div>
+              <CustomerEmployerCardSkeleton key={i} />
             ))}
           </div>
         ) : error ? (
@@ -408,7 +409,10 @@ export default function Services() {
         ) : filteredEmployees.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 place-items-center">
             {filteredEmployees.map((employee) => (
-              <EmployerCard key={employee.providerServiceId} employer={employee} />
+              <CustomerEmployerCard
+                key={employee.providerServiceId}
+                employer={employee}
+              />
             ))}
           </div>
         ) : (
