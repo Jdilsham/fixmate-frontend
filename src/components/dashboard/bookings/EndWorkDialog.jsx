@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { formatWorkedTime } from "../../../../utils/time";
 
 export default function EndWorkDialog({
   open,
@@ -25,14 +26,12 @@ export default function EndWorkDialog({
   if (!booking) return null;
 
   const pricingType = booking.paymentType?.toUpperCase();
-  const workedHours = Number((elapsedSeconds / 3600).toFixed(2));
-  const workedMinutes = Math.floor(elapsedSeconds / 60);
 
   const hourlyRate = booking.hourlyRate;
   const estimatedTotal =
-    pricingType === "HOURLY"
-      ? (hourlyRate * workedHours).toFixed(2)
-      : null;
+  pricingType === "HOURLY"
+    ? Math.round((hourlyRate * elapsedSeconds) / 3600)
+    : null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -45,9 +44,7 @@ export default function EndWorkDialog({
         <div className="space-y-2 text-sm">
           <p>
             <span className="text-muted-foreground">Worked Time:</span>{" "}
-            <strong>
-              {workedMinutes} min ({workedHours} hrs)
-            </strong>
+            <strong>{formatWorkedTime(elapsedSeconds)}</strong>
           </p>
 
           <p>
@@ -81,8 +78,8 @@ export default function EndWorkDialog({
             </p>
 
             <p>
-              <span className="text-muted-foreground">Hours Worked:</span>{" "}
-              <strong>{workedHours}</strong>
+              <span className="text-muted-foreground">Time Worked:</span>{" "}
+              <strong>{formatWorkedTime(elapsedSeconds)}</strong>
             </p>
 
             <p>
@@ -118,7 +115,7 @@ export default function EndWorkDialog({
                 }
                onFinalize({
                   hourlyRate: booking.hourlyRate,
-                  hoursWorked: workedHours,
+                  workedSeconds: elapsedSeconds,
                 });
               }
             }}

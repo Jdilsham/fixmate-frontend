@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { getBookingStatusView } from "../../../../utils/bookingStatus";
+import { formatWorkedTime } from "../../../../utils/time";
 
 const formatPrice = (amount) => {
   if (amount === null || amount === undefined) return "—";
@@ -27,18 +28,22 @@ export default function BookingViewDialog({
           <DialogTitle>Booking Details</DialogTitle>
         </DialogHeader>
 
-        {booking.status === "REJECTED" && (
-          <div className="rounded-lg border border-red-300 bg-red-50 p-3">
+        {booking.status === "REJECTED" && !isProvider && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
             <p className="text-sm font-semibold text-red-600">
               Booking Rejected
             </p>
 
             <p className="mt-1 text-sm text-red-500">
-              Reason: {booking.rejectionReason}
+              Reason:{" "}
+              {booking.rejectionReason ??
+                booking.rejectReason ??
+                booking.reason ??
+                "No reason provided"}
             </p>
 
             {booking.rejectedAt && (
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Rejected at: {new Date(booking.rejectedAt).toLocaleString()}
               </p>
             )}
@@ -91,9 +96,7 @@ export default function BookingViewDialog({
                 />
               )}
               <Row label="Amount">
-                {booking.status === "PAYMENT_PENDING" ||
-                booking.status === "PAYMENT_REQUESTED" ||
-                booking.status === "PAID" ? (
+                {typeof booking.paymentAmount === "number" ? (
                   <span className="font-semibold text-green-600">
                     {formatPrice(booking.paymentAmount)}
                   </span>
@@ -144,7 +147,9 @@ export default function BookingViewDialog({
         </div>
         <div className="mt-6 flex justify-end">
           {/* MANAGE BOOKING (before finalize) */}
-          {!booking.paymentStatus && !booking.paymentAmount && (
+          {booking.status !== "REJECTED" &&
+            !booking.paymentStatus &&
+            !booking.paymentAmount && (
             <button
               disabled={booking.status === "PENDING"}
               onClick={() => {
