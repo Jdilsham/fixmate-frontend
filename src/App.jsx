@@ -8,6 +8,7 @@ import Wanted from "./pages/wanted";
 import About from "./pages/about";
 import Contact from "./pages/contact";
 import PaymentPage from "./pages/payment/PaymentPage";
+import VerifyEmail from "./pages/VerifyEmail";
 
 
 import ProfilePage from "./pages/profile";
@@ -47,6 +48,8 @@ function App() {
           <Route path="/book/:id" element={<BookProfessional />} />
 
           <Route path="/payment" element={<PaymentPage />} />
+
+          <Route path="/verify-email" element={<VerifyEmail />}/>
 
           {/* 404 */}
           <Route path="*" element={<h1>404 not found</h1>} />

@@ -37,7 +37,7 @@ export default function SignupPage() {
       });
       console.log("Signup successful:", response.data);
       toast.success("Signup successful! Please login.");
-      navigate("/login");
+      navigate("/verify-email");
     } catch (error) {
       console.error("Signup failed:", error);
       if (error.response?.data) {
