@@ -77,9 +77,8 @@ const formatPrice = (amount) => {
 
 const MANAGED_KEY = "activeManagedBooking";
 
-/* =======================
-   ROLE CONFIG
-======================= */
+
+
 const ROLE_CONFIG = {
   SERVICE_PROVIDER: {
     tabs: [
@@ -445,7 +444,7 @@ export default function Dashboard() {
     if (role !== "SERVICE_PROVIDER") return;
     if (!providerBookings || providerBookings.length === 0) return;
 
-    const raw = localStorage.getItem(MANAGED_KEY); // "activeManagedBooking"
+    const raw = localStorage.getItem(MANAGED_KEY);
     if (!raw) return;
 
     try {
@@ -1367,9 +1366,13 @@ const handleStartJob = async () => {
 
     <Header />
 
-      <div className="max-w-8xl mx-auto px-4 md:px-6 pt-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-        <aside className="hidden lg:block w-64 shrink-0">
-          <div className="bg-card/60 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-2xl p-4 sticky top-24 h-[calc(100vh-140px)] overflow-auto shadow-lg">            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
+        <div className="max-w-8xl mx-auto px-4 md:px-6 pt-6
+          grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6
+          h-[calc(100vh-96px)] overflow-hidden">
+        <aside className="hidden lg:block w-64 shrink-0 h-full">
+          <div className="bg-card/60 backdrop-blur-xl border border-white/10 dark:border-white/10
+            rounded-2xl p-4 shadow-lg h-full flex flex-col">
+           <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
               Navigation
             </p>
 
@@ -1392,7 +1395,7 @@ const handleStartJob = async () => {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 overflow-y-auto pr-1">
           <div className="bg-card/55 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-2xl p-6 shadow-lg">
             {/* CUSTOMER MANAGE BOOKING (OVERRIDES TABS) */}
             {role === "CUSTOMER" && customerManageBookingOpen && (

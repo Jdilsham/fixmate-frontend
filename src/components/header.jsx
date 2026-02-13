@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   NavigationMenu,
@@ -13,17 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import * as Avatar from "@radix-ui/react-avatar";
 import { Button } from "@/components/ui/button";
 import DarkmodeToggle from "./darkmodeToggle";
-import {
-  Menu,
-  Wrench,
-  LayoutDashboard,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { Menu, Wrench, LayoutDashboard, Settings, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+import { getUserProfile } from "../../utils/profile"; 
 
 export default function Header() {
   const navigate = useNavigate();
@@ -31,7 +27,30 @@ export default function Header() {
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
 
-  const [initials] = useState("U");
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function load() {
+      if (!isLoggedIn) {
+        setProfile(null);
+        return;
+      }
+
+      const p = await getUserProfile(); // returns object with fullName + profilePicture
+      if (alive) setProfile(p);
+    }
+
+    load();
+    return () => {
+      alive = false;
+    };
+  }, [isLoggedIn, token, location.pathname]);
+
+  const fullName = profile?.fullName || "User";
+  const initials = (fullName?.trim()?.[0] || "U").toUpperCase();
+  const profileSrc = profile?.profilePicture || "";
 
   const navLinks = [
     { label: "Home", path: "/" },
@@ -43,7 +62,7 @@ export default function Header() {
 
   function handleLogout() {
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("user"); // ok even if not used
     navigate("/login");
   }
 
@@ -60,9 +79,8 @@ export default function Header() {
       className="sticky top-0 z-50 w-full"
     >
       <div className="border-b border-border/60 bg-background/70 backdrop-blur-xl">
-        {/* ✅ relative container so nav can be centered */}
         <div className="relative mx-auto flex h-20 max-w-7xl items-center px-4 sm:px-6">
-          {/* ✅ Left (Logo) */}
+          {/* LEFT (Logo) */}
           <div className="flex flex-1 items-center">
             <button
               onClick={() => navigate("/")}
@@ -83,7 +101,7 @@ export default function Header() {
             </button>
           </div>
 
-          {/* ✅ Center Nav (desktop) */}
+          {/* CENTER NAV (Desktop) */}
           <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
             <NavigationMenu>
               <NavigationMenuList className="flex items-center gap-1">
@@ -108,16 +126,12 @@ export default function Header() {
             </NavigationMenu>
           </div>
 
-          {/* ✅ Right Side */}
+          {/* RIGHT */}
           <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
             {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden rounded-xl"
-                >
+                <Button variant="ghost" size="icon" className="md:hidden rounded-xl">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -143,10 +157,7 @@ export default function Header() {
 
                   {!isLoggedIn ? (
                     <div className="grid gap-2">
-                      <Button
-                        onClick={() => navigate("/login")}
-                        variant="secondary"
-                      >
+                      <Button onClick={() => navigate("/login")} variant="secondary">
                         Login
                       </Button>
                       <Button onClick={() => navigate("/signup")}>Sign Up</Button>
@@ -180,39 +191,61 @@ export default function Header() {
               </>
             ) : (
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring">
-                    <Avatar className="h-10 w-10 ring-2 ring-border/60">
-                      <AvatarFallback className="bg-primary text-primary-foreground">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                </DropdownMenuTrigger>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="
+                        relative flex items-center justify-center
+                        h-10 w-10
+                        rounded-full
+                        overflow-hidden
+                        border border-border/60
+                        bg-muted
+                        focus:outline-none focus:ring-2 focus:ring-ring/60
+                        transition
+                        hover:scale-[1.04]
+                      "
+                    >
+                      <Avatar.Root className="h-full w-full rounded-full overflow-hidden">
+                        <Avatar.Image
+                          src={profileSrc}
+                          alt="Profile"
+                          className="h-full w-full object-cover object-center"
+                        />
 
+                        <Avatar.Fallback
+                          className="
+                            flex h-full w-full items-center justify-center
+                            text-sm font-semibold
+                            bg-primary/20 text-foreground
+                          "
+                        >
+                          {initials}
+                        </Avatar.Fallback>
+                      </Avatar.Root>
+                    </button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
                   className="w-56 rounded-2xl border border-border/60 bg-background/95 p-2 shadow-xl backdrop-blur"
                 >
                   <div className="px-2 py-2">
-                    <div className="text-sm font-semibold leading-none">
-                      Account
-                    </div>
+                    <div className="text-sm font-semibold leading-none">Account</div>
                     <div className="mt-1 text-xs text-muted-foreground">
                       Manage your profile & settings
                     </div>
                   </div>
 
                   <DropdownMenuSeparator className="my-2" />
-
-                  <DropdownMenuItem
-                    onClick={() => navigate("/provider/dashboard")}
-                    className="cursor-pointer rounded-xl px-3 py-2 focus:bg-accent/50"
-                  >
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </DropdownMenuItem>
-
+                    <DropdownMenuItem
+                      onClick={() => {
+                        localStorage.setItem("dashboardActiveTab", "dashboard");
+                        navigate("/provider/dashboard");
+                      }}
+                      className="cursor-pointer rounded-xl px-3 py-2 focus:bg-accent/50"
+                    >
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => navigate("/settings")}
                     className="cursor-pointer rounded-xl px-3 py-2 focus:bg-accent/50"
@@ -238,7 +271,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* subtle glow line */}
         <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
       </div>
     </motion.header>
