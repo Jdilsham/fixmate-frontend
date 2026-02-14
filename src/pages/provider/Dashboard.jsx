@@ -1498,7 +1498,6 @@ const handleStartJob = async () => {
                     </p>
                   </div>
 
-                  {/* Quick actions */}
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
                       variant="outline"
@@ -1527,301 +1526,309 @@ const handleStartJob = async () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
-                  {/* LEFT – Calendar */}
-                  <Card className="rounded-3xl border bg-card p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-semibold">Calendar</p>
+                  <Card className="relative overflow-hidden rounded-3xl border bg-card shadow-sm">
+                    <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
 
-                      {/* Legend */}
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-red-500" />
-                          Busy
-                        </span>
-                      </div>
-                    </div>
+                    {/* Content */}
+                    <div className="p-5 pt-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold">Calendar</p>
 
-                    <div className="rounded-2xl border bg-background/40 p-3 flex items-center justify-center">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(day) => {
-                          setSelectedDate(day);
-                          setDateBookings([]);
-                          setCalendarSearch("");
-                          setCalendarStatusFilter("ALL");
-                          loadBookingsForDate(day);
-                        }}
-                        disabled={(date) => date < new Date().setHours(0, 0, 0, 0)}
-                        modifiers={{
-                          busy: (date) => busyDates.has(date.toISOString().split("T")[0]),
-                        }}
-                        modifiersClassNames={{
-                          busy:
-                            "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-red-500",
-                        }}
-                        className="rounded-xl"
-                      />
-                    </div>
-
-                    {/* Selected date info */}
-                    <div className="mt-4 rounded-2xl border bg-muted/20 p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Selected Date
-                      </p>
-
-                      <p className="text-sm font-semibold mt-1">
-                        {selectedDate
-                          ? selectedDate.toLocaleDateString("en-LK", {
-                              weekday: "long",
-                              year: "numeric",
-                              month: "long",
-                              day: "2-digit",
-                            })
-                          : "No date selected"}
-                      </p>
-
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {selectedDate
-                          ? "Bookings will appear on the right."
-                          : "Select a date to view bookings."}
-                      </p>
-                    </div>
-                  </Card>
-
-                  {/* RIGHT – Bookings */}
-                  <Card className="rounded-3xl border bg-card p-6">
-                    {/* Top bar */}
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
-                      <div className="min-w-0">
-                        <p className="text-lg font-semibold">Bookings</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedDate
-                            ? "Manage bookings for the selected day"
-                            : "Select a date to see bookings"}
-                        </p>
-                      </div>
-
-                      {/* Controls */}
-                      <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-end">
-                        <input
-                          value={calendarSearch}
-                          onChange={(e) => setCalendarSearch(e.target.value)}
-                          placeholder="Search by customer or service..."
-                          className="
-                            w-full sm:w-72
-                            rounded-full border
-                            bg-background
-                            px-4 py-2
-                            text-sm
-                            focus:outline-none focus:ring-2 focus:ring-primary/40
-                          "
-                          disabled={!selectedDate}
-                        />
-
-                        <div className="relative">
-                          <select
-                            value={calendarStatusFilter}
-                            onChange={(e) => setCalendarStatusFilter(e.target.value)}
-                            disabled={!selectedDate}
-                            className="
-                              appearance-none
-                              rounded-full
-                              px-5 py-2 pr-10
-                              text-sm font-semibold
-                              bg-background
-                              text-foreground
-                              border border-border
-                              shadow-sm
-                              hover:bg-muted
-                              focus:outline-none
-                              focus:ring-2 focus:ring-primary/40
-                              transition
-                              cursor-pointer
-                              disabled:opacity-60 disabled:cursor-not-allowed
-                            "
-                          >
-                            <option value="ALL">All</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="ACCEPTED">Accepted</option>
-                            <option value="IN_PROGRESS">In Progress</option>
-                            <option value="PAYMENT_PENDING">Payment Pending</option>
-                            <option value="COMPLETED">Completed</option>
-                            <option value="REJECTED">Rejected</option>
-                          </select>
-
-                          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
-                            ▼
+                        {/* Legend */}
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500" />
+                            Busy
                           </span>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Content */}
-                    {!selectedDate && (
-                      <div className="rounded-2xl border bg-muted/10 p-10 text-center">
-                        <p className="text-base font-semibold">No date selected</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Pick a date from the calendar to view bookings.
+                      <div className="rounded-2xl border bg-background/40 p-3 flex items-center justify-center">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(day) => {
+                            setSelectedDate(day);
+                            setDateBookings([]);
+                            setCalendarSearch("");
+                            setCalendarStatusFilter("ALL");
+                            loadBookingsForDate(day);
+                          }}
+                          disabled={(date) => date < new Date().setHours(0, 0, 0, 0)}
+                          modifiers={{
+                            busy: (date) => busyDates.has(date.toISOString().split("T")[0]),
+                          }}
+                          modifiersClassNames={{
+                            busy:
+                              "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-red-500",
+                          }}
+                          className="rounded-xl"
+                        />
+                      </div>
+
+                      {/* Selected date info */}
+                      <div className="mt-4 rounded-2xl border bg-muted/20 p-4">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Selected Date
+                        </p>
+
+                        <p className="text-sm font-semibold mt-1">
+                          {selectedDate
+                            ? selectedDate.toLocaleDateString("en-LK", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "2-digit",
+                              })
+                            : "No date selected"}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {selectedDate
+                            ? "Bookings will appear on the right."
+                            : "Select a date to view bookings."}
                         </p>
                       </div>
-                    )}
+                    </div>
+                  </Card>
 
-                    {selectedDate && calendarLoading && (
-                      <div className="rounded-2xl border bg-muted/10 p-10 text-center">
-                        <p className="text-sm text-muted-foreground">Loading bookings...</p>
-                      </div>
-                    )}
+                  <Card className="relative overflow-hidden rounded-3xl border bg-card shadow-sm">
+                    <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
 
-                    {selectedDate && !calendarLoading && (() => {
-                      // filter + search (UI only)
-                      const q = calendarSearch.trim().toLowerCase();
-                      let list = [...(dateBookings || [])];
+                    {/* Content */}
+                    <div className="p-6 pt-7">
+                      {/* Top bar */}
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+                        <div className="min-w-0">
+                          <p className="text-lg font-semibold">Bookings</p>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedDate
+                              ? "Manage bookings for the selected day"
+                              : "Select a date to see bookings"}
+                          </p>
+                        </div>
 
-                      if (calendarStatusFilter !== "ALL") {
-                        list = list.filter((b) => b.status === calendarStatusFilter);
-                      }
+                        {/* Controls */}
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-end">
+                          <input
+                            value={calendarSearch}
+                            onChange={(e) => setCalendarSearch(e.target.value)}
+                            placeholder="Search by customer or service..."
+                            className="
+                              w-full sm:w-72
+                              rounded-full border
+                              bg-background
+                              px-4 py-2
+                              text-sm
+                              focus:outline-none focus:ring-2 focus:ring-primary/40
+                            "
+                            disabled={!selectedDate}
+                          />
 
-                      if (q) {
-                        list = list.filter((b) => {
-                          const name = (b.customerName || "").toLowerCase();
-                          const service = (b.serviceName || "").toLowerCase();
-                          return name.includes(q) || service.includes(q);
-                        });
-                      }
+                          <div className="relative">
+                            <select
+                              value={calendarStatusFilter}
+                              onChange={(e) => setCalendarStatusFilter(e.target.value)}
+                              disabled={!selectedDate}
+                              className="
+                                appearance-none
+                                rounded-full
+                                px-5 py-2 pr-10
+                                text-sm font-semibold
+                                bg-background
+                                text-foreground
+                                border border-border
+                                shadow-sm
+                                hover:bg-muted
+                                focus:outline-none
+                                focus:ring-2 focus:ring-primary/40
+                                transition
+                                cursor-pointer
+                                disabled:opacity-60 disabled:cursor-not-allowed
+                              "
+                            >
+                              <option value="ALL">All</option>
+                              <option value="PENDING">Pending</option>
+                              <option value="ACCEPTED">Accepted</option>
+                              <option value="IN_PROGRESS">In Progress</option>
+                              <option value="PAYMENT_PENDING">Payment Pending</option>
+                              <option value="COMPLETED">Completed</option>
+                              <option value="REJECTED">Rejected</option>
+                            </select>
 
-                      const total = dateBookings?.length ?? 0;
-                      const shown = list.length;
-
-                      return (
-                        <>
-                          {/* Summary row */}
-                          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                            <span className="inline-flex items-center gap-2 rounded-full border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
-                              <span className="w-2 h-2 rounded-full bg-primary/70" />
-                              Showing {shown} of {total}
+                            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                              ▼
                             </span>
-
-                            {q || calendarStatusFilter !== "ALL" ? (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setCalendarSearch("");
-                                  setCalendarStatusFilter("ALL");
-                                }}
-                                className="text-xs font-semibold text-primary hover:underline"
-                              >
-                                Reset filters
-                              </button>
-                            ) : null}
                           </div>
+                        </div>
+                      </div>
 
-                          {list.length === 0 ? (
-                            <div className="rounded-2xl border bg-muted/10 p-10 text-center">
-                              <p className="text-base font-semibold">No bookings found</p>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                Try a different filter or search term.
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="max-h-[460px] overflow-auto pr-1 space-y-3">
-                              {list.map((b) => (
-                                <div
-                                  key={b.bookingId}
-                                  className="
-                                    group
-                                    rounded-2xl border
-                                    bg-background/50
-                                    p-4
-                                    shadow-sm
-                                    hover:shadow-md
-                                    transition
-                                  "
+                      {/* Content */}
+                      {!selectedDate && (
+                        <div className="rounded-2xl border bg-muted/10 p-10 text-center">
+                          <p className="text-base font-semibold">No date selected</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Pick a date from the calendar to view bookings.
+                          </p>
+                        </div>
+                      )}
+
+                      {selectedDate && calendarLoading && (
+                        <div className="rounded-2xl border bg-muted/10 p-10 text-center">
+                          <p className="text-sm text-muted-foreground">Loading bookings...</p>
+                        </div>
+                      )}
+
+                      {selectedDate && !calendarLoading && (() => {
+                        const q = calendarSearch.trim().toLowerCase();
+                        let list = [...(dateBookings || [])];
+
+                        if (calendarStatusFilter !== "ALL") {
+                          list = list.filter((b) => b.status === calendarStatusFilter);
+                        }
+
+                        if (q) {
+                          list = list.filter((b) => {
+                            const name = (b.customerName || "").toLowerCase();
+                            const service = (b.serviceName || "").toLowerCase();
+                            return name.includes(q) || service.includes(q);
+                          });
+                        }
+
+                        const total = dateBookings?.length ?? 0;
+                        const shown = list.length;
+
+                        return (
+                          <>
+                            {/* Summary row */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                              <span className="inline-flex items-center gap-2 rounded-full border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
+                                <span className="w-2 h-2 rounded-full bg-primary/70" />
+                                Showing {shown} of {total}
+                              </span>
+
+                              {q || calendarStatusFilter !== "ALL" ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCalendarSearch("");
+                                    setCalendarStatusFilter("ALL");
+                                  }}
+                                  className="text-xs font-semibold text-primary hover:underline"
                                 >
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                      <p className="font-semibold truncate">{b.customerName}</p>
-                                      <p className="text-sm text-muted-foreground truncate">
-                                        {b.serviceName}
-                                      </p>
+                                  Reset filters
+                                </button>
+                              ) : null}
+                            </div>
 
-                                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                        <span className="rounded-full border px-2 py-1 bg-muted/30">
-                                          {b.scheduledAt
-                                            ? new Date(b.scheduledAt).toLocaleTimeString("en-LK", {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                              })
-                                            : "—"}
+                            {list.length === 0 ? (
+                              <div className="rounded-2xl border bg-muted/10 p-10 text-center">
+                                <p className="text-base font-semibold">No bookings found</p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Try a different filter or search term.
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="max-h-[460px] overflow-auto pr-1 space-y-3">
+                                {list.map((b) => (
+                                  <div
+                                    key={b.bookingId}
+                                    className="
+                                      group
+                                      rounded-2xl border
+                                      bg-background/50
+                                      p-4
+                                      shadow-sm
+                                      hover:shadow-md
+                                      transition
+                                    "
+                                  >
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <p className="font-semibold truncate">{b.customerName}</p>
+                                        <p className="text-sm text-muted-foreground truncate">
+                                          {b.serviceName}
+                                        </p>
+
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                          <span className="rounded-full border px-2 py-1 bg-muted/30">
+                                            {b.scheduledAt
+                                              ? new Date(b.scheduledAt).toLocaleTimeString("en-LK", {
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                })
+                                              : "—"}
+                                          </span>
+
+                                          {b.bookingId ? (
+                                            <span className="rounded-full border px-2 py-1 bg-muted/30">
+                                              #{b.bookingId}
+                                            </span>
+                                          ) : null}
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center gap-2">
+                                        <span
+                                          className={`px-3 py-1 rounded-full text-xs font-semibold border ${providerStatusBadge(
+                                            b.status
+                                          )}`}
+                                        >
+                                          {String(b.status || "—").replaceAll("_", " ")}
                                         </span>
 
-                                        {b.bookingId ? (
-                                          <span className="rounded-full border px-2 py-1 bg-muted/30">
-                                            #{b.bookingId}
-                                          </span>
-                                        ) : null}
+                                        <Button
+                                          size="icon"
+                                          variant="secondary"
+                                          title="View booking"
+                                          onClick={() => handleViewBooking(b)}
+                                        >
+                                          <Eye className="w-4 h-4" />
+                                        </Button>
+
+                                        {b.status === "PENDING" && (
+                                          <>
+                                            <Button
+                                              size="icon"
+                                              title="Accept booking"
+                                              className="bg-green-600 hover:bg-green-700 text-white"
+                                              onClick={() => handleAcceptBooking(b)}
+                                            >
+                                              <CheckCircle className="w-4 h-4" />
+                                            </Button>
+
+                                            <Button
+                                              size="icon"
+                                              variant="destructive"
+                                              title="Reject booking"
+                                              onClick={() => handleRejectBooking(b)}
+                                            >
+                                              <XCircle className="w-4 h-4" />
+                                            </Button>
+                                          </>
+                                        )}
                                       </div>
                                     </div>
-
-                                    <div className="flex items-center gap-2">
-                                      <span
-                                        className={`px-3 py-1 rounded-full text-xs font-semibold border ${providerStatusBadge(
-                                          b.status
-                                        )}`}
-                                      >
-                                        {String(b.status || "—").replaceAll("_", " ")}
-                                      </span>
-
-                                      <Button
-                                        size="icon"
-                                        variant="secondary"
-                                        title="View booking"
-                                        onClick={() => handleViewBooking(b)}
-                                      >
-                                        <Eye className="w-4 h-4" />
-                                      </Button>
-
-                                      {b.status === "PENDING" && (
-                                        <>
-                                          <Button
-                                            size="icon"
-                                            title="Accept booking"
-                                            className="bg-green-600 hover:bg-green-700 text-white"
-                                            onClick={() => handleAcceptBooking(b)}
-                                          >
-                                            <CheckCircle className="w-4 h-4" />
-                                          </Button>
-
-                                          <Button
-                                            size="icon"
-                                            variant="destructive"
-                                            title="Reject booking"
-                                            onClick={() => handleRejectBooking(b)}
-                                          >
-                                            <XCircle className="w-4 h-4" />
-                                          </Button>
-                                        </>
-                                      )}
-                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                   </Card>
                 </div>
               </>
             )}
-
 
             
             {/* Bookings */}
             {activeTab === "pendingBooking" && role === "SERVICE_PROVIDER" && (
               <>
                 <Card className="p-0 overflow-hidden rounded-3xl border bg-card shadow-sm">
+                  <div className="h-1 w-full bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
+
                   {/* Header */}
                   <div className="px-6 py-5 border-b bg-card">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

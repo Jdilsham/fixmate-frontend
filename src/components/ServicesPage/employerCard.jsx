@@ -55,6 +55,8 @@ export default function EmployerCard({ employer, onToggleActive }) {
         overflow-hidden
       "
     >
+
+      <div className="h-1 w-full bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
       <div className="p-6">
         {/* Header row */}
         <div className="flex items-center gap-4">

@@ -25,6 +25,7 @@ export default function CustomerEmployerCard({ employer }) {
 
   return (
     <div className="group relative w-full max-w-[360px] mx-auto">
+      
       {/* subtle glow border */}
       <div className="pointer-events-none absolute -inset-[1px] rounded-[28px] opacity-0 group-hover:opacity-100 transition duration-300 bg-gradient-to-r from-cyan-500/30 via-blue-500/25 to-emerald-500/25 blur-[6px]" />
 
@@ -39,6 +40,7 @@ export default function CustomerEmployerCard({ employer }) {
           transition-all duration-300
         "
       >
+        <div className="h-1 w-full bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
         {/* top accent */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-amber-400/15 via-orange-400/10 to-transparent dark:from-cyan-400/12 dark:via-blue-500/10" />
 
