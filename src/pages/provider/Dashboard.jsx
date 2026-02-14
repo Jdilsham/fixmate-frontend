@@ -6,6 +6,7 @@ import { getAuthUser } from "../../../utils/auth";
 import { Eye, CheckCircle, XCircle } from "lucide-react";
 import { Camera } from "lucide-react";
 import PageBackground from "../../components/animate-ui/components/backgrounds/PageBackground";
+import ProviderDashboardOverview from "../../components/provider-dashboard/ProviderDashboardOverview";
 
 
 import BookingsTable from "../../components/dashboard/bookingTable";
@@ -1461,7 +1462,13 @@ const handleStartJob = async () => {
             <>
 
             {/* DASHBOARD */}
-
+            {activeTab === "dashboard" && role === "SERVICE_PROVIDER" && (
+              <ProviderDashboardOverview
+                onGoManageBookings={() => setActiveTab("pendingBooking")}
+                onGoServices={() => setActiveTab("services")}
+                onGoCalendar={() => setActiveTab("calendar")}
+              />
+            )}
 
             {/* SERVICES */}
             {activeTab === "services" && role === "SERVICE_PROVIDER" && (
