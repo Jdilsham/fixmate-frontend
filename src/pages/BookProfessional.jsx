@@ -25,7 +25,6 @@ export default function BookProfessional() {
   const token = localStorage.getItem("token");
   const isProvider = token?.includes("PROVIDER");
 
-  /* ===================== LOAD SERVICE ===================== */
   useEffect(() => {
     if (!providerServiceId) return;
 
@@ -50,7 +49,6 @@ export default function BookProfessional() {
       .catch(() => setError("Unable to load service details"));
   }, [providerServiceId]);
 
-  /* ===================== LOAD USER ===================== */
   useEffect(() => {
     fetch(`${API}/api/customer/me`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -63,7 +61,6 @@ export default function BookProfessional() {
       .catch(() => console.error("Failed to load user details"));
   }, []);
 
-  /* ===================== LOAD ADDRESS ===================== */
   useEffect(() => {
     const endpoint = isProvider
       ? `${API}/api/provider/address`
@@ -80,7 +77,6 @@ export default function BookProfessional() {
       .catch(() => setAddress(null));
   }, [isProvider]);
 
-  /* ===================== FINAL CONFIRM ===================== */
   const handleFinalConfirm = async () => {
     if (!bookingData) return;
 
@@ -135,7 +131,6 @@ export default function BookProfessional() {
     }
   };
 
-  /* ===================== UI STATES ===================== */
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500">
@@ -152,18 +147,14 @@ export default function BookProfessional() {
     );
   }
 
-  /* ===================== RENDER ===================== */
   return (
     <div className="relative min-h-screen text-foreground overflow-x-hidden">
-      {/* background behind everything */}
       <PageBackground interactive={false} />
 
-      {/* ensure header is above background */}
       <div className="relative z-20">
         <Header />
       </div>
 
-      {/* page content above background */}
       <main className="relative z-10">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           {/* HERO */}

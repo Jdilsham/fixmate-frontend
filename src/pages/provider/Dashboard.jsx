@@ -47,6 +47,7 @@ import { formatWorkedTime, calculateFinalAmount } from "../../../utils/time";
 import CustomerManageBooking from "../../components/dashboard/bookings/CustomerManageBooking";
 import { getProviderPaymentByBooking, confirmProviderPayment } from "../../../utils/payment";
 import ProviderManageBooking from "../../components/dashboard/bookings/ProviderManageBooking";
+import AcceptBookingDialog from "../../components/dashboard/bookings/AcceptBookingDialog";
 
 
 
@@ -154,23 +155,26 @@ export default function Dashboard() {
 
 
   const [date, setDate] = useState(new Date());
-  // Calendar – availability view
+
   const [selectedDate, setSelectedDate] = useState(null);
   const [dateBookings, setDateBookings] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
 
-  // ================= CUSTOMER CALENDAR (READ-ONLY) =================
   const [customerSelectedDate, setCustomerSelectedDate] = useState(null);
   const [customerDateBookings, setCustomerDateBookings] = useState([]);
   const [customerCalendarLoading, setCustomerCalendarLoading] = useState(false);
 
-  // Calendar UI helpers (provider)
+
   const [calendarSearch, setCalendarSearch] = useState("");
   const [calendarStatusFilter, setCalendarStatusFilter] = useState("ALL");
 
   const [isAvailable, setIsAvailable] = useState(false);
   const [editImageOpen, setEditImageOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
+
+  const [acceptOpen, setAcceptOpen] = useState(false);
+  const [acceptBooking, setAcceptBooking] = useState(null);
+  const [acceptLoading, setAcceptLoading] = useState(false);
 
   const user = authUser && profile ? { ...authUser, ...profile } : authUser;
   const role = user?.role;
@@ -527,7 +531,7 @@ export default function Dashboard() {
 
     (async () => {
       try {
-        // 1) always keep booking details fresh
+        // always keep booking details fresh
         const updated = await getProviderBookings(user.id);
         if (!alive) return;
 
@@ -536,7 +540,7 @@ export default function Dashboard() {
         const latest = updated.find(b => b.bookingId === managedBooking.bookingId);
         if (latest) setManagedBooking(prev => (prev ? { ...prev, ...latest } : prev));
 
-        // 2) if payment pending, sync payment info
+        // if payment pending, sync payment info
         if (latest?.status === "PAYMENT_PENDING") {
           const p = await getProviderPaymentByBooking(managedBooking.bookingId);
           if (!alive) return;
@@ -1466,7 +1470,7 @@ const handleStartJob = async () => {
               <ProviderDashboardOverview
                 onGoManageBookings={() => setActiveTab("pendingBooking")}
                 onGoServices={() => setActiveTab("services")}
-                onGoCalendar={() => setActiveTab("calendar")}
+                onGoProfile={() => setActiveTab("profile")}
               />
             )}
 
@@ -1814,7 +1818,7 @@ const handleStartJob = async () => {
 
 
             
-            {/* Pending requests */}
+            {/* Bookings */}
             {activeTab === "pendingBooking" && role === "SERVICE_PROVIDER" && (
               <>
                 <Card className="p-0 overflow-hidden rounded-3xl border bg-card shadow-sm">
@@ -2022,11 +2026,9 @@ const handleStartJob = async () => {
                                             size="icon"
                                             title="Accept booking"
                                             className="rounded-full bg-green-600 hover:bg-green-700 text-white"
-                                            onClick={async () => {
-                                              await confirmBooking(b.bookingId, b.providerServiceId);
-                                              toast.success("Booking accepted");
-                                              const updated = await getProviderBookings(user.id);
-                                              setProviderBookings(updated);
+                                            onClick={() => {
+                                              setAcceptBooking(b);
+                                              setAcceptOpen(true);
                                             }}
                                           >
                                             <CheckCircle className="w-4 h-4" />
@@ -2842,7 +2844,7 @@ const handleStartJob = async () => {
                               />
 
                               <Button
-                                onClick={handleUploadIdFront}
+                                onClick={handleUploadIdBack}
                                 disabled={!idFrontFile}
                                 className="shrink-0 rounded-full px-5"
                               >
@@ -3338,6 +3340,36 @@ const handleStartJob = async () => {
 
             // optional but recommended (keeps state synced with backend)
             await refreshManagedBooking(managedBooking.bookingId);
+          }}
+        />
+
+        <AcceptBookingDialog
+          open={acceptOpen}
+          booking={acceptBooking}
+          loading={acceptLoading}
+          onClose={() => {
+            setAcceptOpen(false);
+            setAcceptBooking(null);
+          }}
+          onConfirm={async () => {
+            if (!acceptBooking) return;
+
+            try {
+              setAcceptLoading(true);
+
+              await confirmBooking(acceptBooking.bookingId, acceptBooking.providerServiceId);
+              toast.success("Booking accepted");
+
+              const updated = await getProviderBookings(user.id);
+              setProviderBookings(updated);
+
+              setAcceptOpen(false);
+              setAcceptBooking(null);
+            } catch (err) {
+              toast.error("Failed to accept booking");
+            } finally {
+              setAcceptLoading(false);
+            }
           }}
         />
 

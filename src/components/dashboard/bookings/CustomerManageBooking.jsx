@@ -75,6 +75,7 @@ export default function CustomerManageBooking({ booking, onBack }) {
     <Card className="p-8 rounded-2xl space-y-6">
 
       {/* HEADER */}
+      
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Manage Booking</h2>
 

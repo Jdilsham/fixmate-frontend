@@ -105,41 +105,53 @@ export default function BookingViewDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className="
+          fixed
+          left-1/2
+          top-1/2
+          -translate-x-1/2
+          -translate-y-1/2
+
           w-[96vw]
           min-w-[1100px]
           max-w-[1280px]
           max-h-[72vh]
+
           flex flex-col
           overflow-hidden
           rounded-3xl
           border border-black/5 dark:border-white/10
 
-          bg-white/75
-          dark:bg-gradient-to-br
-          dark:from-[#071a14]/95
-          dark:via-[#0b2a22]/95
-          dark:to-[#03100c]/95
+          bg-white/85
+          dark:bg-[#0b1220]/95
 
-          shadow-2xl
+          shadow-[0_25px_90px_-50px_rgba(15,23,42,0.45)]
+          dark:shadow-[0_35px_120px_-70px_rgba(0,0,0,0.70)]
           backdrop-blur-xl
 
           [&>button.absolute]:hidden
         "
       >
-        {/* ===== Background Glow ===== */}
-        <div className="pointer-events-none absolute inset-0">
-          {/* Light mode glow */}
-          <div className="absolute -top-28 -right-28 h-80 w-80 rounded-full bg-orange-400/15 blur-3xl dark:hidden" />
-          <div className="absolute -bottom-28 -left-28 h-80 w-80 rounded-full bg-amber-400/10 blur-3xl dark:hidden" />
+        <div
+          className="
+            pointer-events-none absolute left-0 right-0 top-0 h-[5px]
+            bg-gradient-to-r
+            from-accent/80 
+            via-primary/70 
+            to-cyan-400/60
+          "
+        />
 
-          {/* Dark mode FixMate glow */}
-          <div className="hidden dark:block absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full bg-cyan-400/10 blur-[140px]" />
-          <div className="hidden dark:block absolute -bottom-40 -left-40 h-[520px] w-[520px] rounded-full bg-emerald-400/10 blur-[140px]" />
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-36 -right-36 h-[520px] w-[520px] rounded-full bg-orange-400/12 blur-[150px] dark:hidden" />
+          <div className="absolute -bottom-40 -left-40 h-[560px] w-[560px] rounded-full bg-amber-400/10 blur-[160px] dark:hidden" />
+
+          <div className="hidden dark:block absolute -top-44 -right-44 h-[620px] w-[620px] rounded-full bg-cyan-400/10 blur-[170px]" />
+          <div className="hidden dark:block absolute -bottom-48 -left-48 h-[640px] w-[640px] rounded-full bg-emerald-400/10 blur-[190px]" />
         </div>
 
-        {/* ===== Header ===== */}
+        <div className="pointer-events-none absolute inset-0 rounded-3xl ring-1 ring-black/5 dark:ring-white/10" />
         <DialogHeader className="relative px-7 pt-6 pb-4 border-b border-black/5 dark:border-white/10">
-          {/* Custom Close (ONLY ONE) */}
+
           <DialogClose asChild>
             <button
               aria-label="Close"
@@ -149,14 +161,14 @@ export default function BookingViewDialog({
                 h-9 w-9
                 rounded-full
                 border border-black/10 dark:border-white/15
-                bg-white/80 dark:bg-white/10
-                text-muted-foreground
+                bg-white/85 dark:bg-white/10
+                text-slate-600 dark:text-slate-200
                 transition-all duration-200
-                hover:bg-orange-500/10
-                hover:text-orange-600
-                dark:hover:bg-white/15
+                hover:bg-orange-500/10 hover:text-orange-700
+                dark:hover:bg-white/15 dark:hover:text-white
                 focus:outline-none
                 focus-visible:ring-2 focus-visible:ring-orange-400/40
+                dark:focus-visible:ring-cyan-400/30
                 active:scale-95
               "
             >
@@ -188,11 +200,10 @@ export default function BookingViewDialog({
           </div>
         </DialogHeader>
 
-        {/* ===== Body ===== */}
         <div className="relative flex-1 overflow-y-auto px-7 py-5 space-y-6">
-          {/* Rejected banner (customer only) */}
           {booking.status === "REJECTED" && !isProvider && (
-            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
+            <div className="relative overflow-hidden rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
+              <div className="absolute left-0 right-0 top-0 h-[3px] bg-gradient-to-r from-red-500 via-rose-400 to-red-600" />
               <p className="text-sm font-semibold text-red-600">Booking Rejected</p>
               <p className="mt-1 text-sm text-red-500">
                 Reason:{" "}
@@ -210,7 +221,6 @@ export default function BookingViewDialog({
             </div>
           )}
 
-          {/* ===== Overview + Payment ===== */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Section title="Overview" subtitle="Main booking information">
               <Row
@@ -256,7 +266,6 @@ export default function BookingViewDialog({
             </Section>
           </div>
 
-          {/* ===== Contact & Notes ===== */}
           <Section title="Contact & Notes" subtitle="Communication and extra info">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Row label="Phone Number" value={phoneText} />
@@ -268,7 +277,6 @@ export default function BookingViewDialog({
               </Row>
             </div>
 
-            {/* Notes */}
             <div className="py-2 border-b border-black/5 dark:border-white/10">
               <div className="flex justify-between gap-8">
                 <span className="text-sm text-muted-foreground shrink-0 w-[160px]">
@@ -281,7 +289,7 @@ export default function BookingViewDialog({
                     max-w-[80%]
                     rounded-2xl
                     border border-black/5 dark:border-white/10
-                    bg-white/50 dark:bg-white/5
+                    bg-white/70 dark:bg-white/5
                     px-4 py-3
                     text-sm font-medium text-foreground
                     max-h-36
@@ -289,6 +297,9 @@ export default function BookingViewDialog({
                     whitespace-pre-wrap
                     break-words
                     leading-relaxed
+
+                    shadow-[0_10px_30px_-22px_rgba(15,23,42,0.35)]
+                    dark:shadow-[0_18px_60px_-40px_rgba(0,0,0,0.65)]
                   "
                 >
                   {safeText(booking.description || "—")}
@@ -296,7 +307,6 @@ export default function BookingViewDialog({
               </div>
             </div>
 
-            {/* Location actions */}
             <Row label="Location">
               <div className="flex items-center justify-end gap-2">
                 <Button
@@ -321,12 +331,14 @@ export default function BookingViewDialog({
                   disabled={!hasCoords}
                   className="
                     rounded-xl
-                    bg-gradient-to-r from-orange-500 to-amber-500
+                    bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600
+                    dark:bg-gradient-to-r dark:from-cyan-500 dark:via-sky-500 dark:to-emerald-500
                     text-white
                     hover:brightness-110
                     transition-all duration-200
                     active:scale-95
                     disabled:opacity-50 disabled:cursor-not-allowed
+                    dark:ring-1 dark:ring-white/10
                   "
                 >
                   Get Directions
@@ -335,7 +347,7 @@ export default function BookingViewDialog({
             </Row>
 
             {!hasCoords && (
-              <div className="mt-2 flex items-center justify-between rounded-2xl border border-black/5 dark:border-white/10 bg-white/40 dark:bg-white/5 px-4 py-3">
+              <div className="mt-2 flex items-center justify-between rounded-2xl border border-black/5 dark:border-white/10 bg-white/55 dark:bg-white/5 px-4 py-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4" />
                   Location not available for this booking.
@@ -344,14 +356,21 @@ export default function BookingViewDialog({
             )}
           </Section>
 
-          {/* Tip */}
-          <div className="rounded-2xl border border-black/5 dark:border-white/10 bg-white/45 dark:bg-white/5 p-4 text-sm text-muted-foreground">
+
+          <div className="relative overflow-hidden rounded-2xl border border-black/5 dark:border-white/10 bg-white/60 dark:bg-white/5 p-4 text-sm text-muted-foreground">
+            <div
+              className="
+                absolute left-0 right-0 top-0 h-[3px]
+                bg-gradient-to-r
+                from-orange-500 via-amber-400 to-orange-600
+                dark:from-cyan-400 dark:via-sky-500 dark:to-emerald-400
+              "
+            />
             Tip: Use <span className="font-semibold text-foreground">Manage</span>{" "}
             from the bookings list to continue job actions.
           </div>
         </div>
 
-        {/* ===== Footer (no white square) ===== */}
         <div className="relative px-7 py-4 border-t border-black/5 dark:border-white/10 flex items-center justify-end">
           <button
             type="button"
@@ -362,11 +381,13 @@ export default function BookingViewDialog({
               text-sm font-medium
               text-muted-foreground
               transition-all duration-200
-              hover:text-orange-600
+              hover:text-orange-700
               hover:bg-orange-500/10
-              dark:hover:bg-orange-400/10
+              dark:hover:text-cyan-200
+              dark:hover:bg-white/10
               focus:outline-none
               focus-visible:ring-2 focus-visible:ring-orange-400/40
+              dark:focus-visible:ring-cyan-400/30
               active:scale-95
             "
           >
@@ -382,13 +403,13 @@ function Section({ title, subtitle, children }) {
   return (
     <div
       className="
+        relative
         rounded-3xl
         border border-black/5 dark:border-white/10
-        bg-white/65
-        dark:bg-white/5
+        bg-white/75 dark:bg-white/5
         dark:backdrop-blur-xl
-        shadow-[0_18px_60px_-40px_rgba(15,23,42,0.35)]
-        dark:shadow-[0_30px_80px_-50px_rgba(16,185,129,0.35)]
+        shadow-[0_18px_60px_-45px_rgba(15,23,42,0.35)]
+        dark:shadow-[0_30px_90px_-60px_rgba(0,0,0,0.70)]
         overflow-hidden
       "
     >

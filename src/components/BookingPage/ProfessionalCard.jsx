@@ -7,7 +7,6 @@ export default function ProfessionalCard({ service }) {
   return (
     <Card className="rounded-2xl border border-border bg-card/70 dark:bg-card/50 shadow-lg">
       <CardContent className="p-5 flex flex-col gap-5">
-        {/* PROVIDER */}
         <div className="flex items-center gap-4">
           <Avatar className="size-14 ring-2 ring-primary/20">
             <AvatarImage
@@ -70,7 +69,6 @@ export default function ProfessionalCard({ service }) {
           </div>
         </div>
 
-        {/* DESCRIPTION (clamped to avoid tall card) */}
         <div className="rounded-xl bg-muted/25 px-4 py-3 text-xs leading-relaxed text-muted-foreground line-clamp-3">
           {service.serviceDescription ||
             "Professional service delivered with quality workmanship and reliability."}

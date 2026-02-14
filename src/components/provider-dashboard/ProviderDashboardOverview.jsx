@@ -48,121 +48,59 @@ const badgeClass = (status) => {
   return "bg-muted text-muted-foreground border-border";
 };
 
-function Tip({ label, value, icon: Icon }) {
+const PIE_COLORS = ["#22c55e", "#3b82f6", "#f97316", "#a855f7", "#ec4899"];
+
+function FxCard({ children, className = "", barClassName = "" }) {
   return (
-    <div
-      className="
-        group relative
-        flex items-center justify-between gap-3
-        rounded-3xl border
-        bg-card/60 backdrop-blur-xl
-        p-5
-        shadow-[0_18px_60px_-30px_rgba(15,23,42,0.35)]
-        dark:shadow-[0_22px_70px_-36px_rgba(34,211,238,0.18)]
-        hover:shadow-[0_22px_75px_-30px_rgba(15,23,42,0.45)]
-        dark:hover:shadow-[0_28px_90px_-40px_rgba(34,211,238,0.25)]
-        transition
-        overflow-hidden
-      "
+    <Card
+      className={[
+        "relative overflow-hidden rounded-3xl border",
+        "bg-card shadow-[0_16px_55px_-32px_rgba(15,23,42,0.25)]",
+        "dark:bg-[#0b141a]/70 dark:border-white/10 dark:shadow-[0_18px_70px_-36px_rgba(0,0,0,0.55)]",
+        className,
+      ].join(" ")}
     >
-      {/* soft glow */}
-      <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition">
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-muted/20 blur-3xl" />
-        <div className="hidden dark:block absolute -top-24 -left-24 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
-      </div>
+      {/* TOP GRADIENT STRIP */}
+      <div
+        className={[
+          "pointer-events-none absolute left-0 top-0 h-[4px] w-full",
+          "bg-gradient-to-r from-orange-400 via-sky-500 to-cyan-400",
+          "opacity-90 dark:opacity-85",
+          barClassName,
+        ].join(" ")}
+      />
 
-      <div className="relative min-w-0">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-1 text-xl font-semibold tracking-tight">{value}</p>
-      </div>
+      {/* subtle inner top highlight (makes it look like your screenshot) */}
+      <div className="pointer-events-none absolute inset-x-0 top-[4px] h-10 bg-gradient-to-b from-black/5 to-transparent dark:from-white/5" />
 
-      <div className="relative h-11 w-11 rounded-2xl border bg-muted/20 flex items-center justify-center">
-        <Icon className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition" />
-      </div>
-    </div>
+      {/* content */}
+      <div className="relative">{children}</div>
+    </Card>
   );
 }
 
-function BookingRow({ b, onOpenBooking }) {
+function Tip({ label, value, icon: Icon }) {
   return (
-    <div className="rounded-2xl border bg-background/40 p-4 hover:bg-background/60 transition">
-      <div className="flex items-start justify-between gap-3">
+    <FxCard className="p-5">
+      <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-semibold truncate">{b.customerName || "—"}</p>
-          <p className="text-sm text-muted-foreground truncate">
-            {b.serviceTitle || "—"}
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            {label}
           </p>
-
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1 rounded-full border bg-muted/20 px-2 py-1">
-              <CalIcon className="h-3.5 w-3.5" />
-              {b.scheduledAt
-                ? new Date(b.scheduledAt).toLocaleString("en-LK", {
-                    weekday: "short",
-                    month: "short",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "—"}
-            </span>
-
-            {(b.city || b.address) && (
-              <span className="inline-flex items-center gap-1 rounded-full border bg-muted/20 px-2 py-1">
-                <MapPin className="h-3.5 w-3.5" />
-                <span className="truncate max-w-[320px]">
-                  {b.city || ""}
-                  {b.city && b.address ? " • " : ""}
-                  {b.address || ""}
-                </span>
-              </span>
-            )}
-          </div>
+          <p className="mt-1 text-xl font-semibold tracking-tight">{value}</p>
         </div>
 
-        <div className="flex flex-col items-end gap-2">
-          <span
-            className={`text-xs font-semibold px-3 py-1 rounded-full border ${badgeClass(
-              b.status
-            )}`}
-          >
-            {String(b.status || "—").replaceAll("_", " ")}
-          </span>
-
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Amount</p>
-            <p className="text-sm font-semibold">
-              {b.amount == null ? "—" : money(b.amount)}
-            </p>
-            {b.paymentStatus && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Payment: {String(b.paymentStatus).replaceAll("_", " ")}
-              </p>
-            )}
-          </div>
-
-          {onOpenBooking ? (
-            <Button
-              size="sm"
-              variant="fixmateOutline"
-              onClick={() => onOpenBooking(b)}
-              className="rounded-xl"
-            >
-              View
-            </Button>
-          ) : null}
+        <div className="h-11 w-11 rounded-2xl border bg-muted/20 flex items-center justify-center">
+          <Icon className="h-5 w-5 text-muted-foreground" />
         </div>
       </div>
-    </div>
+    </FxCard>
   );
 }
 
 function BookingTable({ title, subtitle, rows, onViewAll }) {
   return (
-    <Card className="rounded-3xl border bg-card p-6">
+    <FxCard className="p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-lg font-semibold">{title}</p>
@@ -258,22 +196,15 @@ function BookingTable({ title, subtitle, rows, onViewAll }) {
           </span>
         </div>
       )}
-    </Card>
+    </FxCard>
   );
 }
-
-const PIE_COLORS = [
-  "#22c55e", 
-  "#3b82f6", 
-  "#f97316",
-  "#a855f7", 
-  "#ec4899", 
-];
 
 export default function ProviderDashboardOverview({
   onGoManageBookings,
   onGoServices,
-  onGoCalendar,
+  onGoProfile,
+
 }) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -288,11 +219,7 @@ export default function ProviderDashboardOverview({
       setData(res);
       setLastUpdated(new Date());
     } catch (e) {
-      setErr(
-        e?.response?.data?.message ||
-          e.message ||
-          "Failed to load dashboard"
-      );
+      setErr(e?.response?.data?.message || e.message || "Failed to load dashboard");
     } finally {
       setLoading(false);
     }
@@ -309,12 +236,11 @@ export default function ProviderDashboardOverview({
 
   useEffect(() => {
     loadDashboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (err && !loading) {
     return (
-      <Card className="rounded-3xl border bg-card p-6">
+      <FxCard className="p-6">
         <div className="flex items-start gap-3">
           <div className="h-10 w-10 rounded-2xl border bg-rose-500/10 flex items-center justify-center">
             <AlertTriangle className="h-5 w-5 text-rose-500" />
@@ -331,7 +257,7 @@ export default function ProviderDashboardOverview({
             </Button>
           </div>
         </div>
-      </Card>
+      </FxCard>
     );
   }
 
@@ -353,14 +279,13 @@ export default function ProviderDashboardOverview({
 
   return (
     <div className="space-y-6">
-      {/* ===== DASHBOARD HEADER (ALWAYS SHOW) ===== */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
           <p className="text-sm text-muted-foreground">Provider Dashboard</p>
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
             Welcome back 👋
           </h2>
-
           <p className="text-sm text-muted-foreground mt-1">
             {lastUpdated
               ? `Last updated: ${lastUpdated.toLocaleString("en-LK")}`
@@ -368,26 +293,23 @@ export default function ProviderDashboardOverview({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="fixmateOutline"
-            className="rounded-2xl"
-            onClick={loadDashboard}
-            disabled={loading}
-          >
-            {loading ? "Refreshing..." : "Refresh"}
-          </Button>
-        </div>
+        <Button
+          variant="fixmateOutline"
+          className="rounded-2xl"
+          onClick={loadDashboard}
+          disabled={loading}
+        >
+          {loading ? "Refreshing..." : "Refresh"}
+        </Button>
       </div>
 
-      {/* ===== LOADING SKELETON (ONLY CARDS) ===== */}
       {loading ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className="h-[92px] rounded-2xl border bg-muted/20 animate-pulse"
+                className="h-[92px] rounded-3xl border bg-muted/20 animate-pulse"
               />
             ))}
           </div>
@@ -401,39 +323,19 @@ export default function ProviderDashboardOverview({
         </div>
       ) : (
         <>
-          {/* ========= TOP KPI ROW ========= */}
+          {/* KPI Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-            <Tip
-              label="Total bookings"
-              value={data?.totalBookings ?? 0}
-              icon={ClipboardList}
-            />
-            <Tip
-              label="Active jobs"
-              value={data?.activeJobs ?? 0}
-              icon={Briefcase}
-            />
-            <Tip
-              label="Completed"
-              value={data?.completedJobs ?? 0}
-              icon={CheckCircle2}
-            />
-            <Tip
-              label="Month income"
-              value={money(data?.monthIncome)}
-              icon={Wallet}
-            />
-            <Tip
-              label="Year income"
-              value={money(data?.yearIncome)}
-              icon={TrendingUp}
-            />
+            <Tip label="Total bookings" value={data?.totalBookings ?? 0} icon={ClipboardList} />
+            <Tip label="Active jobs" value={data?.activeJobs ?? 0} icon={Briefcase} />
+            <Tip label="Completed" value={data?.completedJobs ?? 0} icon={CheckCircle2} />
+            <Tip label="Month income" value={money(data?.monthIncome)} icon={Wallet} />
+            <Tip label="Year income" value={money(data?.yearIncome)} icon={TrendingUp} />
           </div>
 
-          {/* ========= CHART + ALERTS ========= */}
+          {/* Chart + Alerts */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* Earnings chart */}
-            <Card className="rounded-3xl border bg-card p-6 overflow-hidden">
+            {/* Earnings */}
+            <FxCard className="p-6 overflow-hidden">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-lg font-semibold">Earnings</p>
@@ -455,32 +357,15 @@ export default function ProviderDashboardOverview({
                   <AreaChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
                     <XAxis dataKey="label" tickMargin={8} />
-                    <YAxis
-                      tickFormatter={(v) => `${Math.round(v / 1000)}k`}
-                      width={40}
-                    />
+                    <YAxis tickFormatter={(v) => `${Math.round(v / 1000)}k`} width={40} />
                     <Tooltip
                       formatter={(value) => money(value)}
                       labelFormatter={(label) => `Month: ${label}`}
                     />
                     <defs>
-                      <linearGradient
-                        id="earningsFill"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="currentColor"
-                          stopOpacity={0.22}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="currentColor"
-                          stopOpacity={0.02}
-                        />
+                      <linearGradient id="earningsFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="currentColor" stopOpacity={0.22} />
+                        <stop offset="100%" stopColor="currentColor" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
 
@@ -496,38 +381,73 @@ export default function ProviderDashboardOverview({
                 </ResponsiveContainer>
               </div>
 
-              {/* Small actions */}
-              <div className="mt-4 flex flex-wrap items-center gap-2">
+              {/* ===== Earnings Insights ===== */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-2xl border bg-background/40 p-4">
+                <p className="text-xs text-muted-foreground">Growth</p>
+                <p className="mt-1 text-lg font-semibold text-emerald-600">
+                +32% this month
+                </p>
+            </div>
+
+            <div className="rounded-2xl border bg-background/40 p-4">
+                <p className="text-xs text-muted-foreground">Best month</p>
+                <p className="mt-1 text-lg font-semibold">
+                Feb — Rs. 21,670
+                </p>
+            </div>
+
+            <div className="rounded-2xl border bg-background/40 p-4">
+                <p className="text-xs text-muted-foreground">Next month estimate</p>
+                <p className="mt-1 text-lg font-semibold text-blue-600">
+                Rs. ~26,000
+                </p>
+            </div>
+            </div>
+
+            {/* ===== Smart Suggestions ===== */}
+            <div className="mt-6 rounded-2xl border bg-background/40 p-5">
+            <p className="font-semibold mb-2">Boost your earnings</p>
+
+            <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• Add more service categories</li>
+                <li>• Enable availability on weekends</li>
+                <li>• Respond faster to new bookings</li>
+            </ul>
+            </div>
+
+              {/* Actions */}
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Button
-                  variant="fixmate"
-                  className="rounded-2xl"
-                  onClick={onGoManageBookings}
+                    variant="fixmate"
+                    onClick={onGoManageBookings}
+                    className="w-full rounded-2xl justify-center"
                 >
-                  Go to Manage Bookings
+                    Go to Manage Bookings
                 </Button>
 
                 <Button
-                  variant="fixmateOutline"
-                  className="rounded-2xl"
-                  onClick={onGoServices}
+                    variant="fixmateOutline"
+                    onClick={onGoServices}
+                    className="w-full rounded-2xl justify-center"
                 >
-                  Add / Manage Services
+                    Add / Manage Services
                 </Button>
 
                 <Button
-                  variant="fixmateOutline"
-                  className="rounded-2xl"
-                  onClick={onGoCalendar}
-                >
-                  Update Availability
+                    variant="fixmateOutline"
+                    onClick={onGoProfile}
+                    className="w-full rounded-2xl justify-center"
+                    >
+                    Update Availability
                 </Button>
-              </div>
-            </Card>
+            </div>
+            </FxCard>
 
-            {/* Alerts + pie + profile */}
-            <Card className="rounded-3xl border bg-card p-6">
+            {/* Alerts + Pie + Profile */}
+            <FxCard className="p-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* LEFT: Alerts */}
+                {/* Alerts */}
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -585,16 +505,13 @@ export default function ProviderDashboardOverview({
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold">
-                          {alerts.verificationPending
-                            ? "Verification pending"
-                            : "Verified"}
+                          {alerts.verificationPending ? "Verification pending" : "Verified"}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {alerts.verificationPending
                             ? "Complete required info and submit verification."
                             : "Your account is approved."}
                         </p>
-
                         <p className="text-sm mt-2">
                           <span className="text-muted-foreground">
                             Availability:
@@ -608,7 +525,7 @@ export default function ProviderDashboardOverview({
                   </div>
                 </div>
 
-                {/* RIGHT: PIE */}
+                {/* Pie */}
                 <div className="rounded-3xl border bg-background/40 p-5">
                   <div className="flex items-center justify-between">
                     <p className="font-semibold">Jobs breakdown</p>
@@ -642,16 +559,11 @@ export default function ProviderDashboardOverview({
 
                   <div className="mt-2 space-y-2 text-sm">
                     {pieData.map((x, i) => (
-                      <div
-                        key={x.name}
-                        className="flex items-center justify-between"
-                      >
+                      <div key={x.name} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span
                             className="h-2.5 w-2.5 rounded-full"
-                            style={{
-                              background: PIE_COLORS[i % PIE_COLORS.length],
-                            }}
+                            style={{ background: PIE_COLORS[i % PIE_COLORS.length] }}
                           />
                           <span className="text-muted-foreground">{x.name}</span>
                         </div>
@@ -662,7 +574,7 @@ export default function ProviderDashboardOverview({
                 </div>
               </div>
 
-              {/* Profile health */}
+              {/* Profile Health */}
               <div className="mt-6 rounded-3xl border bg-background/40 p-5">
                 <div className="flex items-center justify-between">
                   <p className="font-semibold">Profile health</p>
@@ -705,10 +617,10 @@ export default function ProviderDashboardOverview({
                   </div>
                 </div>
               </div>
-            </Card>
+            </FxCard>
           </div>
 
-          {/* ========= TODAY + UPCOMING ========= */}
+          {/* Today + Upcoming */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <BookingTable
               title="Today’s bookings"
