@@ -67,3 +67,15 @@ export const rejectBookingApi = async (bookingId, providerServiceId, reason) => 
     }
   );
 };
+
+export const getProviderDashboardSummary = async () => {
+  const auth = getAuthUser();
+
+  const res = await axios.get(`${API}/api/provider/dashboard/summary`, {
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return res.data;
+};

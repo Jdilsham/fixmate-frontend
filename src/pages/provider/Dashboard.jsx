@@ -1461,32 +1461,7 @@ const handleStartJob = async () => {
             <>
 
             {/* DASHBOARD */}
-            {activeTab === "dashboard" && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                  <Card className="p-4">
-                    <p className="text-sm text-muted-foreground">Revenue</p>
-                    <p className="text-2xl font-semibold">Rs. 0</p>
-                  </Card>
 
-                  <Card className="p-4">
-                    <p className="text-sm text-muted-foreground">
-                      {role === "SERVICE_PROVIDER"
-                        ? "Jobs Completed"
-                        : "Requests"}
-                    </p>
-                    <p className="text-2xl font-semibold">0</p>
-                  </Card>
-
-                  <Card className="p-4">
-                    <p className="text-sm text-muted-foreground">Rating</p>
-                    <p className="text-2xl font-semibold">—</p>
-                  </Card>
-                </div>
-
-                <BookingsTable role={role} bookings={bookings} />
-              </>
-            )}
 
             {/* SERVICES */}
             {activeTab === "services" && role === "SERVICE_PROVIDER" && (
