@@ -2341,6 +2341,8 @@ const handleStartJob = async () => {
               <>
               {/* ================= PROFILE HEADER ================= */}
               <Card className="relative overflow-hidden rounded-3xl border mb-10">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
+
                 {/* soft background */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-muted/30" />
                 <div className="relative p-6 md:p-8">
@@ -2586,13 +2588,16 @@ const handleStartJob = async () => {
 
                     {/* ================= BASIC INFORMATION ================= */}
                     <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-5 shadow-sm">
+                    
                       <div className="flex items-center justify-between">
+                        
                         <div>
                           <h3 className="text-lg font-semibold">Basic Information</h3>
                           <p className="text-sm text-muted-foreground">
                             Personal details visible on your profile
                           </p>
                         </div>
+                        
 
                         {editingSection !== "basic" && (
                          <Button

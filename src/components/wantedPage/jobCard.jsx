@@ -12,7 +12,8 @@ export default function JobCard({ profession, description, location, contact }) 
   return (
     <Card className="w-full max-w-5xl mx-auto rounded-3xl border border-border bg-card/65 dark:bg-card/45 backdrop-blur-md shadow-xl overflow-hidden">
       {/* top gradient line */}
-      <div className="h-1 w-full bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
+
 
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

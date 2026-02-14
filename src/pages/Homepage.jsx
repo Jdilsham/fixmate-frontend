@@ -39,7 +39,6 @@ export default function Homepage() {
       <PageBackground />
       <Header />
 
-      {/* ================= HERO (FULL WIDTH DESIGN) ================= */}
       <section className="relative w-full">
         
         <div className="w-full px-6 md:px-12 lg:px-16 pt-24 md:pt-28 pb-16">
@@ -96,8 +95,8 @@ export default function Homepage() {
       <div className="h-10" />
       </section>
 
-      {/* ================= SERVICES ================= */}
       <section className="w-full">
+        
         <div className="w-full px-6 md:px-12 lg:px-16 pb-20 md:pb-28">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
@@ -141,7 +140,6 @@ export default function Homepage() {
         </div>
       </section>
 
-      {/* ================= WHY FIXMATE ================= */}
       <section className="w-full">
         <div className="w-full px-6 md:px-12 lg:px-16 pb-20 md:pb-28">
           <div className="max-w-6xl mx-auto">
@@ -179,7 +177,6 @@ export default function Homepage() {
         </div>
       </section>
 
-      {/* ================= FOOTER ================= */}
       <section className="w-full pt-10 pb-16">
         <div className="w-full px-6 md:px-12 lg:px-16">
           <div className="max-w-6xl mx-auto">

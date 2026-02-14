@@ -1,5 +1,6 @@
 export default function AddServiceCard({ onClick }) {
   return (
+    
     <button
       type="button"
       onClick={onClick}
@@ -16,9 +17,14 @@ export default function AddServiceCard({ onClick }) {
         transition-all duration-300
         flex items-center justify-center
         text-left
+        overflow-auto
       "
     >
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
+
+      
       <div className="flex flex-col items-center text-center px-6">
+        
         {/* Icon */}
         <div
           className="
@@ -30,6 +36,7 @@ export default function AddServiceCard({ onClick }) {
             group-hover:scale-110
           "
         >
+          
           <span className="text-3xl font-semibold text-slate-700 dark:text-slate-200">
             +
           </span>
