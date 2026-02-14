@@ -100,7 +100,7 @@ export async function updateAvailability() {
     }
   );
 
-  return res.data; // { isAvailable: true/false }
+  return res.data; 
 }
 
 
@@ -122,9 +122,8 @@ export async function updateProviderProfile(payload) {
   return res.data;
 }
 
-// =======================
+
 // PROVIDER ADDRESS APIs
-// =======================
 
 // GET provider address
 export async function getProviderAddress() {
@@ -140,7 +139,7 @@ export async function getProviderAddress() {
     }
   );
 
-  return res.data; // null OR address object
+  return res.data; 
 }
 
 // ADD provider address
@@ -223,9 +222,8 @@ export async function updateProfessionalInfo(payload) {
   return res.data;
 }
 
-// =======================
+
 // PROVIDER ID VERIFICATION
-// =======================
 
 export async function uploadIdFront(file) {
   const auth = getAuthUser();
@@ -324,7 +322,6 @@ export const addProviderService = async (formData) => {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      // DO NOT set Content-Type
     },
     body: formData,
   });
@@ -382,9 +379,8 @@ export async function updateCustomerProfile(payload) {
   });
 }
 
-// =======================
+
 // CUSTOMER ADDRESS APIs
-// =======================
 
 // GET customer address
 export async function getCustomerAddress() {
@@ -398,7 +394,7 @@ export async function getCustomerAddress() {
     }
   );
 
-  return res.data; // null OR address
+  return res.data; 
 }
 
 // ADD customer address
@@ -439,7 +435,7 @@ export async function uploadUserProfilePicture(file) {
   if (!auth) throw new Error("Not authenticated");
 
   const formData = new FormData();
-  formData.append("file", file); // MUST be "file"
+  formData.append("file", file)
 
   const res = await axios.post(
     `${API}/api/user/profile/image`,
@@ -452,7 +448,7 @@ export async function uploadUserProfilePicture(file) {
     }
   );
 
-  return res.data; // image URL
+  return res.data; 
 }
 
 

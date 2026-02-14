@@ -7,6 +7,7 @@ import { Eye, CheckCircle, XCircle } from "lucide-react";
 import { Camera } from "lucide-react";
 import PageBackground from "../../components/animate-ui/components/backgrounds/PageBackground";
 import ProviderDashboardOverview from "../../components/provider-dashboard/ProviderDashboardOverview";
+import CustomerDashboard from "../../components/customer-dashboard/CustomerDashboard";
 
 
 import BookingsTable from "../../components/dashboard/bookingTable";
@@ -1474,6 +1475,17 @@ const handleStartJob = async () => {
               />
             )}
 
+            {/* CUSTOMER DASHBOARD */}
+            {activeTab === "dashboard" && role === "CUSTOMER" && (
+              <CustomerDashboard
+                onViewAll={() => setActiveTab("myBookings")}
+                onPayNow={(booking) => {
+                  setSelectedBooking(booking);
+                  setCustomerManageBookingOpen(true);
+                }}
+              />
+            )}
+
             {/* SERVICES */}
             {activeTab === "services" && role === "SERVICE_PROVIDER" && (
               <>
@@ -1862,6 +1874,7 @@ const handleStartJob = async () => {
                               cursor-pointer
                             "
                           >
+                            
                             <option value="ALL">All</option>
                             <option value="PENDING">Pending</option>
                             <option value="ACCEPTED">Accepted</option>
@@ -1937,6 +1950,7 @@ const handleStartJob = async () => {
                                     transition
                                   "
                                 >
+                                  
                                   {/* Customer */}
                                   <div className="flex items-center gap-3 min-w-0">
                                     <div
@@ -2161,6 +2175,7 @@ const handleStartJob = async () => {
                             transition
                             cursor-pointer
                           "
+                          
                         >
                           <option value="ALL">All</option>
                           <option value="PENDING">Pending</option>
@@ -2241,11 +2256,15 @@ const handleStartJob = async () => {
                 {!customerBookingsLoading &&
                   filterCustomerBookings(customerBookings).length > 0 && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      
                       {filterCustomerBookings(customerBookings).map((b) => (
                         <Card
                           key={b.bookingId}
-                          className="p-5 rounded-2xl border hover:shadow-md transition"
+                          className="relative overflow-hidden p-5 rounded-2xl border hover:shadow-md transition"
                         >
+                          {/* TOP GRADIENT LINE */}
+                          <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-accent via-primary to-cyan-400" />
+
                           {/* Top Row */}
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -2268,6 +2287,7 @@ const handleStartJob = async () => {
 
                           {/* Details */}
                           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            {/* Scheduled */}
                             <div className="rounded-xl bg-muted/30 p-3">
                               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Scheduled
@@ -2285,19 +2305,37 @@ const handleStartJob = async () => {
                               </p>
                             </div>
 
+                            {/* Amount */}
                             <div className="rounded-xl bg-muted/30 p-3">
                               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Amount
                               </p>
+                              <p className="font-semibold">{formatPrice(b.amount)}</p>
+                            </div>
+
+                            {/* Pricing Type */}
+                            <div className="rounded-xl bg-muted/30 p-3">
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Pricing Type
+                              </p>
                               <p className="font-semibold">
-                                {formatPrice(b.paymentAmount)}
+                                {(b.pricingType ?? "—").replaceAll("_", " ")}
+                              </p>
+                            </div>
+
+                            {/* Provider Phone */}
+                            <div className="rounded-xl bg-muted/30 p-3">
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Provider Phone
+                              </p>
+                              <p className="font-semibold">
+                                {b.providerPhone ?? "—"}
                               </p>
                             </div>
                           </div>
 
                           {/* Actions */}
                           <div className="mt-5 flex items-center justify-end gap-2">
-                            {/* VIEW (same behavior as your old code) */}
                             <Button
                               size="sm"
                               variant="secondary"
@@ -2310,7 +2348,6 @@ const handleStartJob = async () => {
                               View
                             </Button>
 
-                            {/* PAY (same behavior as your old code) */}
                             {b.status === "PAYMENT_PENDING" && (
                               <Button
                                 size="sm"
