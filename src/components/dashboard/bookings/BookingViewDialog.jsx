@@ -101,6 +101,12 @@ export default function BookingViewDialog({
     );
   };
 
+  const getDisplayAmount = (b) => {
+    const v = b?.paymentAmount ?? b?.amount ?? b?.finalAmount ?? b?.totalAmount ?? null;
+    const n = toNum(v);
+    return n;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
@@ -249,20 +255,20 @@ export default function BookingViewDialog({
                 />
               )}
 
-              <Row label="Amount">
-                {typeof booking.paymentAmount === "number" ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
-                      {formatPrice(booking.paymentAmount)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({String(booking.paymentType || "").replaceAll("_", " ")})
-                    </span>
+            <Row label="Amount">
+              {getDisplayAmount(booking) !== null ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                    {formatPrice(getDisplayAmount(booking))}
                   </span>
-                ) : (
-                  <span className="text-muted-foreground">To be decided</span>
-                )}
-              </Row>
+                  <span className="text-xs text-muted-foreground">
+                    ({String(booking.paymentType ?? booking.pricingType ?? "").replaceAll("_", " ")})
+                  </span>
+                </span>
+              ) : (
+                <span className="text-muted-foreground">To be decided</span>
+              )}
+            </Row>
             </Section>
           </div>
 
