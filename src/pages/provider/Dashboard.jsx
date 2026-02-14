@@ -5,6 +5,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { getAuthUser } from "../../../utils/auth";
 import { Eye, CheckCircle, XCircle } from "lucide-react";
 import { Camera } from "lucide-react";
+import PageBackground from "../../components/animate-ui/components/backgrounds/PageBackground";
+import ProviderDashboardOverview from "../../components/provider-dashboard/ProviderDashboardOverview";
 
 
 import BookingsTable from "../../components/dashboard/bookingTable";
@@ -42,7 +44,10 @@ import StartJobConfirmDialog from "../../components/dashboard/bookings/StartJobC
 import EndWorkDialog from "../../components/dashboard/bookings/EndWorkDialog";
 import { getBookingStatusView } from "../../../utils/bookingStatus";
 import { formatWorkedTime, calculateFinalAmount } from "../../../utils/time";
-
+import CustomerManageBooking from "../../components/dashboard/bookings/CustomerManageBooking";
+import { getProviderPaymentByBooking, confirmProviderPayment } from "../../../utils/payment";
+import ProviderManageBooking from "../../components/dashboard/bookings/ProviderManageBooking";
+import AcceptBookingDialog from "../../components/dashboard/bookings/AcceptBookingDialog";
 
 
 
@@ -72,9 +77,10 @@ const formatPrice = (amount) => {
   return `Rs. ${Number(amount).toLocaleString("en-LK")}`;
 };
 
-/* =======================
-   ROLE CONFIG
-======================= */
+const MANAGED_KEY = "activeManagedBooking";
+
+
+
 const ROLE_CONFIG = {
   SERVICE_PROVIDER: {
     tabs: [
@@ -137,8 +143,6 @@ export default function Dashboard() {
     return localStorage.getItem("bookingStatusFilter") || "ALL";
   });
 
-
-
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem("dashboardActiveTab") || "dashboard";
   });
@@ -151,19 +155,26 @@ export default function Dashboard() {
 
 
   const [date, setDate] = useState(new Date());
-  // Calendar – availability view
+
   const [selectedDate, setSelectedDate] = useState(null);
   const [dateBookings, setDateBookings] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
 
-  // ================= CUSTOMER CALENDAR (READ-ONLY) =================
   const [customerSelectedDate, setCustomerSelectedDate] = useState(null);
   const [customerDateBookings, setCustomerDateBookings] = useState([]);
   const [customerCalendarLoading, setCustomerCalendarLoading] = useState(false);
 
+
+  const [calendarSearch, setCalendarSearch] = useState("");
+  const [calendarStatusFilter, setCalendarStatusFilter] = useState("ALL");
+
   const [isAvailable, setIsAvailable] = useState(false);
   const [editImageOpen, setEditImageOpen] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
+
+  const [acceptOpen, setAcceptOpen] = useState(false);
+  const [acceptBooking, setAcceptBooking] = useState(null);
+  const [acceptLoading, setAcceptLoading] = useState(false);
 
   const user = authUser && profile ? { ...authUser, ...profile } : authUser;
   const role = user?.role;
@@ -193,6 +204,9 @@ export default function Dashboard() {
 
   const [paymentInfo, setPaymentInfo] = useState(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
+
+  const [providerPaymentInfo, setProviderPaymentInfo] = useState(null);
+  const [providerPaymentLoading, setProviderPaymentLoading] = useState(false);
 
 
   const [profileForm, setProfileForm] = useState({
@@ -319,6 +333,10 @@ export default function Dashboard() {
   const [customerBookings, setCustomerBookings] = useState([]);
   const [customerBookingsLoading, setCustomerBookingsLoading] = useState(false);
 
+  // CUSTOMER MyBookings UI helpers (customer only)
+  const [customerStatusFilter, setCustomerStatusFilter] = useState("ALL");
+  const [customerSearch, setCustomerSearch] = useState("");
+
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectBooking, setRejectBooking] = useState(null);
 
@@ -331,6 +349,8 @@ export default function Dashboard() {
   const [pendingAvailability, setPendingAvailability] = useState(null);
 
   const [showActivateModal, setShowActivateModal] = useState(false);
+
+  const [customerManageBookingOpen, setCustomerManageBookingOpen] = useState(false);
 
   // ================= ACTIVATE ACCOUNT FLOW =================
   const [activateStep, setActivateStep] = useState(1);
@@ -348,6 +368,15 @@ export default function Dashboard() {
   const [endWorkOpen, setEndWorkOpen] = useState(false);
   const [startConfirmOpen, setStartConfirmOpen] = useState(false);
   const [finalElapsedSeconds, setFinalElapsedSeconds] = useState(null);
+
+
+  const refreshManagedBooking = async (bookingId) => {
+    const updated = await getProviderBookings(user.id);     // refetch list
+    setProviderBookings(updated);
+
+    const latest = updated.find(b => b.bookingId === bookingId);
+    if (latest) setManagedBooking(prev => ({ ...prev, ...latest }));
+  };
 
   useEffect(() => {
     if (!managedBooking) return;
@@ -418,6 +447,53 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (role !== "SERVICE_PROVIDER") return;
+    if (!providerBookings || providerBookings.length === 0) return;
+
+    const raw = localStorage.getItem(MANAGED_KEY);
+    if (!raw) return;
+
+    try {
+      const { bookingId } = JSON.parse(raw);
+      if (!bookingId) return;
+
+      const booking = providerBookings.find((b) => b.bookingId === bookingId);
+
+      if (!booking) {
+        localStorage.removeItem(MANAGED_KEY);
+        return;
+      }
+
+      setManagedBooking((prev) =>
+        prev
+          ? prev
+          : {
+              ...booking,
+              bookingId: booking.bookingId ?? booking.id,
+              scheduledAt: booking.scheduledAt,
+              startedAt: booking.startedAt ?? null,
+            }
+      );
+
+      setActiveTab("managebookings");
+    } catch (e) {
+      localStorage.removeItem(MANAGED_KEY);
+    }
+  }, [role, providerBookings]);
+
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
+    if (!managedBooking?.bookingId) return;
+
+    if (["COMPLETED", "REJECTED"].includes(managedBooking.status)) {
+      localStorage.removeItem(MANAGED_KEY); // activeManagedBooking
+      localStorage.removeItem("activeJob");
+      localStorage.removeItem("elapsedSeconds");
+      localStorage.removeItem("pendingPaymentBooking");
+    }
+  }, [role, managedBooking?.status, managedBooking?.bookingId]);
+
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
 
     if (!providerBookings || providerBookings.length === 0) return;
 
@@ -447,6 +523,37 @@ export default function Dashboard() {
     }
   }, [providerBookings, role]);
     
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
+    if (!managedBooking?.bookingId) return;
+
+    let alive = true;
+
+    (async () => {
+      try {
+        // always keep booking details fresh
+        const updated = await getProviderBookings(user.id);
+        if (!alive) return;
+
+        setProviderBookings(updated);
+
+        const latest = updated.find(b => b.bookingId === managedBooking.bookingId);
+        if (latest) setManagedBooking(prev => (prev ? { ...prev, ...latest } : prev));
+
+        // if payment pending, sync payment info
+        if (latest?.status === "PAYMENT_PENDING") {
+          const p = await getProviderPaymentByBooking(managedBooking.bookingId);
+          if (!alive) return;
+          setProviderPaymentInfo(p);
+        }
+      } catch (e) {
+        // keep quiet to avoid toast spam
+        console.warn("sync managed booking failed", e);
+      }
+    })();
+
+    return () => { alive = false; };
+  }, [role, user?.id, managedBooking?.bookingId]);
 
   useEffect(() => {
     if (!providerBookings.length) return;
@@ -476,6 +583,35 @@ export default function Dashboard() {
     // ensure correct tab
     setActiveTab("managebookings");
   }, [providerBookings]);
+
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
+    if (!managedBooking?.bookingId) return;
+
+    if (managedBooking.status !== "PAYMENT_PENDING") {
+      setProviderPaymentInfo(null);
+      return;
+    }
+
+    let alive = true;
+
+    (async () => {
+      try {
+        setProviderPaymentLoading(true);
+        const data = await getProviderPaymentByBooking(managedBooking.bookingId);
+        if (alive) setProviderPaymentInfo(data);
+      } catch (e) {
+        // don't spam backend — just keep current UI state
+        console.warn("Failed to fetch provider payment:", e);
+      } finally {
+        if (alive) setProviderPaymentLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [role, managedBooking?.bookingId, managedBooking?.status]);
 
 
 
@@ -738,6 +874,69 @@ const handleUploadWorkPdf = () => {
     .toLowerCase()
     .replaceAll("_", " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const CUSTOMER_STATUS_PRIORITY = {
+    PAYMENT_PENDING: 1,
+    ACCEPTED: 2,
+    PENDING: 3,
+    IN_PROGRESS: 4,
+    COMPLETED: 5,
+    REJECTED: 6,
+  };
+
+  const sortCustomerBookings = (bookings = []) => {
+    return [...bookings].sort((a, b) => {
+      const statusDiff =
+        (CUSTOMER_STATUS_PRIORITY[a.status] ?? 99) -
+        (CUSTOMER_STATUS_PRIORITY[b.status] ?? 99);
+
+      if (statusDiff !== 0) return statusDiff;
+
+      const dateA = new Date(a.scheduledAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.scheduledAt || b.createdAt || 0).getTime();
+
+      return dateB - dateA;
+    });
+  };
+
+  const filterCustomerBookings = (bookings = []) => {
+    let list = [...bookings];
+
+    // status filter
+    if (customerStatusFilter !== "ALL") {
+      list = list.filter((b) => b.status === customerStatusFilter);
+    }
+
+    const q = customerSearch.trim().toLowerCase();
+    if (q) {
+      list = list.filter((b) => {
+        const service = (b.serviceName || "").toLowerCase();
+        const provider = (b.providerName || "").toLowerCase();
+        return service.includes(q) || provider.includes(q);
+      });
+    }
+
+    return sortCustomerBookings(list);
+  };
+
+const customerStatusBadgeClass = (status) => {
+  switch (status) {
+    case "PENDING":
+      return "bg-yellow-500/20 text-yellow-500";
+    case "ACCEPTED":
+      return "bg-green-500/20 text-green-500";
+    case "IN_PROGRESS":
+      return "bg-orange-500/20 text-orange-500";
+    case "PAYMENT_PENDING":
+      return "bg-blue-500/20 text-blue-500";
+    case "COMPLETED":
+      return "bg-emerald-500/20 text-emerald-500";
+    case "REJECTED":
+      return "bg-red-500/20 text-red-500";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+};
 
 
   const loadBookingsForDate = async (day) => {
@@ -1085,7 +1284,7 @@ const handleStartJob = async () => {
 
   const handleRequestPayment = async (booking) => {
     try {
-      await fetch(`${API}/api/provider/payments/request`, {
+      const res = await fetch(`${API}/api/provider/payments/request`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1098,38 +1297,87 @@ const handleStartJob = async () => {
         }),
       });
 
-      localStorage.removeItem("pendingPaymentBooking");
+      let created = null;
+      try {
+        created = await res.json();
+      } catch {
+
+      }
+
+      if (!res.ok) {
+        throw new Error(created?.message || "Failed to request payment");
+      }
+
+      setProviderPaymentInfo(
+        created ?? {
+          paymentId: true, 
+          paymentStatus: "REQUESTED",
+          paymentMethod: null,
+        }
+      );
+
+      toast.success("Payment request sent");
+
+      try {
+        const p = await getProviderPaymentByBooking(booking.bookingId ?? booking.id);
+        setProviderPaymentInfo(p);
+      } catch (e) {
+        console.warn("Payment created, but failed to fetch payment info:", e);
+      }
 
       setProviderBookings((prev) =>
         prev.map((b) =>
-          b.bookingId === booking.bookingId
+          b.bookingId === (booking.bookingId ?? booking.id)
             ? { ...b, status: "PAYMENT_PENDING" }
             : b
         )
       );
 
-      if (managedBooking?.bookingId === booking.bookingId) {
-        setManagedBooking((prev) => ({
-          ...prev,
-          status: "PAYMENT_REQUESTED",
-        }));
+      if (managedBooking?.bookingId === (booking.bookingId ?? booking.id)) {
+        setManagedBooking((prev) => (prev ? { ...prev, status: "PAYMENT_PENDING" } : prev));
       }
 
-      toast.success("Payment request sent");
+      localStorage.removeItem("pendingPaymentBooking");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to request payment");
+      toast.error(err?.message || "Failed to request payment");
     }
   };
 
+  const providerStatusBadge = (status) => {
+    switch (status) {
+      case "PENDING":
+        return "bg-yellow-500/15 text-yellow-400 border-yellow-500/20";
+      case "ACCEPTED":
+        return "bg-blue-500/15 text-blue-400 border-blue-500/20";
+      case "IN_PROGRESS":
+        return "bg-orange-500/15 text-orange-400 border-orange-500/20";
+      case "PAYMENT_PENDING":
+        return "bg-emerald-500/15 text-emerald-400 border-emerald-500/20";
+      case "COMPLETED":
+        return "bg-green-500/15 text-green-400 border-green-500/20";
+      case "REJECTED":
+        return "bg-red-500/15 text-red-400 border-red-500/20";
+      default:
+        return "bg-muted text-muted-foreground border-border";
+    }
+  };
+  
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
+    <div className="relative min-h-screen text-foreground overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <PageBackground />
+      </div>
 
-      <div className="max-w-8xl mx-auto px-4 md:px-6 pt-6 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-        <aside className="hidden lg:block w-64 shrink-0">
-          <div className="bg-card border rounded-2xl p-4 sticky top-24 h-[calc(100vh-140px)] overflow-auto">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
+    <Header />
+
+        <div className="max-w-8xl mx-auto px-4 md:px-6 pt-6
+          grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6
+          h-[calc(100vh-96px)] overflow-hidden">
+        <aside className="hidden lg:block w-64 shrink-0 h-full">
+          <div className="bg-card/60 backdrop-blur-xl border border-white/10 dark:border-white/10
+            rounded-2xl p-4 shadow-lg h-full flex flex-col">
+           <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
               Navigation
             </p>
 
@@ -1152,34 +1400,78 @@ const handleStartJob = async () => {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0">
-          <div className="bg-card border rounded-2xl p-6">
+        <main className="flex-1 min-w-0 overflow-y-auto pr-1">
+          <div className="bg-card/55 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-2xl p-6 shadow-lg">
+            {/* CUSTOMER MANAGE BOOKING (OVERRIDES TABS) */}
+            {role === "CUSTOMER" && customerManageBookingOpen && (
+              <CustomerManageBooking
+                booking={selectedBooking}
+                onBack={() => {
+                  setCustomerManageBookingOpen(false);
+                  setSelectedBooking(null);
+                  setActiveTab("myBookings");
+                }}
+              />
+            )}
+
+            {/* PROVIDER MANAGE BOOKING (OVERRIDES TABS) */}
+            {role === "SERVICE_PROVIDER" && activeTab === "managebookings" && (
+              <ProviderManageBooking
+                booking={managedBooking}
+                providerPaymentInfo={providerPaymentInfo}
+                providerPaymentLoading={providerPaymentLoading}
+                elapsedSeconds={elapsedSeconds}
+                onBack={() => {
+                  setActiveTab("pendingBooking"); // only navigation, no logic changed
+                }}
+                onStart={() => setStartConfirmOpen(true)}
+                onEnd={() => {
+                  setFinalElapsedSeconds(elapsedSeconds);
+                  setEndWorkOpen(true);
+                }}
+                onRequestPayment={async () => {
+                  await handleRequestPayment(managedBooking);
+
+                  // keep your existing refresh pattern (same logic you already do in UI)
+                  try {
+                    const p = await getProviderPaymentByBooking(managedBooking.bookingId);
+                    setProviderPaymentInfo(p);
+                  } catch {}
+
+                  await refreshManagedBooking(managedBooking.bookingId);
+                }}
+                onConfirmCash={async () => {
+                  await confirmProviderPayment(
+                    providerPaymentInfo.paymentId ?? providerPaymentInfo.id
+                  );
+                  toast.success("Payment confirmed");
+
+                  const updated = await getProviderBookings(user.id);
+                  setProviderBookings(updated);
+
+                  const p = await getProviderPaymentByBooking(managedBooking.bookingId);
+                  setProviderPaymentInfo(p);
+
+                  setManagedBooking((prev) =>
+                    prev ? { ...prev, status: "COMPLETED" } : prev
+                  );
+                }}
+              />
+            )}
+
+            {!(
+              (role === "CUSTOMER" && customerManageBookingOpen) ||
+              (role === "SERVICE_PROVIDER" && activeTab === "managebookings")
+            ) && (
+            <>
+
             {/* DASHBOARD */}
-            {activeTab === "dashboard" && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                  <Card className="p-4">
-                    <p className="text-sm text-muted-foreground">Revenue</p>
-                    <p className="text-2xl font-semibold">Rs. 0</p>
-                  </Card>
-
-                  <Card className="p-4">
-                    <p className="text-sm text-muted-foreground">
-                      {role === "SERVICE_PROVIDER"
-                        ? "Jobs Completed"
-                        : "Requests"}
-                    </p>
-                    <p className="text-2xl font-semibold">0</p>
-                  </Card>
-
-                  <Card className="p-4">
-                    <p className="text-sm text-muted-foreground">Rating</p>
-                    <p className="text-2xl font-semibold">—</p>
-                  </Card>
-                </div>
-
-                <BookingsTable role={role} bookings={bookings} />
-              </>
+            {activeTab === "dashboard" && role === "SERVICE_PROVIDER" && (
+              <ProviderDashboardOverview
+                onGoManageBookings={() => setActiveTab("pendingBooking")}
+                onGoServices={() => setActiveTab("services")}
+                onGoProfile={() => setActiveTab("profile")}
+              />
             )}
 
             {/* SERVICES */}
@@ -1197,223 +1489,416 @@ const handleStartJob = async () => {
             {/* CALENDAR */}
             {activeTab === "calendar" && role === "SERVICE_PROVIDER" && (
               <>
-                <h2 className="text-lg font-semibold mb-4">Availability</h2>
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                  <div>
+                    <h2 className="text-2xl font-semibold tracking-tight">Availability</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Pick a date to view bookings. Busy dates are marked with a red dot.
+                    </p>
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-6">
-                  
-                  {/* LEFT – Calendar */}
-                  <Card className="p-4 rounded-2xl flex items-center justify-center">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(day) => {
-                        setSelectedDate(day);
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const today = new Date();
+                        setSelectedDate(today);
                         setDateBookings([]);
-                        loadBookingsForDate(day);
+                        loadBookingsForDate(today);
                       }}
-                      disabled={(date) => date < new Date().setHours(0, 0, 0, 0)}
-                      modifiers={{
-                        busy: (date) =>
-                          busyDates.has(date.toISOString().split("T")[0]),
+                    >
+                      Today
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedDate(null);
+                        setDateBookings([]);
+                        setCalendarSearch("");
+                        setCalendarStatusFilter("ALL");
                       }}
-                      modifiersClassNames={{
-                        busy:
-                          "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-red-500",
-                      }}
-                      className="rounded-xl border"
-                    />
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
+                  <Card className="relative overflow-hidden rounded-3xl border bg-card shadow-sm">
+                    <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
+
+                    {/* Content */}
+                    <div className="p-5 pt-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold">Calendar</p>
+
+                        {/* Legend */}
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500" />
+                            Busy
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border bg-background/40 p-3 flex items-center justify-center">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(day) => {
+                            setSelectedDate(day);
+                            setDateBookings([]);
+                            setCalendarSearch("");
+                            setCalendarStatusFilter("ALL");
+                            loadBookingsForDate(day);
+                          }}
+                          disabled={(date) => date < new Date().setHours(0, 0, 0, 0)}
+                          modifiers={{
+                            busy: (date) => busyDates.has(date.toISOString().split("T")[0]),
+                          }}
+                          modifiersClassNames={{
+                            busy:
+                              "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-red-500",
+                          }}
+                          className="rounded-xl"
+                        />
+                      </div>
+
+                      {/* Selected date info */}
+                      <div className="mt-4 rounded-2xl border bg-muted/20 p-4">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Selected Date
+                        </p>
+
+                        <p className="text-sm font-semibold mt-1">
+                          {selectedDate
+                            ? selectedDate.toLocaleDateString("en-LK", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "2-digit",
+                              })
+                            : "No date selected"}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {selectedDate
+                            ? "Bookings will appear on the right."
+                            : "Select a date to view bookings."}
+                        </p>
+                      </div>
+                    </div>
                   </Card>
 
+                  <Card className="relative overflow-hidden rounded-3xl border bg-card shadow-sm">
+                    <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
 
-                  {/* RIGHT – Bookings */}
-                  <Card className="p-6 rounded-2xl">
-                    {!selectedDate && (
-                      <p className="text-muted-foreground">
-                        Select a date to view bookings
-                      </p>
-                    )}
+                    {/* Content */}
+                    <div className="p-6 pt-7">
+                      {/* Top bar */}
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+                        <div className="min-w-0">
+                          <p className="text-lg font-semibold">Bookings</p>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedDate
+                              ? "Manage bookings for the selected day"
+                              : "Select a date to see bookings"}
+                          </p>
+                        </div>
 
-                    {calendarLoading && (
-                      <p className="text-sm text-muted-foreground">
-                        Loading bookings...
-                      </p>
-                    )}
+                        {/* Controls */}
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-end">
+                          <input
+                            value={calendarSearch}
+                            onChange={(e) => setCalendarSearch(e.target.value)}
+                            placeholder="Search by customer or service..."
+                            className="
+                              w-full sm:w-72
+                              rounded-full border
+                              bg-background
+                              px-4 py-2
+                              text-sm
+                              focus:outline-none focus:ring-2 focus:ring-primary/40
+                            "
+                            disabled={!selectedDate}
+                          />
 
-                    {selectedDate && !calendarLoading && dateBookings.length === 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        No bookings for this date
-                      </p>
-                    )}
+                          <div className="relative">
+                            <select
+                              value={calendarStatusFilter}
+                              onChange={(e) => setCalendarStatusFilter(e.target.value)}
+                              disabled={!selectedDate}
+                              className="
+                                appearance-none
+                                rounded-full
+                                px-5 py-2 pr-10
+                                text-sm font-semibold
+                                bg-background
+                                text-foreground
+                                border border-border
+                                shadow-sm
+                                hover:bg-muted
+                                focus:outline-none
+                                focus:ring-2 focus:ring-primary/40
+                                transition
+                                cursor-pointer
+                                disabled:opacity-60 disabled:cursor-not-allowed
+                              "
+                            >
+                              <option value="ALL">All</option>
+                              <option value="PENDING">Pending</option>
+                              <option value="ACCEPTED">Accepted</option>
+                              <option value="IN_PROGRESS">In Progress</option>
+                              <option value="PAYMENT_PENDING">Payment Pending</option>
+                              <option value="COMPLETED">Completed</option>
+                              <option value="REJECTED">Rejected</option>
+                            </select>
 
-                    {dateBookings.length > 0 && (
-                      <div className="space-y-3">
-                        {dateBookings.map((b) => (
-                          <div
-                            key={b.bookingId}
-                            className="flex items-center justify-between rounded-xl border p-4 hover:bg-muted/40 transition"
-                          >
-                            <div>
-                              <p className="font-medium">{b.customerName}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {b.serviceName}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(b.scheduledAt).toLocaleTimeString("en-LK", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </p>
-                            </div>
+                            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                              ▼
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                            <div className="flex items-center gap-2">
-                              {/* STATUS */}
-                              <span
-                                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  b.status === "PENDING"
-                                    ? "bg-yellow-500/20 text-yellow-500"
-                                    : b.status === "ACCEPTED"
-                                    ? "bg-green-500/20 text-green-500"
-                                    : b.status === "COMPLETED"
-                                    ? "bg-emerald-500/20 text-emerald-500"
-                                    : b.status === "REJECTED"
-                                    ? "bg-red-500/20 text-red-500"
-                                    : "bg-muted text-muted-foreground"
-                                }`}
-                              >
-                                {b.status.replace("_", " ")}
+                      {/* Content */}
+                      {!selectedDate && (
+                        <div className="rounded-2xl border bg-muted/10 p-10 text-center">
+                          <p className="text-base font-semibold">No date selected</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Pick a date from the calendar to view bookings.
+                          </p>
+                        </div>
+                      )}
+
+                      {selectedDate && calendarLoading && (
+                        <div className="rounded-2xl border bg-muted/10 p-10 text-center">
+                          <p className="text-sm text-muted-foreground">Loading bookings...</p>
+                        </div>
+                      )}
+
+                      {selectedDate && !calendarLoading && (() => {
+                        const q = calendarSearch.trim().toLowerCase();
+                        let list = [...(dateBookings || [])];
+
+                        if (calendarStatusFilter !== "ALL") {
+                          list = list.filter((b) => b.status === calendarStatusFilter);
+                        }
+
+                        if (q) {
+                          list = list.filter((b) => {
+                            const name = (b.customerName || "").toLowerCase();
+                            const service = (b.serviceName || "").toLowerCase();
+                            return name.includes(q) || service.includes(q);
+                          });
+                        }
+
+                        const total = dateBookings?.length ?? 0;
+                        const shown = list.length;
+
+                        return (
+                          <>
+                            {/* Summary row */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                              <span className="inline-flex items-center gap-2 rounded-full border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
+                                <span className="w-2 h-2 rounded-full bg-primary/70" />
+                                Showing {shown} of {total}
                               </span>
 
-                              {/* VIEW */}
-                              <Button
-                                size="icon"
-                                variant="secondary"
-                                title="View booking"
-                                onClick={() => handleViewBooking(b)}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-
-                              {/* ACCEPT / REJECT ONLY IF PENDING */}
-                              {b.status === "PENDING" && (
-                                <>
-                                  <Button
-                                    size="icon"
-                                    title="Accept booking"
-                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                    onClick={() => handleAcceptBooking(b)}
-                                  >
-                                    <CheckCircle className="w-4 h-4" />
-                                  </Button>
-
-                                  <Button
-                                    size="icon"
-                                    variant="destructive"
-                                    title="Reject booking"
-                                    onClick={() => handleRejectBooking(b)}
-                                  >
-                                    <XCircle className="w-4 h-4" />
-                                  </Button>
-                                </>
-                              )}
+                              {q || calendarStatusFilter !== "ALL" ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCalendarSearch("");
+                                    setCalendarStatusFilter("ALL");
+                                  }}
+                                  className="text-xs font-semibold text-primary hover:underline"
+                                >
+                                  Reset filters
+                                </button>
+                              ) : null}
                             </div>
 
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                            {list.length === 0 ? (
+                              <div className="rounded-2xl border bg-muted/10 p-10 text-center">
+                                <p className="text-base font-semibold">No bookings found</p>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Try a different filter or search term.
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="max-h-[460px] overflow-auto pr-1 space-y-3">
+                                {list.map((b) => (
+                                  <div
+                                    key={b.bookingId}
+                                    className="
+                                      group
+                                      rounded-2xl border
+                                      bg-background/50
+                                      p-4
+                                      shadow-sm
+                                      hover:shadow-md
+                                      transition
+                                    "
+                                  >
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <p className="font-semibold truncate">{b.customerName}</p>
+                                        <p className="text-sm text-muted-foreground truncate">
+                                          {b.serviceName}
+                                        </p>
+
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                          <span className="rounded-full border px-2 py-1 bg-muted/30">
+                                            {b.scheduledAt
+                                              ? new Date(b.scheduledAt).toLocaleTimeString("en-LK", {
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                })
+                                              : "—"}
+                                          </span>
+
+                                          {b.bookingId ? (
+                                            <span className="rounded-full border px-2 py-1 bg-muted/30">
+                                              #{b.bookingId}
+                                            </span>
+                                          ) : null}
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center gap-2">
+                                        <span
+                                          className={`px-3 py-1 rounded-full text-xs font-semibold border ${providerStatusBadge(
+                                            b.status
+                                          )}`}
+                                        >
+                                          {String(b.status || "—").replaceAll("_", " ")}
+                                        </span>
+
+                                        <Button
+                                          size="icon"
+                                          variant="secondary"
+                                          title="View booking"
+                                          onClick={() => handleViewBooking(b)}
+                                        >
+                                          <Eye className="w-4 h-4" />
+                                        </Button>
+
+                                        {b.status === "PENDING" && (
+                                          <>
+                                            <Button
+                                              size="icon"
+                                              title="Accept booking"
+                                              className="bg-green-600 hover:bg-green-700 text-white"
+                                              onClick={() => handleAcceptBooking(b)}
+                                            >
+                                              <CheckCircle className="w-4 h-4" />
+                                            </Button>
+
+                                            <Button
+                                              size="icon"
+                                              variant="destructive"
+                                              title="Reject booking"
+                                              onClick={() => handleRejectBooking(b)}
+                                            >
+                                              <XCircle className="w-4 h-4" />
+                                            </Button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                   </Card>
                 </div>
               </>
             )}
 
-
             
-            {/* Pending requests */}
+            {/* Bookings */}
             {activeTab === "pendingBooking" && role === "SERVICE_PROVIDER" && (
               <>
-                <Card className="p-6 rounded-2xl bg-card border shadow-md">
+                <Card className="p-0 overflow-hidden rounded-3xl border bg-card shadow-sm">
+                  <div className="h-1 w-full bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
 
-                  <div className="flex items-center mb-6">
-                    {/* Left title */}
-                    <h2 className="text-xl font-semibold">
-                      Pending Bookings
-                    </h2>
-
-                    {/* Right controls */}
-                    <div className="ml-auto flex items-center gap-3">
-                      {/* Filter */}
-                      <div className="relative">
-                        <select
-                          value={bookingStatusFilter}
-                          onChange={(e) => setBookingStatusFilter(e.target.value)}
-                          className="
-                            appearance-none
-                            rounded-full
-                            px-5 py-2 pr-10
-                            text-sm font-semibold
-
-                            bg-background
-                            text-foreground
-                            border border-border
-                            shadow-sm
-
-                            hover:bg-muted
-                            focus:outline-none
-                            focus:ring-2 focus:ring-primary/40
-
-                            transition
-                            cursor-pointer
-
-                            [&>option]:bg-background
-                            [&>option]:text-foreground
-                          "
-                        >
-                          <option value="ALL">All Bookings</option>
-                          <option value="PENDING">Pending</option>
-                          <option value="ACCEPTED">Accepted</option>
-                          <option value="IN_PROGRESS">In Progress</option>
-                          <option value="PAYMENT_PENDING">Payment Pending</option>
-                          <option value="COMPLETED">Completed</option>
-                          <option value="REJECTED">Rejected</option>
-                        </select>
-
-                        {/* Chevron */}
-                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
-                          ▼
-                        </span>
+                  {/* Header */}
+                  <div className="px-6 py-5 border-b bg-card">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div>
+                        <h2 className="text-2xl font-semibold tracking-tight">
+                          Bookings
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          View requests, accept/reject pending ones, and manage accepted jobs.
+                        </p>
                       </div>
 
-                      {/* Count badge */}
-                      <span
-                        className="
-                          px-3 py-1
-                          rounded-full
-                          text-xs font-semibold
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Filter */}
+                        <div className="relative">
+                          <select
+                            value={bookingStatusFilter}
+                            onChange={(e) => setBookingStatusFilter(e.target.value)}
+                            className="
+                              appearance-none
+                              rounded-full
+                              px-5 py-2 pr-10
+                              text-sm font-medium
+                              bg-background
+                              text-foreground
+                              border border-border
+                              shadow-sm
+                              hover:bg-muted
+                              focus:outline-none focus:ring-2 focus:ring-primary/40
+                              transition
+                              cursor-pointer
+                            "
+                          >
+                            <option value="ALL">All</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="ACCEPTED">Accepted</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="PAYMENT_PENDING">Payment Pending</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="REJECTED">Rejected</option>
+                          </select>
 
-                          bg-muted
-                          text-muted-foreground
-                          border border-border
-                        "
-                      >
-                        {filterBookingsByStatus(providerBookings, bookingStatusFilter).length} bookings
-                      </span>
+                          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                            ▼
+                          </span>
+                        </div>
+
+                        {/* Count */}
+                        <span className="inline-flex items-center gap-2 rounded-full border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
+                          <span className="w-2 h-2 rounded-full bg-primary/60" />
+                          {filterBookingsByStatus(providerBookings, bookingStatusFilter).length} bookings
+                        </span>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Table */}
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead>
+                      <thead className="sticky top-0 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/70">
                         <tr className="border-b text-muted-foreground">
-                          <th className="py-3 px-2 font-medium">Customer</th>
-                          <th className="px-2 font-medium">Phone</th>
-                          <th className="px-2 font-medium">Address</th>
-                          <th className="px-2 font-medium text-center">Status</th>
-                          <th className="px-2 text-center font-medium">Actions</th>
+                          <th className="py-4 px-4 font-medium text-left">Customer</th>
+                          <th className="py-4 px-4 font-medium text-left">Phone</th>
+                          <th className="py-4 px-4 font-medium text-left">Address</th>
+                          <th className="py-4 px-4 font-medium text-center">Status</th>
+                          <th className="py-4 px-4 font-medium text-center">Actions</th>
                         </tr>
                       </thead>
 
-
-
-                      <tbody>
+                      <tbody className="divide-y divide-border">
                         {(() => {
                           const filtered = filterBookingsByStatus(
                             providerBookings,
@@ -1424,92 +1909,187 @@ const handleStartJob = async () => {
                           if (sorted.length === 0) {
                             return (
                               <tr>
-                                <td
-                                  colSpan={5}
-                                  className="py-6 text-center text-muted-foreground"
-                                >
-                                  No bookings found for{" "}
-                                  <strong>{bookingStatusFilter}</strong>
+                                <td colSpan={5} className="py-10 text-center">
+                                  <p className="text-base font-semibold">No bookings found</p>
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    Try changing the filter.
+                                  </p>
                                 </td>
                               </tr>
                             );
                           }
-
                           return sorted.map((b) => (
-                            <tr
-                              key={b.bookingId}
-                              className="border-b hover:bg-muted/40 transition"
-                            >
-                              <td className="py-3 px-2 font-medium">{b.customerName}</td>
-
-                              <td className="px-2 py-3 text-muted-foreground">
-                                {b.customerPhone}
-                              </td>
-
-                              <td className="px-2 py-3 text-muted-foreground">
-                                {b.bookingAddress}
-                              </td>
-
-                              <td className="px-2 py-3 text-center">
-                                {(() => {
-                                  const status = getBookingStatusView(b);
-                                  return (
-                                    <span
-                                      className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${status.className}`}
+                            <tr key={b.bookingId} className="border-0">
+                              <td colSpan={5} className="px-4 py-2">
+                                <div
+                                  className="
+                                    group
+                                    grid grid-cols-1 md:grid-cols-[260px_160px_1fr_140px_220px]
+                                    items-center
+                                    gap-4
+                                    rounded-2xl
+                                    border
+                                    bg-background/60
+                                    px-4 py-4
+                                    shadow-sm
+                                    hover:shadow-md
+                                    hover:-translate-y-[1px]
+                                    transition
+                                  "
+                                >
+                                  {/* Customer */}
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div
+                                      className="
+                                        w-10 h-10 rounded-full
+                                        bg-muted
+                                        border
+                                        flex items-center justify-center
+                                        text-xs font-bold
+                                      "
                                     >
-                                      {status.label}
+                                      {(b.customerName || "C")[0]?.toUpperCase()}
+                                    </div>
+
+                                    <div className="min-w-0">
+                                      <p className="font-semibold truncate">{b.customerName}</p>
+                                      <p className="text-xs text-muted-foreground truncate">
+                                        Booking #{b.bookingId}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Phone */}
+                                  <div className="text-sm">
+                                    <span className="md:hidden text-xs uppercase tracking-wide text-muted-foreground block">
+                                      Phone
                                     </span>
-                                  );
-                                })()}
-                              </td>
+                                    <span className="font-medium text-foreground/90">
+                                      {b.customerPhone}
+                                    </span>
+                                  </div>
 
-                              <td className="px-2 py-3">
-                                <div className="flex justify-center items-center gap-2">
-                                  <Button
-                                    size="icon"
-                                    variant="secondary"
-                                    onClick={() => {
-                                      setSelectedBooking(b);
-                                      setViewOpen(true);
-                                    }}
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </Button>
+                                  {/* Address */}
+                                  <div className="min-w-0">
+                                    <span className="md:hidden text-xs uppercase tracking-wide text-muted-foreground block">
+                                      Address
+                                    </span>
+                                    <p className="text-sm text-muted-foreground truncate" title={b.bookingAddress}>
+                                      {b.bookingAddress}
+                                    </p>
+                                  </div>
 
-                                  {b.status === "PENDING" && (
-                                    <>
+                                  {/* Status */}
+                                  <div className="flex md:justify-center">
+                                    {(() => {
+                                      const status = getBookingStatusView(b);
+                                      return (
+                                        <span
+                                          className={`
+                                            inline-flex items-center gap-1
+                                            rounded-full
+                                            px-3 py-1
+                                            text-xs font-semibold
+                                            border border-border/60
+                                            ${status.className}
+                                          `}
+                                        >
+                                          {status.label}
+                                        </span>
+                                      );
+                                    })()}
+                                  </div>
+
+                                  {/* Actions */}
+                                  <div className="flex md:justify-end">
+                                    <div
+                                      className="
+                                        inline-flex items-center gap-2
+                                        rounded-full
+                                        border
+                                        bg-muted/30
+                                        p-1.5
+                                        shadow-sm
+                                      "
+                                    >
+                                      {/* VIEW - always */}
                                       <Button
                                         size="icon"
-                                        className="bg-green-600 hover:bg-green-700 text-white"
-                                        onClick={async () => {
-                                          await confirmBooking(
-                                            b.bookingId,
-                                            b.providerServiceId
-                                          );
-                                          const updated =
-                                            await getProviderBookings(user.id);
-                                          setProviderBookings(updated);
-                                        }}
-                                      >
-                                        <CheckCircle className="w-4 h-4" />
-                                      </Button>
-
-                                      <Button
-                                        size="icon"
-                                        variant="destructive"
+                                        variant="secondary"
+                                        className="rounded-full"
+                                        title="View booking"
                                         onClick={() => {
-                                          setRejectBooking(b);
-                                          setRejectOpen(true);
+                                          setSelectedBooking(b);
+                                          setViewOpen(true);
                                         }}
                                       >
-                                        <XCircle className="w-4 h-4" />
+                                        <Eye className="w-4 h-4" />
                                       </Button>
-                                    </>
-                                  )}
+
+                                      {/* PENDING: Accept + Reject (NO Manage) */}
+                                      {b.status === "PENDING" && (
+                                        <>
+                                          <Button
+                                            size="icon"
+                                            title="Accept booking"
+                                            className="rounded-full bg-green-600 hover:bg-green-700 text-white"
+                                            onClick={() => {
+                                              setAcceptBooking(b);
+                                              setAcceptOpen(true);
+                                            }}
+                                          >
+                                            <CheckCircle className="w-4 h-4" />
+                                          </Button>
+
+                                          <Button
+                                            size="icon"
+                                            variant="destructive"
+                                            className="rounded-full"
+                                            title="Reject booking"
+                                            onClick={() => {
+                                              setRejectBooking(b);
+                                              setRejectOpen(true);
+                                            }}
+                                          >
+                                            <XCircle className="w-4 h-4" />
+                                          </Button>
+                                        </>
+                                      )}
+
+                                      {/* NOT PENDING: Manage */}
+                                      {b.status !== "PENDING" && (
+                                        <Button
+                                          size="sm"
+                                          className="rounded-full bg-blue-600 hover:bg-blue-700 text-white px-4"
+                                          onClick={() => {
+                                            localStorage.setItem(
+                                              MANAGED_KEY,
+                                              JSON.stringify({
+                                                bookingId: b.bookingId,
+                                                providerServiceId: b.providerServiceId,
+                                              })
+                                            );
+
+                                            setManagedBooking({
+                                              ...b,
+                                              bookingId: b.bookingId ?? b.id,
+                                              scheduledAt: b.scheduledAt,
+                                              startedAt: b.startedAt ?? null,
+                                            });
+
+                                            setActiveTab("managebookings");
+                                          }}
+                                        >
+                                          Manage
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               </td>
                             </tr>
                           ));
+                          
                         })()}
                       </tbody>
                     </table>
@@ -1521,500 +2101,436 @@ const handleStartJob = async () => {
             {/* CUSTOMER - MY BOOKINGS */}
             {activeTab === "myBookings" && role === "CUSTOMER" && (
               <>
-                <h2 className="text-lg font-semibold mb-4">My Bookings</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-6">
-
-                  {/* LEFT — Calendar */}
-                  <Card className="p-4 rounded-2xl flex items-center justify-center">
-                    <Calendar
-                      mode="single"
-                      selected={customerSelectedDate}
-                      onSelect={(day) => {
-                        setCustomerSelectedDate(day);
-                        setCustomerDateBookings([]);
-                        loadCustomerBookingsForDate(day);
-                      }}
-                      modifiers={{
-                        busy: (date) =>
-                          customerBusyDates.has(
-                            date.toISOString().split("T")[0]
-                          ),
-                      }}
-                      modifiersClassNames={{
-                        busy:
-                          "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-blue-500",
-                      }}
-                      className="rounded-xl border"
-                    />
-                  </Card>
-
-                  {/* RIGHT — Bookings */}
-                  <Card className="p-6 rounded-2xl">
-                    {!customerSelectedDate && (
-                      <p className="text-muted-foreground">
-                        Select a date to view your bookings
-                      </p>
-                    )}
-
-                    {customerCalendarLoading && (
+                {/* Header */}
+                <div className="flex flex-col gap-4 mb-4">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-semibold">My Bookings</h2>
                       <p className="text-sm text-muted-foreground">
-                        Loading bookings...
-                      </p>
-                    )}
-
-                    {customerSelectedDate &&
-                      !customerCalendarLoading &&
-                      customerDateBookings.length === 0 && (
-                        <p className="text-sm text-muted-foreground">
-                          No bookings for this date
-                        </p>
-                      )}
-
-                    {customerDateBookings.length > 0 && (
-                      <div className="space-y-3">
-                        {customerDateBookings.map((b) => (
-                          <div
-                            key={b.bookingId}
-                            className="flex items-center justify-between rounded-xl border p-4 hover:bg-muted/40 transition"
-                          >
-                            <div>
-                              <p className="font-medium">{b.serviceName}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {b.providerName || "Provider not assigned"}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(b.scheduledAt).toLocaleTimeString("en-LK", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </p>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              {/* STATUS */}
-                              <span
-                                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  b.status === "PENDING"
-                                    ? "bg-yellow-500/20 text-yellow-500"
-                                    : b.status === "ACCEPTED"
-                                    ? "bg-green-500/20 text-green-500"
-                                    : b.status === "PAYMENT_PENDING"
-                                    ? "bg-blue-500/20 text-blue-500"
-                                    : b.status === "COMPLETED"
-                                    ? "bg-emerald-500/20 text-emerald-500"
-                                    : "bg-muted text-muted-foreground"
-                                }`}
-                              >
-                                {b.status.replace("_", " ")}
-                              </span>
-
-                              {/* VIEW */}
-                              <Button
-                                size="icon"
-                                variant="secondary"
-                                onClick={() => {
-                                  setSelectedBooking(b);
-                                  setViewOpen(true);
-                                }}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-
-                              {/* PAY */}
-                              {b.status === "PAYMENT_PENDING" && (
-                                <Button
-                                  size="sm"
-                                  onClick={async () => {
-                                    try {
-                                      const payment = await getCustomerPayment(b.bookingId);
-                                      setPaymentInfo(payment);
-                                      setPaymentOpen(true);
-                                    } catch {
-                                      toast.error("Failed to load payment info");
-                                    }
-                                  }}
-                                >
-                                  Pay
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Card>
-                </div>
-              </>
-            )}
-
-            {activeTab === "managebookings" && role === "SERVICE_PROVIDER" && (
-            <Card className="p-8 rounded-2xl border bg-card space-y-6">
-
-              {/* NO BOOKING SELECTED */}
-              {!managedBooking && (
-                <div className="text-center py-12">
-                  <p className="text-lg font-semibold">
-                    No booking selected
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Select a booking to start managing work and payments
-                  </p>
-                </div>
-              )}
-
-              {/* BOOKING DETAILS */}
-              {managedBooking && (
-                <>
-                  {/* HEADER */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex flex-col gap-1">
-                      <h2 className="text-2xl font-semibold tracking-tight">
-                        Manage Booking
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        Track job progress and manage payment
+                        View your requests and complete payments when required
                       </p>
                     </div>
 
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide
-                        ${
-                          managedBooking.status === "ACCEPTED"
-                            ? "bg-blue-500/15 text-blue-400"
-                            : managedBooking.status === "IN_PROGRESS"
-                            ? "bg-yellow-500/15 text-yellow-400"
-                            : managedBooking.status === "PAYMENT_PENDING"
-                            ? "bg-green-500/15 text-green-400"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                    >
-                      {managedBooking.status.replace("_", " ")}
-                    </span>
-                  </div>
+                    {/* Controls */}
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setCustomerSearch("");
+                          setCustomerStatusFilter("ALL");
+                        }}
+                        className="sm:order-3"
+                      >
+                        Clear
+                      </Button>
 
-                  {/* DETAILS GRID */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm rounded-xl bg-muted/20 p-6">
+                      {/* Search */}
+                      <input
+                        value={customerSearch}
+                        onChange={(e) => setCustomerSearch(e.target.value)}
+                        placeholder="Search by service or provider..."
+                        className="
+                          w-full sm:w-64
+                          rounded-full border
+                          bg-background
+                          px-4 py-2
+                          text-sm
+                          focus:outline-none focus:ring-2 focus:ring-primary/40
+                        "
+                      />
 
-                    <Detail label="Customer">{managedBooking.customerName}</Detail>
-                    <Detail label="Service">{managedBooking.serviceTitle}</Detail>
+                      {/* Status Filter */}
+                      <div className="relative">
+                        <select
+                          value={customerStatusFilter}
+                          onChange={(e) => setCustomerStatusFilter(e.target.value)}
+                          className="
+                            w-full sm:w-auto
+                            appearance-none
+                            rounded-full
+                            px-5 py-2 pr-10
+                            text-sm font-semibold
+                            bg-background
+                            text-foreground
+                            border border-border
+                            shadow-sm
+                            hover:bg-muted
+                            focus:outline-none
+                            focus:ring-2 focus:ring-primary/40
+                            transition
+                            cursor-pointer
+                          "
+                        >
+                          <option value="ALL">All</option>
+                          <option value="PENDING">Pending</option>
+                          <option value="ACCEPTED">Accepted</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="PAYMENT_PENDING">Payment Pending</option>
+                          <option value="COMPLETED">Completed</option>
+                          <option value="REJECTED">Rejected</option>
+                        </select>
 
-                    <Detail label="Scheduled At">
-                      {new Date(managedBooking.scheduledAt).toLocaleString()}
-                    </Detail>
-
-                    <Detail label="Pricing Type">
-                      {managedBooking.paymentType}
-                    </Detail>
-
-                    {managedBooking.paymentType === "HOURLY" && (
-                      <Detail label="Hourly Rate">
-                        Rs. {managedBooking.hourlyRate ?? "—"}
-                      </Detail>
-                    )}
-
-                    <Detail label="Phone">{managedBooking.customerPhone}</Detail>
-
-                    <Detail label="Notes">
-                      {managedBooking.description || "—"}
-                    </Detail>
-                  </div>
-                </>
-              )}
-
-              {/* START JOB */}
-              {managedBooking?.status === "ACCEPTED" && (
-                <div className="mt-8 flex justify-end">
-                  <Button
-                    className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-                    onClick={() => setStartConfirmOpen(true)}
-                  >
-                    ▶ Start Job
-                  </Button>
-                </div>
-              )}
-
-              {/* END WORK */}
-              {managedBooking?.status === "IN_PROGRESS" && (
-                <div className="mt-8 flex items-center justify-between">
-                  {/* TIMER */}
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    ⏱
-                    <span>
-                      {formatWorkedTime(elapsedSeconds)}
-                    </span>
-                  </div>
-
-                  {/* END WORK */}
-                  <Button
-                    className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
-                    onClick={() => {
-                      setFinalElapsedSeconds(elapsedSeconds); // freeze time here
-                      setEndWorkOpen(true);
-                    }}
-                  >
-                    ⏹ End Work
-                  </Button>
-                </div>
-              )}
-
-              {/* AFTER FINALIZE → JOB SUMMARY + REQUEST PAYMENT */}
-              {managedBooking?.status === "PAYMENT_PENDING" && (
-              <div className="mt-8 rounded-2xl border bg-green-500/10 p-6">
-
-                {/* HEADER */}
-                <div className="flex items-center justify-between mb-5">
-                  <div>
-                    <h3 className="text-lg font-semibold text-green-500">
-                      Job Completed
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Review job summary and request payment
-                    </p>
-                  </div>
-
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold
-                                  bg-green-500/20 text-green-400">
-                    Ready for Payment
-                  </span>
-                </div>
-
-                {/* SUMMARY */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm
-                                rounded-xl bg-background p-4 border">
-
-                  <Detail label="Worked Time">
-                    {formatWorkedTime(managedBooking.workedSeconds)}
-                  </Detail>
-
-                  {/* HOURLY BREAKDOWN */}
-                  {managedBooking.paymentType === "HOURLY" && (
-                    <>
-                      <Detail label="Hourly Rate">
-                        Rs. {managedBooking.hourlyRate}
-                      </Detail>
-
-                      <Detail label="Final Amount">
-                        <span className="text-2xl font-bold text-green-500">
-                          Rs. {managedBooking.paymentAmount}
+                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                          ▼
                         </span>
-                      </Detail>
-                    </>
-                  )}
+                      </div>
 
-                  {/* FIXED PRICE */}
-                  {managedBooking.paymentType === "FIXED" && (
-  <>
-                      <Detail label="Pricing Type">FIXED</Detail>
+                      {/* Count */}
+                      <span className="px-3 py-2 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border sm:self-center">
+                        {filterCustomerBookings(customerBookings).length} bookings
+                      </span>
+                    </div>
+                  </div>
 
-                      <Detail label="Final Amount">
-                        <span className="text-2xl font-bold text-green-500">
-                          Rs. {managedBooking.paymentAmount ?? "—"}
-                        </span>
-                      </Detail>
-                    </>
+                  {/* Quick Summary (Customer only) - moved BELOW header */}
+                  {!customerBookingsLoading && (
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: "Payment Pending", status: "PAYMENT_PENDING", cls: "bg-blue-500/15 text-blue-500 border-blue-500/20" },
+                        { label: "Pending", status: "PENDING", cls: "bg-yellow-500/15 text-yellow-500 border-yellow-500/20" },
+                        { label: "Accepted", status: "ACCEPTED", cls: "bg-green-500/15 text-green-500 border-green-500/20" },
+                        { label: "Completed", status: "COMPLETED", cls: "bg-emerald-500/15 text-emerald-500 border-emerald-500/20" },
+                      ].map((x) => {
+                        const count = (customerBookings || []).filter((b) => b.status === x.status).length;
+
+                        return (
+                          <button
+                            key={x.status}
+                            onClick={() => setCustomerStatusFilter(x.status)}
+                            className={`px-3 py-2 rounded-full text-xs font-semibold border transition hover:opacity-90 ${x.cls}`}
+                            title="Click to filter"
+                            type="button"
+                          >
+                            {x.label}: {count}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        type="button"
+                        onClick={() => setCustomerStatusFilter("ALL")}
+                        className="px-3 py-2 rounded-full text-xs font-semibold border bg-muted text-muted-foreground hover:bg-muted/80 transition"
+                        title="Show all"
+                      >
+                        All: {customerBookings?.length ?? 0}
+                      </button>
+                    </div>
                   )}
                 </div>
 
-                {/* CTA */}
-                <div className="mt-6 flex justify-end">
-                  <Button
-                    size="lg"
-                    className="bg-green-600 hover:bg-green-700 text-white px-8"
-                    onClick={() => handleRequestPayment(managedBooking)}
-                  >
-                    Request Payment
-                  </Button>
-                </div>
-              </div>
+                {/* Loading */}
+                {customerBookingsLoading && (
+                  <Card className="p-6 rounded-2xl">
+                    <p className="text-sm text-muted-foreground">Loading your bookings...</p>
+                  </Card>
+                )}
+
+                {/* Empty */}
+                {!customerBookingsLoading &&
+                  filterCustomerBookings(customerBookings).length === 0 && (
+                    <Card className="p-10 rounded-2xl text-center">
+                      <p className="text-lg font-semibold">No bookings found</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Try changing filters or search keywords
+                      </p>
+                    </Card>
+                  )}
+
+                {/* List */}
+                {!customerBookingsLoading &&
+                  filterCustomerBookings(customerBookings).length > 0 && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {filterCustomerBookings(customerBookings).map((b) => (
+                        <Card
+                          key={b.bookingId}
+                          className="p-5 rounded-2xl border hover:shadow-md transition"
+                        >
+                          {/* Top Row */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-base font-semibold truncate">
+                                {b.serviceName}
+                              </p>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {b.providerName || "Provider not assigned"}
+                              </p>
+                            </div>
+
+                            <span
+                              className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${customerStatusBadgeClass(
+                                b.status
+                              )}`}
+                            >
+                              {b.status.replaceAll("_", " ")}
+                            </span>
+                          </div>
+
+                          {/* Details */}
+                          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div className="rounded-xl bg-muted/30 p-3">
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Scheduled
+                              </p>
+                              <p className="font-semibold">
+                                {b.scheduledAt
+                                  ? new Date(b.scheduledAt).toLocaleString("en-LK", {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "2-digit",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })
+                                  : "—"}
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl bg-muted/30 p-3">
+                              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Amount
+                              </p>
+                              <p className="font-semibold">
+                                {formatPrice(b.paymentAmount)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="mt-5 flex items-center justify-end gap-2">
+                            {/* VIEW (same behavior as your old code) */}
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => {
+                                setSelectedBooking(b);
+                                setViewOpen(true);
+                              }}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View
+                            </Button>
+
+                            {/* PAY (same behavior as your old code) */}
+                            {b.status === "PAYMENT_PENDING" && (
+                              <Button
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                onClick={async () => {
+                                  try {
+                                    const payment = await getCustomerPayment(b.bookingId);
+                                    setPaymentInfo(payment);
+                                    setPaymentOpen(true);
+                                  } catch {
+                                    toast.error("Failed to load payment info");
+                                  }
+                                }}
+                              >
+                                Pay Now
+                              </Button>
+                            )}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+              </>
             )}
-
-              <StartJobConfirmDialog
-                open={startConfirmOpen}
-                onClose={() => setStartConfirmOpen(false)}
-                loading={startingJob}
-                onConfirm={async () => {
-                  await handleStartJob();
-                  setStartConfirmOpen(false);
-                }}
-              />
-            </Card>
-          )}
-
-
 
             {/* PROFILE */}
             {activeTab === "profile" && (
               <>
               {/* ================= PROFILE HEADER ================= */}
-              <Card className="rounded-3xl border p-8 mb-10">
-                <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-8 items-center">
+              <Card className="relative overflow-hidden rounded-3xl border mb-10">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
 
-                  {/* ================= LEFT — PROFILE IMAGE + CONTROLS ================= */}
-                  <div className="flex flex-col items-center gap-3">
+                {/* soft background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-muted/30" />
+                <div className="relative p-6 md:p-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8 items-center">
+                    {/* LEFT — Avatar */}
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="relative w-40 h-40 md:w-56 md:h-56 rounded-full">
+                        <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-primary/30 to-transparent blur-xl" />
 
-                    {/* AVATAR */}
-                    <div className="relative w-56 h-56 rounded-full shadow-lg">
-                      <Avatar.Root className="w-full h-full">
-                        <Avatar.Image
-                          src={user?.profilePicture}
-                          alt="Profile"
-                          className="w-full h-full object-cover rounded-full"
-                        />
-                        <Avatar.Fallback className="flex items-center justify-center w-full h-full rounded-full text-4xl font-bold bg-muted">
-                          {user?.fullName?.[0] || "U"}
-                        </Avatar.Fallback>
-                      </Avatar.Root>
+                        <div className="relative w-full h-full rounded-full border bg-background shadow-lg overflow-hidden">
+                          <Avatar.Root className="w-full h-full">
+                            <Avatar.Image
+                              src={user?.profilePicture}
+                              alt="Profile"
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                            <Avatar.Fallback className="flex items-center justify-center w-full h-full rounded-full text-4xl font-bold bg-muted">
+                              {user?.fullName?.[0] || "U"}
+                            </Avatar.Fallback>
+                          </Avatar.Root>
 
-                      {/* Availability dot */}
-                      {role === "SERVICE_PROVIDER" && (
-                        <span
-                          className={`
-                            absolute bottom-2 right-2
-                            w-4 h-4 rounded-full
-                            border-2 border-background
-                            ${isAvailable ? "bg-green-500" : "bg-red-500"}
-                          `}
-                        />
-                      )}
+                          {/* Availability dot */}
+                          {role === "SERVICE_PROVIDER" && (
+                            <span
+                              className={`
+                                absolute bottom-2 right-2
+                                w-4 h-4 rounded-full
+                                border-2 border-background
+                                ${isAvailable ? "bg-green-500" : "bg-red-500"}
+                              `}
+                            />
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setEditImageOpen(true)}
+                        className="
+                          inline-flex items-center gap-2
+                          px-4 py-2
+                          rounded-full
+                          text-sm font-medium
+                          border bg-background/70
+                          hover:bg-muted
+                          transition
+                          shadow-sm
+                        "
+                      >
+                        <Camera className="w-4 h-4 opacity-80" />
+                        Edit Profile Photo
+                      </button>
                     </div>
 
-                    {/* Edit Profile Photo Button */}
-                    <button
-                      onClick={() => setEditImageOpen(true)}
-                      className="
-                        inline-flex items-center gap-2
-                        px-4 py-1.5
-                        rounded-full
-                        text-sm font-medium
-                        bg-muted/70
-                        hover:bg-muted
-                        transition
-                        shadow-sm
-                      "
-                    >
-                      <Camera className="w-4 h-4 opacity-80" />
-                      Edit Profile Photo
-                    </button>
+                    {/* RIGHT — Details */}
+                    <div className="space-y-6 min-w-0">
+                      {/* Name + Role */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="min-w-0">
+                          <h2 className="text-2xl md:text-3xl font-bold tracking-tight truncate">
+                            {user?.fullName}
+                          </h2>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {role === "SERVICE_PROVIDER"
+                              ? "Manage your provider profile & verification"
+                              : "Manage your profile details"}
+                          </p>
+                        </div>
 
-                  </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-background">
+                            {role}
+                          </span>
 
-                  {/* ================= RIGHT — DETAILS ================= */}
-                  <div className="space-y-6">
+                          {/* Provider status chip (only provider) */}
+                          {role === "SERVICE_PROVIDER" && (
+                            <>
+                              {verificationStatus === "APPROVED" && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-green-500/10 text-green-700 dark:text-green-300">
+                                  ✓ Verified
+                                </span>
+                              )}
+                              {verificationStatus === "PENDING" && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-yellow-500/10 text-yellow-700 dark:text-yellow-300">
+                                  ⏳ Pending
+                                </span>
+                              )}
+                              {verificationStatus === "NOT_SUBMITTED" && (
+                                <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-orange-500/10 text-orange-700 dark:text-orange-300">
+                                  ⚠ Not Activated
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
 
-                    {/* Name + Role */}
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-3xl font-bold">{user?.fullName}</h2>
-
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted">
-                        {role}
-                      </span>
-                    </div>
-
-                    {/* DETAILS GRID */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-
-                      {/* LEFT SIDE */}
-                      <div className="space-y-4">
+                      {/* Info cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Skill → ONLY for Service Provider */}
                         {role === "SERVICE_PROVIDER" && (
-                          <div>
-                            <p className="text-muted-foreground text-sm">Skill</p>
-                            <p className="font-medium">{user?.skill || "Not set"}</p>
+                          <div className="rounded-2xl border bg-background/70 p-4">
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                              Skill
+                            </p>
+                            <p className="text-sm font-semibold mt-1">
+                              {user?.skill || "Not set"}
+                            </p>
                           </div>
                         )}
 
-                        <div>
-                          <p className="text-muted-foreground text-sm">Location</p>
-                          <p className="font-medium">
+                        {/* Location */}
+                        <div className="rounded-2xl border bg-background/70 p-4">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Location
+                          </p>
+                          <p className="text-sm font-semibold mt-1">
                             {addressForm.city
                               ? `${addressForm.city}, ${addressForm.province}`
                               : "Not set"}
                           </p>
                         </div>
 
-                        <div>
-                          <p className="text-muted-foreground text-sm">Phone</p>
-                          <p className="font-medium">{user?.phone || "Not set"}</p>
+                        {/* Phone */}
+                        <div
+                          className={`rounded-2xl border bg-background/70 p-4 ${
+                            role === "SERVICE_PROVIDER" ? "md:col-span-2" : ""
+                          }`}
+                        >
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Phone
+                          </p>
+                          <p className="text-sm font-semibold mt-1">
+                            {user?.phone || "Not set"}
+                          </p>
                         </div>
                       </div>
 
-                      {/* RIGHT SIDE */}
+                      {/* Availability (provider only) */}
                       {role === "SERVICE_PROVIDER" && (
-                        <div className="space-y-4">
-
-                          {/* Account Status */}
-                          <div>
-                            <p className="text-muted-foreground text-sm pb-2">
-                              Account Status
-                            </p>
-
-                            {verificationStatus === "APPROVED" && (
-                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-600">
-                                ✓ Verified
-                              </span>
-                            )}
-
-                            {verificationStatus === "PENDING" && (
-                              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-600">
-                                ⏳ Pending Verification
-                              </span>
-                            )}
-
-                            {verificationStatus === "NOT_SUBMITTED" && (
-                              <div className="space-y-3">
-                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/15 text-orange-600">
-                                  ⚠ Not Activated
-                                </span>
-
-                                <p className="text-sm text-muted-foreground">
-                                  Your account is not activated yet. Complete verification to start receiving jobs.
-                                </p>
-
-                                <button
-                                  onClick={() => setShowActivateModal(true)}
-                                  className="inline-flex items-center px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium"
-                                >
-                                  Activate Account
-                                </button>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Availability */}
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                              <p className="text-muted-foreground text-sm">
-                                Availability
+                        <div className="rounded-2xl border bg-background/70 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold">Availability</p>
+                              <p className="text-xs text-muted-foreground">
+                                {canToggleAvailability
+                                  ? "Turn on/off to receive new jobs"
+                                  : "Verify your account to change availability"}
                               </p>
-
-                              <button
-                                onClick={handleAvailabilityToggle}
-                                disabled={!canToggleAvailability}
-                                className={`relative w-14 h-7 rounded-full transition
-                                  ${isAvailable ? "bg-green-500" : "bg-gray-300"}
-                                  ${!canToggleAvailability ? "opacity-50 cursor-not-allowed" : ""}
-                                `}
-                              >
-                                <span
-                                  className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full transition-transform
-                                    ${isAvailable ? "translate-x-7" : "translate-x-0"}
-                                  `}
-                                />
-                              </button>
                             </div>
 
-                            {!canToggleAvailability && (
-                              <p className="text-xs text-muted-foreground">
-                                Verify your account to change availability
-                              </p>
-                            )}
+                            <button
+                              onClick={handleAvailabilityToggle}
+                              disabled={!canToggleAvailability}
+                              className={`relative w-14 h-7 rounded-full transition
+                                ${isAvailable ? "bg-green-500" : "bg-gray-300"}
+                                ${!canToggleAvailability ? "opacity-50 cursor-not-allowed" : ""}
+                              `}
+                            >
+                              <span
+                                className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full transition-transform
+                                  ${isAvailable ? "translate-x-7" : "translate-x-0"}
+                                `}
+                              />
+                            </button>
                           </div>
+                        </div>
+                      )}
 
+                      {/* Activate button (only when NOT_SUBMITTED) */}
+                      {role === "SERVICE_PROVIDER" && verificationStatus === "NOT_SUBMITTED" && (
+                        <div className="rounded-2xl border bg-orange-500/5 p-4">
+                          <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">
+                            Activate your provider account
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Upload ID + work proof to request verification and start receiving bookings.
+                          </p>
+
+                          <button
+                            onClick={() => setShowActivateModal(true)}
+                            className="mt-3 inline-flex items-center px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium"
+                          >
+                            Activate Account
+                          </button>
                         </div>
                       )}
                     </div>
                   </div>
-
                 </div>
               </Card>
 
@@ -2061,28 +2577,37 @@ const handleStartJob = async () => {
                   )}
 
                   {/* UPDATE PROFILE */}
-                  <h2 className="text-xl font-semibold mb-8">Update Profile</h2>
+                  <div className="mb-8">
+                    <h2 className="text-2xl font-semibold tracking-tight">Update Profile</h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Manage your personal details, documents, and security settings.
+                    </p>
+                  </div>
 
                   <div className="space-y-6">
 
                     {/* ================= BASIC INFORMATION ================= */}
-                    <Card className="rounded-2xl border p-6 space-y-5">
+                    <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-5 shadow-sm">
+                    
                       <div className="flex items-center justify-between">
+                        
                         <div>
                           <h3 className="text-lg font-semibold">Basic Information</h3>
                           <p className="text-sm text-muted-foreground">
                             Personal details visible on your profile
                           </p>
                         </div>
+                        
 
                         {editingSection !== "basic" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSection("basic")}
-                          >
-                            Edit
-                          </Button>
+                         <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full px-4"
+                          onClick={() => setEditingSection("basic")}
+                        >
+                          Edit
+                        </Button>
                         )}
                       </div>
 
@@ -2116,21 +2641,25 @@ const handleStartJob = async () => {
                       </div>
 
                       {editingSection === "basic" && (
-                        <div className="flex gap-3 pt-4">
-                          <Button onClick={handleSaveProfile}>Save Changes</Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => setEditingSection(null)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
+                       <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                        <Button className="rounded-full px-6" onClick={handleSaveProfile}>
+                          Save Changes
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="rounded-full px-6"
+                          onClick={() => setEditingSection(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                       )}
                     </Card>
 
                     {/* ================= PROFESSIONAL INFORMATION ================= */}
                     {role === "SERVICE_PROVIDER" && (
-                      <Card className="rounded-2xl border p-6 space-y-5">
+                      <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-5 shadow-sm">
                         <div className="flex items-center justify-between">
                           <div>
                             <h3 className="text-lg font-semibold">Professional Information</h3>
@@ -2143,6 +2672,7 @@ const handleStartJob = async () => {
                             <Button
                               size="sm"
                               variant="outline"
+                              className="rounded-full px-4"
                               onClick={() => setEditingSection("professional")}
                             >
                               Edit
@@ -2177,21 +2707,37 @@ const handleStartJob = async () => {
                               setProfessionalForm((p) => ({ ...p, description: e.target.value }))
                             }
                             disabled={editingSection !== "professional"}
-                            className={`w-full rounded-lg border px-3 py-2 bg-background ${
-                              editingSection !== "professional"
+                            className={`
+                              w-full
+                              rounded-lg
+                              border
+                              bg-background
+                              px-3 py-2
+                              text-sm
+                              leading-relaxed
+                              focus:outline-none
+                              focus:ring-2 focus:ring-primary/40
+                              transition
+                              ${editingSection !== "professional"
                                 ? "opacity-60 cursor-not-allowed"
                                 : ""
-                            }`}
+                              }
+                            `}
                           />
                         </div>
 
                         {editingSection === "professional" && (
-                          <div className="flex gap-3 pt-4">
-                            <Button onClick={handleSaveProfessionalInfo}>
+                          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                            <Button
+                              className="rounded-full px-6"
+                              onClick={handleSaveProfessionalInfo}
+                            >
                               Save Changes
                             </Button>
+
                             <Button
                               variant="outline"
+                              className="rounded-full px-6"
                               onClick={() => setEditingSection(null)}
                             >
                               Cancel
@@ -2203,7 +2749,7 @@ const handleStartJob = async () => {
 
                     {/* ================= IDENTITY VERIFICATION ================= */}
                     {role === "SERVICE_PROVIDER" && (
-                      <Card className="rounded-2xl border p-6 space-y-6">
+                      <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-6 shadow-sm">
                         <div>
                           <h3 className="text-lg font-semibold">Identity Verification</h3>
                           <p className="text-sm text-muted-foreground">
@@ -2215,7 +2761,7 @@ const handleStartJob = async () => {
                         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-start">
 
                           {/* LEFT — Upload Card */}
-                          <div className="rounded-xl border bg-card p-5 space-y-4">
+                          <div className="rounded-2xl border bg-card/60 p-5 md:p-6 space-y-4 shadow-sm">
                             <div>
                               <label className="text-sm font-semibold">ID Card – Front</label>
                               <p className="text-xs text-muted-foreground">
@@ -2228,18 +2774,20 @@ const handleStartJob = async () => {
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => setIdFrontFile(e.target.files?.[0] || null)}
-                                className="block w-full text-sm
-                                  file:mr-3 file:rounded-md file:border-0
-                                  file:bg-muted file:px-3 file:py-2
-                                  file:text-xs file:font-medium
+                                className="
+                                  block w-full text-sm
+                                  file:mr-3 file:rounded-full file:border-0
+                                  file:bg-muted file:px-4 file:py-2
+                                  file:text-xs file:font-semibold
                                   hover:file:bg-muted/70
-                                  cursor-pointer"
+                                  cursor-pointer
+                                "
                               />
 
                               <Button
                                 onClick={handleUploadIdFront}
                                 disabled={!idFrontFile}
-                                className="shrink-0"
+                                className="shrink-0 rounded-full px-5"
                               >
                                 Upload
                               </Button>
@@ -2256,17 +2804,17 @@ const handleStartJob = async () => {
 
                           {/* RIGHT — Preview Card */}
                           {profile?.idFrontUrl && (
-                            <div className="rounded-xl border bg-muted/40 p-4 shadow-sm">
+                            <div className="rounded-2xl border bg-muted/30 p-5 shadow-sm">
                               <p className="text-xs font-semibold mb-2 text-muted-foreground">
                                 Current ID (Front)
                               </p>
 
-                              <div className="relative overflow-hidden rounded-lg border bg-background">
+                              <div className="relative overflow-hidden rounded-2xl border bg-background">
                               <img
                                 src={`${API}${profile.idFrontUrl}`}
                                 alt="ID Front"
                                 className="
-                                  w-full h-70 object-cover
+                                  w-full h-64 md:h-72 object-cover
                                   rounded-lg
                                   transition-transform duration-300
                                   hover:scale-105
@@ -2297,18 +2845,20 @@ const handleStartJob = async () => {
                                 type="file"
                                 accept="image/*"
                                 onChange={(e) => setIdBackFile(e.target.files?.[0] || null)}
-                                className="block w-full text-sm
-                                  file:mr-3 file:rounded-md file:border-0
-                                  file:bg-muted file:px-3 file:py-2
-                                  file:text-xs file:font-medium
+                                className="
+                                  block w-full text-sm
+                                  file:mr-3 file:rounded-full file:border-0
+                                  file:bg-muted file:px-4 file:py-2
+                                  file:text-xs file:font-semibold
                                   hover:file:bg-muted/70
-                                  cursor-pointer"
+                                  cursor-pointer
+                                "
                               />
 
                               <Button
                                 onClick={handleUploadIdBack}
-                                disabled={!idBackFile}
-                                className="shrink-0"
+                                disabled={!idFrontFile}
+                                className="shrink-0 rounded-full px-5"
                               >
                                 Upload
                               </Button>
@@ -2324,17 +2874,17 @@ const handleStartJob = async () => {
 
                           {/* RIGHT — Preview Card */}
                           {profile?.idBackUrl && (
-                            <div className="rounded-xl border bg-muted/40 p-4 shadow-sm">
+                            <div className="rounded-2xl border bg-muted/30 p-5 shadow-sm">
                               <p className="text-xs font-semibold mb-2 text-muted-foreground">
                                 Current ID (Back)
                               </p>
 
-                              <div className="relative overflow-hidden rounded-lg border bg-background">
+                              <div className="relative overflow-hidden rounded-2xl border bg-background">
                                 <img
                                   src={`${API}${profile.idBackUrl}`}
                                   alt="ID Back"
                                   className="
-                                    w-full h-70 object-cover
+                                    w-full h-64 md:h-72 object-cover
                                     rounded-lg
                                     transition-transform duration-300
                                     hover:scale-105
@@ -2352,64 +2902,75 @@ const handleStartJob = async () => {
                   {/* ================= WORK PROOF (PDF) ================= */}
                   {role === "SERVICE_PROVIDER" && (
                     <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-stretch">
-
                       {/* LEFT — Upload Card */}
-                      <div className="rounded-xl border bg-card p-5 space-y-4 h-full flex flex-col justify-between">
-                        <div className="space-y-1">
-                          <label className="text-sm font-semibold">Work Proof (PDF)</label>
+                      <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-5 shadow-sm h-full">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-lg font-semibold">Work Proof (PDF)</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Upload documents that prove your professional experience
+                            </p>
+                          </div>
+
+                          <span className="shrink-0 px-3 py-1 rounded-full text-xs font-semibold border bg-muted/40 text-muted-foreground">
+                            PDF
+                          </span>
+                        </div>
+
+                        {/* Upload input */}
+                        <div className="rounded-2xl border bg-card/50 p-4 space-y-3">
+                          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                            <input
+                              type="file"
+                              accept="application/pdf"
+                              onChange={(e) => setWorkPdf(e.target.files?.[0] || null)}
+                              className="block w-full text-sm
+                                file:mr-3 file:rounded-full file:border-0
+                                file:bg-muted file:px-4 file:py-2
+                                file:text-xs file:font-semibold
+                                hover:file:bg-muted/80
+                                cursor-pointer"
+                            />
+
+                            <Button
+                              onClick={handleUploadWorkPdf}
+                              disabled={!workPdf}
+                              className="shrink-0 rounded-full px-5"
+                            >
+                              Upload
+                            </Button>
+                          </div>
+
+                          {/* helper */}
                           <p className="text-xs text-muted-foreground">
-                            Upload documents that prove your professional experience
-                          </p>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                          <input
-                            type="file"
-                            accept="application/pdf"
-                            onChange={(e) => setWorkPdf(e.target.files?.[0] || null)}
-                            className="block w-full text-sm
-                              file:mr-3 file:rounded-md file:border-0
-                              file:bg-muted file:px-3 file:py-2
-                              file:text-xs file:font-medium
-                              hover:file:bg-muted/70
-                              cursor-pointer"
-                          />
-
-                          <Button
-                            onClick={handleUploadWorkPdf}
-                            disabled={!workPdf}
-                            className="shrink-0"
-                          >
-                            Upload
-                          </Button>
-                        </div>
-
-                        {profile?.workPdfUrl && (
-                          <p className="text-xs flex items-center gap-1
-                            text-amber-700 dark:text-amber-300">
-                            ⚠ Re-uploading will require re-verification
+                            Tip: upload a clear scanned document (letters, certificates, work agreements, etc.)
                           </p>
 
-                        )}
-                      </div>
+                          {profile?.workPdfUrl && (
+                            <div className="text-xs flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-amber-700 dark:text-amber-300">
+                              <span className="text-sm">⚠</span>
+                              <span>Re-uploading will require re-verification</span>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
 
                       {/* RIGHT — Preview Card */}
                       {profile?.workPdfUrl && (
-                        <div className="rounded-xl border bg-muted/40 p-5 shadow-sm h-full flex flex-col justify-center">
+                        <Card className="rounded-3xl border bg-muted/30 p-6 md:p-7 shadow-sm h-full flex flex-col justify-center">
                           <p className="text-xs font-semibold mb-3 text-muted-foreground">
                             Current Work Proof
                           </p>
 
-                          <div className="flex items-center gap-4 rounded-lg border bg-background p-4">
+                          <div className="rounded-2xl border bg-background p-4 flex items-center gap-4">
                             {/* PDF Icon */}
-                            <div className="w-12 h-12 rounded-lg bg-red-500/10 text-red-500
-                                            flex items-center justify-center text-sm font-bold">
+                            <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center text-sm font-extrabold">
                               PDF
                             </div>
 
                             {/* File Info */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
+                              <p className="text-sm font-semibold truncate">
                                 {profile.workPdfUrl.split("/").pop()}
                               </p>
                               <p className="text-xs text-muted-foreground">
@@ -2422,44 +2983,50 @@ const handleStartJob = async () => {
                               href={`${API}${profile.workPdfUrl}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-primary hover:underline"
+                              className="shrink-0 inline-flex items-center justify-center rounded-full border bg-muted px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/80 transition"
                             >
                               View
                             </a>
                           </div>
-                        </div>
+                        </Card>
                       )}
-                    
                     </div>
                   )}
 
-                    {/* ================= ADDRESS ================= */}
-                    <Card className="rounded-2xl border p-6 space-y-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold">Address</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Your service location
-                          </p>
-                        </div>
-
-                        {editingSection !== "address" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSection("address")}
-                          >
-                            {hasAddress ? "Edit" : "Add"}
-                          </Button>
-                        )}
+                  {/* ================= ADDRESS ================= */}
+                  <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-6 shadow-sm">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">Address</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Your service location details
+                        </p>
                       </div>
 
+                      {editingSection !== "address" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full px-4"
+                          onClick={() => setEditingSection("address")}
+                        >
+                          {hasAddress ? "Edit" : "Add"}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Form */}
+                    <div className="rounded-2xl border bg-card/60 p-5 md:p-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
                           label="Address Line 1"
                           value={addressForm.addressLine1}
                           onChange={(e) =>
-                            setAddressForm((p) => ({ ...p, addressLine1: e.target.value }))
+                            setAddressForm((p) => ({
+                              ...p,
+                              addressLine1: e.target.value,
+                            }))
                           }
                           disabled={editingSection !== "address"}
                         />
@@ -2468,7 +3035,10 @@ const handleStartJob = async () => {
                           label="Address Line 2"
                           value={addressForm.addressLine2}
                           onChange={(e) =>
-                            setAddressForm((p) => ({ ...p, addressLine2: e.target.value }))
+                            setAddressForm((p) => ({
+                              ...p,
+                              addressLine2: e.target.value,
+                            }))
                           }
                           disabled={editingSection !== "address"}
                         />
@@ -2477,7 +3047,10 @@ const handleStartJob = async () => {
                           label="Province"
                           value={addressForm.province}
                           onChange={(e) =>
-                            setAddressForm((p) => ({ ...p, province: e.target.value }))
+                            setAddressForm((p) => ({
+                              ...p,
+                              province: e.target.value,
+                            }))
                           }
                           disabled={editingSection !== "address"}
                         />
@@ -2486,88 +3059,107 @@ const handleStartJob = async () => {
                           label="City"
                           value={addressForm.city}
                           onChange={(e) =>
-                            setAddressForm((p) => ({ ...p, city: e.target.value }))
+                            setAddressForm((p) => ({
+                              ...p,
+                              city: e.target.value,
+                            }))
                           }
                           disabled={editingSection !== "address"}
                         />
                       </div>
 
+                      {/* Actions */}
                       {editingSection === "address" && (
-                        <div className="flex gap-3 pt-4">
-                          <Button onClick={handleSaveAddress}>Save Address</Button>
+                        <div className="flex gap-3 pt-5">
+                          <Button className="rounded-full px-6" onClick={handleSaveAddress}>
+                            Save Address
+                          </Button>
+
                           <Button
                             variant="outline"
+                            className="rounded-full px-6"
                             onClick={() => setEditingSection(null)}
                           >
                             Cancel
                           </Button>
                         </div>
                       )}
-                    </Card>
+                    </div>
+                  </Card>
 
-                    {/* ================= CHANGE PASSWORD ================= */}
-                    <Card className="rounded-2xl border p-6 space-y-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold">Change Password</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Update your account password
-                          </p>
-                        </div>
-
-                        {editingSection !== "password" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSection("password")}
-                          >
-                            Edit
-                          </Button>
-                        )}
+                  {/* ================= CHANGE PASSWORD ================= */}
+                  <Card className="rounded-3xl border bg-background/50 p-6 md:p-7 space-y-6 shadow-sm">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">Change Password</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Update your account password
+                        </p>
                       </div>
 
-                      <Input
-                        label="Current Password"
-                        type="password"
-                        value={passwordForm.currentPassword}
-                        onChange={(e) =>
-                          setPasswordForm((p) => ({
-                            ...p,
-                            currentPassword: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "password"}
-                      />
+                      {editingSection !== "password" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full px-4"
+                          onClick={() => setEditingSection("password")}
+                        >
+                          Edit
+                        </Button>
+                      )}
+                    </div>
 
-                      <Input
-                        label="New Password"
-                        type="password"
-                        value={passwordForm.newPassword}
-                        onChange={(e) =>
-                          setPasswordForm((p) => ({
-                            ...p,
-                            newPassword: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "password"}
-                      />
+                    {/* Form */}
+                    <div className="rounded-2xl border bg-card/60 p-5 md:p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                          label="Current Password"
+                          type="password"
+                          value={passwordForm.currentPassword}
+                          onChange={(e) =>
+                            setPasswordForm((p) => ({
+                              ...p,
+                              currentPassword: e.target.value,
+                            }))
+                          }
+                          disabled={editingSection !== "password"}
+                        />
 
-                      <Input
-                        label="Confirm New Password"
-                        type="password"
-                        value={passwordForm.confirmPassword}
-                        onChange={(e) =>
-                          setPasswordForm((p) => ({
-                            ...p,
-                            confirmPassword: e.target.value,
-                          }))
-                        }
-                        disabled={editingSection !== "password"}
-                      />
+                        <div className="hidden md:block" />
 
+                        <Input
+                          label="New Password"
+                          type="password"
+                          value={passwordForm.newPassword}
+                          onChange={(e) =>
+                            setPasswordForm((p) => ({
+                              ...p,
+                              newPassword: e.target.value,
+                            }))
+                          }
+                          disabled={editingSection !== "password"}
+                        />
+
+                        <Input
+                          label="Confirm New Password"
+                          type="password"
+                          value={passwordForm.confirmPassword}
+                          onChange={(e) =>
+                            setPasswordForm((p) => ({
+                              ...p,
+                              confirmPassword: e.target.value,
+                            }))
+                          }
+                          disabled={editingSection !== "password"}
+                        />
+                      </div>
+
+                      {/* Actions */}
                       {editingSection === "password" && (
-                        <div className="flex gap-3 pt-4">
+                        <div className="flex flex-col sm:flex-row gap-3 pt-5">
                           <Button
+                            className="rounded-full px-6"
                             onClick={handleChangePassword}
                             disabled={changingPassword}
                           >
@@ -2576,6 +3168,7 @@ const handleStartJob = async () => {
 
                           <Button
                             variant="outline"
+                            className="rounded-full px-6"
                             onClick={() => {
                               setEditingSection(null);
                               setPasswordForm({
@@ -2589,12 +3182,14 @@ const handleStartJob = async () => {
                           </Button>
                         </div>
                       )}
-                    </Card>
+                    </div>
+                  </Card>
 
                   </div>               
               </>
             )}
-            
+          </>
+          )}
           </div>
         </main>
       </div>
@@ -2613,18 +3208,32 @@ const handleStartJob = async () => {
         mode={role === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}
         onManage={(booking) => {
           setViewOpen(false);
-          setManagedBooking((prev) =>
-            prev
-              ? prev
-              : {
-                  ...booking,
-                  bookingId: booking.bookingId ?? booking.id,
-                  scheduledAt: booking.scheduledAt,
-                  startedAt: booking.startedAt ?? null,
-                }
-          );
-          setSelectedBooking((prev) => prev ?? booking);
-          setActiveTab("managebookings");
+          setSelectedBooking(booking);
+
+          if (role === "CUSTOMER") {
+            setCustomerManageBookingOpen(true);
+          } else {
+            localStorage.setItem(
+              "activeManagedBooking",
+              JSON.stringify({
+                bookingId: booking.bookingId ?? booking.id,
+                providerServiceId: booking.providerServiceId,
+              })
+            );
+
+            setManagedBooking((prev) =>
+              prev
+                ? prev
+                : {
+                    ...booking,
+                    bookingId: booking.bookingId ?? booking.id,
+                    scheduledAt: booking.scheduledAt,
+                    startedAt: booking.startedAt ?? null,
+                  }
+            );
+
+            setActiveTab("managebookings");
+          }
         }}
         onRequestPayment={handleRequestPayment}
       />
@@ -2732,6 +3341,48 @@ const handleStartJob = async () => {
           booking={managedBooking}
           elapsedSeconds={finalElapsedSeconds ?? elapsedSeconds}
           onFinalize={handleFinalizeFromPopup}
+        />
+        <StartJobConfirmDialog
+          open={startConfirmOpen}
+          onClose={() => setStartConfirmOpen(false)}
+          booking={managedBooking}
+          onConfirm={async () => {
+            setStartConfirmOpen(false);
+            await handleStartJob();
+
+            // optional but recommended (keeps state synced with backend)
+            await refreshManagedBooking(managedBooking.bookingId);
+          }}
+        />
+
+        <AcceptBookingDialog
+          open={acceptOpen}
+          booking={acceptBooking}
+          loading={acceptLoading}
+          onClose={() => {
+            setAcceptOpen(false);
+            setAcceptBooking(null);
+          }}
+          onConfirm={async () => {
+            if (!acceptBooking) return;
+
+            try {
+              setAcceptLoading(true);
+
+              await confirmBooking(acceptBooking.bookingId, acceptBooking.providerServiceId);
+              toast.success("Booking accepted");
+
+              const updated = await getProviderBookings(user.id);
+              setProviderBookings(updated);
+
+              setAcceptOpen(false);
+              setAcceptBooking(null);
+            } catch (err) {
+              toast.error("Failed to accept booking");
+            } finally {
+              setAcceptLoading(false);
+            }
+          }}
         />
 
     </div>

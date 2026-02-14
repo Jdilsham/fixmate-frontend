@@ -14,12 +14,16 @@ import { Toaster } from "react-hot-toast";
 import BookProfessional from "./pages/BookProfessional";
 import AdminDashboard from "./pages/admin/dashboard";
 import ManageBookingPage from "./components/dashboard/bookings/ManageBookingPage";
+import PaymentSuccess from "./pages/payment-success";
+import PaymentCancel from "./pages/payment-cancel";
+
 
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="w-full h-screen ">
+      <div className="w-full min-h-screen">
+        
         <Toaster position="top-center" />
 
         <Routes>
@@ -51,8 +55,13 @@ function App() {
            {/* BOOKING */}
           <Route path="/book/:providerServiceId" element={<BookProfessional />} />
 
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-cancel" element={<PaymentCancel />} />
+
           {/* 404 */}
           <Route path="*" element={<h1>404 not found</h1>} />
+
+
         </Routes>
       </div>
     </BrowserRouter>

@@ -108,3 +108,16 @@
     @apply bg-background text-foreground antialiased;
   }
 }
+
+/* Modern glass-like surface for dark mode */
+.dark .fm-surface {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  backdrop-filter: blur(12px);
+}
+
+.dark .fm-surface-strong {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
