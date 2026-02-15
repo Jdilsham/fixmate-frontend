@@ -313,29 +313,25 @@ export const changePassword = async (payload) => {
   );
 };
 
-
-
 export const addProviderService = async (formData) => {
-  const token = localStorage.getItem("token");
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
 
   const res = await fetch(`${API}/api/provider/services`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${auth.token}`,
     },
     body: formData,
   });
 
-  
   if (!res.ok) {
-    const text = await res.text(); 
+    const text = await res.text();
     throw new Error(text || "Failed to add service");
   }
 
-  
   return await res.text();
 };
-
 
 
 export async function getProviderServiceCategories() {
@@ -351,6 +347,19 @@ export async function getProviderServiceCategories() {
   );
 
   return res.data;
+}
+
+export async function getProviderDistricts() {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(`${API}/api/provider/districts`, {
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return res.data; 
 }
 
 export async function getProviderServices() {

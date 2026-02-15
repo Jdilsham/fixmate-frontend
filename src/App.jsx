@@ -24,7 +24,13 @@ function App() {
     <BrowserRouter>
       <div className="w-full min-h-screen">
         
-        <Toaster position="top-center" />
+        <Toaster
+          position="top-center"
+          containerStyle={{ zIndex: 20000 }}
+          toastOptions={{
+            style: { zIndex: 20000 },
+          }}
+        />
 
         <Routes>
           {/* CUSTOMER */}

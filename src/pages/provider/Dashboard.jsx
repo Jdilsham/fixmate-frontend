@@ -68,7 +68,8 @@ import {
   uploadIdFront,
   uploadIdBack,
   uploadWorkPdf,
-  requestVerification
+  requestVerification,
+  getProviderDistricts,
 } from "../../../utils/profile";
 
 const API = import.meta.env.VITE_BACKEND_URL;
@@ -327,6 +328,19 @@ export default function Dashboard() {
 
   };
 
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
+
+    (async () => {
+      try {
+        const d = await getProviderDistricts();
+        setDistricts(d || []);
+      } catch (e) {
+        console.error("Failed to load districts", e);
+      }
+    })();
+  }, [role]);
+
   const [providerBookings, setProviderBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [viewOpen, setViewOpen] = useState(false);
@@ -370,6 +384,8 @@ export default function Dashboard() {
   const [startConfirmOpen, setStartConfirmOpen] = useState(false);
   const [finalElapsedSeconds, setFinalElapsedSeconds] = useState(null);
 
+
+  const [districts, setDistricts] = useState([]); 
 
   const refreshManagedBooking = async (bookingId) => {
     const updated = await getProviderBookings(user.id);     // refetch list
@@ -1492,7 +1508,7 @@ const handleStartJob = async () => {
                 <h2 className="text-lg font-semibold mb-4">My Services</h2>
 
                 {providerProfile && (
-                  <EmployerGrid profile={providerProfile} />
+                  <EmployerGrid profile={providerProfile} districts={districts} /> 
                 )}
               </>
             )}

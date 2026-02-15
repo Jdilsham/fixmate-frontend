@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import toast from "react-hot-toast";
 
 export default function AddEmployerModal({
   profile,
@@ -10,6 +11,7 @@ export default function AddEmployerModal({
   setPdfFile,
   categories,
   providerServices,
+  districts,
 }) {
   const [fileName, setFileName] = useState("");
 
@@ -19,19 +21,39 @@ export default function AddEmployerModal({
 
   const handleSubmit = () => {
     if (!serviceForm.serviceId) {
-      alert("Please select a service category");
+      toast.error("Please select a service category");
+      return;
+    }
+
+    if (!serviceForm.districtId) {
+      toast.error("Please select a district");
+      return;
+    }
+
+    const hasHourly =
+      serviceForm.hourlyRate !== "" &&
+      serviceForm.hourlyRate !== null &&
+      Number(serviceForm.hourlyRate) > 0;
+
+    const hasFixed = Boolean(serviceForm.fixedPriceAvailable);
+
+    if (!hasHourly && !hasFixed) {
+      toast.error("Please provide hourly rate or enable fixed price");
+      return;
+    }
+
+    if (!fileName) {
+      toast.error("Please upload verification PDF");
       return;
     }
 
     onSubmit({
       serviceId: Number(serviceForm.serviceId),
+      districtId: Number(serviceForm.districtId),
       description: serviceForm.description || null,
-      fixedPriceAvailable: Boolean(serviceForm.fixedPriceAvailable),
-      hourlyRate:
-        serviceForm.hourlyRate === "" ? null : Number(serviceForm.hourlyRate),
+      fixedPriceAvailable: hasFixed,
+      hourlyRate: hasHourly ? Number(serviceForm.hourlyRate) : null,
     });
-
-    onClose();
   };
 
   if (typeof document === "undefined") return null;
@@ -159,6 +181,47 @@ export default function AddEmployerModal({
                     </option>
                   );
                 })}
+              </select>
+            </div>
+
+            <div
+              className="
+                rounded-2xl
+                border border-black/5 dark:border-white/10
+                bg-white/60 dark:bg-white/5
+                p-4
+              "
+            >
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Service Area (District) <span className="text-orange-500">*</span>
+                </label>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  Required
+                </span>
+              </div>
+
+              <select
+                className="
+                  mt-2 w-full rounded-2xl px-4 py-3 text-sm
+                  border border-black/10 bg-white/80
+                  focus:outline-none focus:ring-2 focus:ring-orange-500/60
+                  dark:border-white/10 dark:bg-slate-950/40 dark:text-white
+                "
+                value={serviceForm.districtId ?? ""}
+                onChange={(e) =>
+                  setServiceForm((prev) => ({
+                    ...prev,
+                    districtId: e.target.value,
+                  }))
+                }
+              >
+                <option value="">Select District</option>
+                {(districts || []).map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
               </select>
             </div>
 

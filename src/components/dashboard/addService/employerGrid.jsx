@@ -11,7 +11,7 @@ import {
   toggleProviderServiceActive
 } from "../../../../utils/profile";
 
-export default function EmployerGrid({ profile }) {
+export default function EmployerGrid({ profile, districts = [] }) {
   const [services, setServices] = useState([]);
   const [providerServices, setProviderServices] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -21,6 +21,7 @@ export default function EmployerGrid({ profile }) {
 
   const [serviceForm, setServiceForm] = useState({
     serviceId: "",
+    districtId: "",
     description: "",
     hourlyRate: "",
     isFixedPrice: false,
@@ -118,6 +119,7 @@ export default function EmployerGrid({ profile }) {
       // reset form
       setServiceForm({
         serviceId: "",
+        districtId: "",
         description: "",
         hourlyRate: "",
         isFixedPrice: false,
@@ -153,8 +155,8 @@ export default function EmployerGrid({ profile }) {
 
               // meta
               rating: null,
-              location: location,
-
+              location: s.district || "Unknown",
+              
               //PROVIDER-ONLY
               verificationStatus: s.verificationStatus,
               isActive: s.isActive,
@@ -182,6 +184,7 @@ export default function EmployerGrid({ profile }) {
           setPdfFile={setPdfFile}
           categories={categories}
           providerServices={providerServices}
+          districts={districts}
         />
       )}
     </>
