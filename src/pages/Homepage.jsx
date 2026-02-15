@@ -121,8 +121,7 @@ export default function Homepage() {
                       <ServiceCard
                         imgsrc={service.icon}
                         title={service.title}
-                        onClick={() => navigate(`/services?service=${service.key.toLowerCase()}`)}
-                      />
+                        onClick={() => navigate(`/services?service=${encodeURIComponent(service.title)}`)}                      />
                     </div>
                   ))
                 ) : (

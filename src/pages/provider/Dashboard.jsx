@@ -8,7 +8,8 @@ import { Camera } from "lucide-react";
 import PageBackground from "../../components/animate-ui/components/backgrounds/PageBackground";
 import ProviderDashboardOverview from "../../components/provider-dashboard/ProviderDashboardOverview";
 import CustomerDashboard from "../../components/customer-dashboard/CustomerDashboard";
-
+import ReviewDialog from "../../components/review/ReviewDialog";
+import ProviderReviewsPage from "../../components/review/ProviderReviews";
 
 import BookingsTable from "../../components/dashboard/bookingTable";
 import {
@@ -17,6 +18,7 @@ import {
   Settings,
   Briefcase,
   ListCheck,
+  Star,
 } from "lucide-react";
 import * as Avatar from "@radix-ui/react-avatar";
 import toast from "react-hot-toast";
@@ -68,7 +70,9 @@ import {
   uploadIdFront,
   uploadIdBack,
   uploadWorkPdf,
-  requestVerification
+  requestVerification,
+  getProviderDistricts,
+  getMyReviewedBookingIds,
 } from "../../../utils/profile";
 
 const API = import.meta.env.VITE_BACKEND_URL;
@@ -90,6 +94,7 @@ const ROLE_CONFIG = {
       { id: "calendar", label: "Calendar", icon: CalendarIcon },
       { id: "pendingBooking", label: "Bookings", icon: ListCheck },
       { id: "managebookings", label: "Manage Bookings", icon: ListCheck },
+      { id: "reviews", label: "Reviews", icon: Star },
       { id: "profile", label: "Profile", icon: Settings }
     ],
   },
@@ -327,6 +332,19 @@ export default function Dashboard() {
 
   };
 
+  useEffect(() => {
+    if (role !== "SERVICE_PROVIDER") return;
+
+    (async () => {
+      try {
+        const d = await getProviderDistricts();
+        setDistricts(d || []);
+      } catch (e) {
+        console.error("Failed to load districts", e);
+      }
+    })();
+  }, [role]);
+
   const [providerBookings, setProviderBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [viewOpen, setViewOpen] = useState(false);
@@ -353,6 +371,10 @@ export default function Dashboard() {
 
   const [customerManageBookingOpen, setCustomerManageBookingOpen] = useState(false);
 
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewBooking, setReviewBooking] = useState(null);
+  const [reviewedIds, setReviewedIds] = useState(new Set());
+
   // ================= ACTIVATE ACCOUNT FLOW =================
   const [activateStep, setActivateStep] = useState(1);
 
@@ -371,6 +393,8 @@ export default function Dashboard() {
   const [finalElapsedSeconds, setFinalElapsedSeconds] = useState(null);
 
 
+  const [districts, setDistricts] = useState([]); 
+
   const refreshManagedBooking = async (bookingId) => {
     const updated = await getProviderBookings(user.id);     // refetch list
     setProviderBookings(updated);
@@ -380,11 +404,25 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    const loadReviewed = async () => {
+      try {
+        const ids = await getMyReviewedBookingIds();
+        setReviewedIds(new Set(ids || []));
+      } catch (e) {
+        console.error("Failed to load reviewed bookings", e);
+      }
+    };
+
+    if (activeTab === "myBookings" && role === "CUSTOMER") {
+      loadReviewed();
+    }
+  }, [activeTab, role]);
+
+  useEffect(() => {
     if (!managedBooking) return;
 
     if (endWorkOpen) return;
 
-    // Only run timer for valid states
     if (!["IN_PROGRESS", "PAYMENT_PENDING"].includes(managedBooking.status)) {
       setElapsedSeconds(0);
       return;
@@ -410,8 +448,6 @@ export default function Dashboard() {
         })
       );
     };
-
-    // run immediately
     updateTimer();
 
     const interval = setInterval(updateTimer, 1000);
@@ -1472,6 +1508,7 @@ const handleStartJob = async () => {
                 onGoManageBookings={() => setActiveTab("pendingBooking")}
                 onGoServices={() => setActiveTab("services")}
                 onGoProfile={() => setActiveTab("profile")}
+                onGoReviews={() => setActiveTab("reviews")}
               />
             )}
 
@@ -1486,13 +1523,18 @@ const handleStartJob = async () => {
               />
             )}
 
+            {/* PROVIDER REVIEWS */}
+            {activeTab === "reviews" && role === "SERVICE_PROVIDER" && (
+              <ProviderReviewsPage />
+            )}
+
             {/* SERVICES */}
             {activeTab === "services" && role === "SERVICE_PROVIDER" && (
               <>
                 <h2 className="text-lg font-semibold mb-4">My Services</h2>
 
                 {providerProfile && (
-                  <EmployerGrid profile={providerProfile} />
+                  <EmployerGrid profile={providerProfile} districts={districts} /> 
                 )}
               </>
             )}
@@ -2336,6 +2378,33 @@ const handleStartJob = async () => {
 
                           {/* Actions */}
                           <div className="mt-5 flex items-center justify-end gap-2">
+                            {b.status === "COMPLETED" && (
+                              reviewedIds.has(b.bookingId) ? (
+                                <span
+                                  className="
+                                    inline-flex items-center
+                                    px-3 py-1
+                                    rounded-full
+                                    text-xs font-semibold
+                                    bg-muted text-muted-foreground
+                                    border border-border
+                                  "
+                                >
+                                  Reviewed
+                                </span>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="fixmate"
+                                  onClick={() => {
+                                    setReviewBooking(b);
+                                    setReviewOpen(true);
+                                  }}
+                                >
+                                  Review
+                                </Button>
+                              )
+                            )}
                             <Button
                               size="sm"
                               variant="secondary"
@@ -2376,7 +2445,6 @@ const handleStartJob = async () => {
             {/* PROFILE */}
             {activeTab === "profile" && (
               <>
-              {/* ================= PROFILE HEADER ================= */}
               <Card className="relative overflow-hidden rounded-3xl border mb-10">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
 
@@ -3418,6 +3486,19 @@ const handleStartJob = async () => {
               toast.error("Failed to accept booking");
             } finally {
               setAcceptLoading(false);
+            }
+          }}
+        />
+        <ReviewDialog
+          open={reviewOpen}
+          onClose={() => setReviewOpen(false)}
+          booking={reviewBooking}
+          onSubmitted={async () => {
+            try {
+              const ids = await getMyReviewedBookingIds();
+              setReviewedIds(new Set(ids || []));
+            } catch (e) {
+              console.error("Failed to refresh reviewed bookings", e);
             }
           }}
         />

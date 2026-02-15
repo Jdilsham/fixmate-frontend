@@ -8,19 +8,22 @@ import {
   getProviderServiceCategories,
   getProviderServices,
   getProviderAddress,
-  toggleProviderServiceActive
+  toggleProviderServiceActive,
+  getProviderAverageRating
+
 } from "../../../../utils/profile";
 
-export default function EmployerGrid({ profile }) {
+export default function EmployerGrid({ profile, districts = [] }) {
   const [services, setServices] = useState([]);
   const [providerServices, setProviderServices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [open, setOpen] = useState(false);
   const [location, setLocation] = useState("Not specified");
-  console.log("PROVIDER PROFILE:", profile);
+  const [avgRating, setAvgRating] = useState(null);
 
   const [serviceForm, setServiceForm] = useState({
     serviceId: "",
+    districtId: "",
     description: "",
     hourlyRate: "",
     isFixedPrice: false,
@@ -118,6 +121,7 @@ export default function EmployerGrid({ profile }) {
       // reset form
       setServiceForm({
         serviceId: "",
+        districtId: "",
         description: "",
         hourlyRate: "",
         isFixedPrice: false,
@@ -129,6 +133,19 @@ export default function EmployerGrid({ profile }) {
       toast.error(err?.response?.data?.message || "Failed to add service");
     }
   };
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    (async () => {
+      try {
+        const avg = await getProviderAverageRating(profile.id);
+        setAvgRating(avg);
+      } catch (e) {
+        setAvgRating(null);
+      }
+    })();
+  }, [profile?.id]);
 
   return (
     
@@ -152,9 +169,9 @@ export default function EmployerGrid({ profile }) {
               hourlyRate: s.hourlyRate,
 
               // meta
-              rating: null,
-              location: location,
-
+              rating: avgRating,
+              location: s.district || "Unknown",
+              
               //PROVIDER-ONLY
               verificationStatus: s.verificationStatus,
               isActive: s.isActive,
@@ -182,6 +199,7 @@ export default function EmployerGrid({ profile }) {
           setPdfFile={setPdfFile}
           categories={categories}
           providerServices={providerServices}
+          districts={districts}
         />
       )}
     </>

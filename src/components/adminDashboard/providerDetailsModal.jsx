@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:8081/";
+const API_BASE = import.meta.env.VITE_BACKEND_URL;
 
 export default function ProviderDetailsModal({ providerId, isOpen, onClose }) {
   const [details, setDetails] = useState(null);
