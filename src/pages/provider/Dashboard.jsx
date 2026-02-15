@@ -8,7 +8,8 @@ import { Camera } from "lucide-react";
 import PageBackground from "../../components/animate-ui/components/backgrounds/PageBackground";
 import ProviderDashboardOverview from "../../components/provider-dashboard/ProviderDashboardOverview";
 import CustomerDashboard from "../../components/customer-dashboard/CustomerDashboard";
-import ReviewDialog from "../../components/review/ReviewDialog"; 
+import ReviewDialog from "../../components/review/ReviewDialog";
+import ProviderReviewsPage from "../../components/review/ProviderReviews";
 
 import BookingsTable from "../../components/dashboard/bookingTable";
 import {
@@ -17,6 +18,7 @@ import {
   Settings,
   Briefcase,
   ListCheck,
+  Star,
 } from "lucide-react";
 import * as Avatar from "@radix-ui/react-avatar";
 import toast from "react-hot-toast";
@@ -92,6 +94,7 @@ const ROLE_CONFIG = {
       { id: "calendar", label: "Calendar", icon: CalendarIcon },
       { id: "pendingBooking", label: "Bookings", icon: ListCheck },
       { id: "managebookings", label: "Manage Bookings", icon: ListCheck },
+      { id: "reviews", label: "Reviews", icon: Star },
       { id: "profile", label: "Profile", icon: Settings }
     ],
   },
@@ -1505,6 +1508,7 @@ const handleStartJob = async () => {
                 onGoManageBookings={() => setActiveTab("pendingBooking")}
                 onGoServices={() => setActiveTab("services")}
                 onGoProfile={() => setActiveTab("profile")}
+                onGoReviews={() => setActiveTab("reviews")}
               />
             )}
 
@@ -1517,6 +1521,11 @@ const handleStartJob = async () => {
                   setCustomerManageBookingOpen(true);
                 }}
               />
+            )}
+
+            {/* PROVIDER REVIEWS */}
+            {activeTab === "reviews" && role === "SERVICE_PROVIDER" && (
+              <ProviderReviewsPage />
             )}
 
             {/* SERVICES */}
