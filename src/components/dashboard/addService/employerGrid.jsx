@@ -8,7 +8,9 @@ import {
   getProviderServiceCategories,
   getProviderServices,
   getProviderAddress,
-  toggleProviderServiceActive
+  toggleProviderServiceActive,
+  getProviderAverageRating
+
 } from "../../../../utils/profile";
 
 export default function EmployerGrid({ profile, districts = [] }) {
@@ -17,7 +19,7 @@ export default function EmployerGrid({ profile, districts = [] }) {
   const [categories, setCategories] = useState([]);
   const [open, setOpen] = useState(false);
   const [location, setLocation] = useState("Not specified");
-  console.log("PROVIDER PROFILE:", profile);
+  const [avgRating, setAvgRating] = useState(null);
 
   const [serviceForm, setServiceForm] = useState({
     serviceId: "",
@@ -132,6 +134,19 @@ export default function EmployerGrid({ profile, districts = [] }) {
     }
   };
 
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    (async () => {
+      try {
+        const avg = await getProviderAverageRating(profile.id);
+        setAvgRating(avg);
+      } catch (e) {
+        setAvgRating(null);
+      }
+    })();
+  }, [profile?.id]);
+
   return (
     
     <>
@@ -154,7 +169,7 @@ export default function EmployerGrid({ profile, districts = [] }) {
               hourlyRate: s.hourlyRate,
 
               // meta
-              rating: null,
+              rating: avgRating,
               location: s.district || "Unknown",
               
               //PROVIDER-ONLY

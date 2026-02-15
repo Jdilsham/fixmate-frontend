@@ -14,8 +14,6 @@ export default function EmployerCard({ employer, onToggleActive }) {
     hourlyRate,
     rating,
     location,
-
-    // provider-only
     verificationStatus,
     isActive,
     isProviderView = false,
@@ -40,6 +38,11 @@ export default function EmployerCard({ employer, onToggleActive }) {
       : "bg-slate-900/5 text-slate-700 dark:bg-white/10 dark:text-slate-200";
 
   const canToggle = isProviderView && status.includes("APPROV") && typeof isActive === "boolean";
+
+  const displayRating =
+    rating === null || rating === undefined || Number.isNaN(Number(rating))
+      ? "New"
+      : Number(rating).toFixed(1);
 
   return (
     <div
@@ -105,10 +108,10 @@ export default function EmployerCard({ employer, onToggleActive }) {
                   bg-slate-900/5 text-slate-700
                   dark:bg-white/10 dark:text-slate-200
                 "
-                title={rating ?? "New"}
+                title={displayRating}
               >
                 <span className="text-yellow-500">★</span>
-                <span className="leading-none">{rating ?? "New"}</span>
+                <span className="leading-none">{displayRating}</span>
               </span>
 
               {/* Location */}

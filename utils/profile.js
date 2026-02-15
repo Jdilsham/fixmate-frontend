@@ -477,3 +477,73 @@ export const toggleProviderServiceActive = async (providerServiceId) => {
   );
 };
 
+//Customer revirew creation
+export const createReview = async ({ bookingId, rating, comment }) => {
+  const user = getAuthUser?.();
+  const token = user?.token;
+
+  const res = await axios.post(
+    `${API}/api/reviews`,
+    { bookingId, rating, comment },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }
+  );
+
+  return res.data;
+};
+
+// Get reviewed booking IDs for logged-in customer
+export async function getMyReviewedBookingIds() {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(`${API}/api/reviews/my/reviewed-bookings`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
+
+  return res.data;
+}
+
+// Provider reviews
+export async function getProviderReviews(providerId) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(`${API}/api/reviews/provider/${providerId}`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
+
+  return res.data;
+}
+
+// Provider average rating (single number)
+export async function getProviderAverageRating(providerId) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(`${API}/api/reviews/provider/${providerId}/rating`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
+
+  return res.data;
+}
+
+export async function getProviderServicesWithRating() {
+  const services = await getProviderServices();
+  const prof = await getUserProfile();
+  const providerId = prof?.id;
+
+  let avg = null;
+  if (providerId) {
+    avg = await getProviderAverageRating(providerId);
+  }
+
+  return (services || []).map((s) => ({
+    ...s,
+    rating: avg,
+  }));
+}

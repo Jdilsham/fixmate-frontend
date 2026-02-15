@@ -25,9 +25,11 @@ import {
   ShieldCheck,
   MapPin,
   Calendar as CalIcon,
+  Star,
 } from "lucide-react";
 
 import { getProviderDashboardSummary } from "../../../utils/booking";
+import { getProviderReviews, getUserProfile } from "../../../utils/profile";
 
 const money = (v) => `Rs. ${Number(v || 0).toLocaleString("en-LK")}`;
 
@@ -65,6 +67,32 @@ const badgeClass = (status) => {
 };
 
 const PIE_COLORS = ["#22c55e", "#3b82f6", "#f97316", "#a855f7", "#ec4899"];
+
+const avgRatingFromList = (list) => {
+  if (!list || list.length === 0) return 0;
+  const sum = list.reduce((s, r) => s + Number(r.rating || 0), 0);
+  return Math.round((sum / list.length) * 10) / 10; // 1 decimal
+};
+
+function StarsViewLarge({ value = 0 }) {
+  const v = Number(value || 0);
+  const filled = Math.round(v);
+
+  return (
+    <div className="grid grid-cols-5 gap-6 px-8 w-full">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star
+          key={n}
+          className={
+            n <= filled
+              ? "h-7 w-7 fill-amber-400 text-amber-400"
+              : "h-7 w-7 text-slate-300 dark:text-slate-600"
+          }
+        />
+      ))}
+    </div>
+  );
+}
 
 function FxCard({ children, className = "", barClassName = "" }) {
   return (
@@ -218,6 +246,7 @@ export default function ProviderDashboardOverview({
   onGoManageBookings,
   onGoServices,
   onGoProfile,
+  onGoReviews,
 
 }) {
   const [loading, setLoading] = useState(true);
@@ -225,13 +254,34 @@ export default function ProviderDashboardOverview({
   const [err, setErr] = useState("");
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+
   const loadDashboard = async () => {
     try {
       setLoading(true);
       setErr("");
       const res = await getProviderDashboardSummary();
+      console.log("DASHBOARD SUMMARY =", res);
       setData(res);
       setLastUpdated(new Date());
+      try {
+        setReviewsLoading(true);
+        const prof = await getUserProfile();   
+        const providerId = prof?.id;          
+
+        console.log("PROVIDER ID =", providerId);
+
+        if (providerId) {
+          const list = await getProviderReviews(providerId);
+          console.log("REVIEWS LIST =", list);
+          setReviews(list || []);
+        } else {
+          setReviews([]);
+        }
+      } finally {
+        setReviewsLoading(false);
+      }
     } catch (e) {
       setErr(e?.response?.data?.message || e.message || "Failed to load dashboard");
     } finally {
@@ -675,6 +725,47 @@ export default function ProviderDashboardOverview({
               </div>
             </FxCard>
           </div>
+
+          {/* Reviews (Summary only) */}
+          <FxCard className="p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-lg font-semibold">Customer reviews</p>
+                <p className="text-sm text-muted-foreground">
+                  Average rating from customers
+                </p>
+              </div>
+
+              <Button
+                variant="fixmateOutline"
+                size="sm"
+                className="rounded-xl"
+                onClick={onGoReviews}
+              >
+                View all
+              </Button>
+            </div>
+
+            <div className="mt-6 rounded-2xl border bg-background/30 p-6 space-y-3">
+              <div className="flex items-center gap-6">
+                <StarsViewLarge
+                  value={avgRatingFromList(reviews)}
+                  className="flex-1"
+                />
+
+                <div className="shrink-0 flex items-center gap-2">
+                  <span className="text-5xl font-bold leading-none">
+                    {reviewsLoading ? "—" : avgRatingFromList(reviews) || "—"}
+                  </span>
+                  <span className="text-2xl font-semibold text-muted-foreground">/ 5</span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-lg text-muted-foreground">
+                    {reviewsLoading ? "Loading..." : `${reviews?.length ?? 0} review(s)`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </FxCard>
 
           {/* Today + Upcoming */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

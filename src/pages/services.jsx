@@ -27,7 +27,11 @@ const SERVICE_OPTIONS = [
   { value: "Contractors", label: "Contractors" },
 ];
 
-const norm = (v) => String(v ?? "").trim().toLowerCase();
+const norm = (v) =>
+  String(v ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 
 const pickText = (...vals) => {
   for (const v of vals) {
@@ -191,23 +195,43 @@ export default function Services() {
     }
   }, [employees]);
 
-  const filteredEmployees = useMemo(() => {
-    const s = norm(service);
-    const l = norm(debouncedLocation);
+const filteredEmployees = useMemo(() => {
+  const selected = SERVICE_OPTIONS.find((o) => o.value === service);
 
-    const selected = SERVICE_OPTIONS.find(o => o.value === service);
-    const sLabel = norm(selected?.label || ""); // "Electrician" -> "electrician"
+  const s = norm(service);               
+  const sLabel = norm(selected?.label); 
+  const l = norm(debouncedLocation);
 
-    return (employees || []).filter((emp) => {
-      const empServiceName = norm(getEmployeeServiceName(emp));
-      const empLoc = norm(getEmployeeLocationText(emp));
+  return (employees || []).filter((emp) => {
+    const empService = norm(emp?.serviceTitle);
+    const empCategory = norm(emp?.categoryName);
 
-      const okService = !s || empServiceName === s;
-      const okLoc = !l || empLoc.includes(l);
+    const empLoc = norm(
+      [
+        emp?.location,
+        emp?.city,
+        emp?.district,
+        emp?.area,
+        emp?.address,
+      ]
+        .filter(Boolean)
+        .join(" ")
+    );
 
-      return okService && okLoc;
-    });
-  }, [employees, service, debouncedLocation]);
+    const okService =
+      !s ||
+      empService === s ||
+      empService === sLabel ||
+      empService.includes(s) ||
+      empService.includes(sLabel) ||
+      empCategory === s ||
+      empCategory.includes(s);
+
+    const okLoc = !l || empLoc.includes(l);
+
+    return okService && okLoc;
+  });
+}, [employees, service, debouncedLocation]);
 
   const activeFilterCount = (service ? 1 : 0) + (location ? 1 : 0);
 
