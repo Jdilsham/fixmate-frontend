@@ -34,8 +34,6 @@ import {
 } from "../../../utils/booking";
 
 import BookingViewDialog from "../../components/dashboard/bookings/BookingViewDialog";
-import CustomerPaymentDialog from "../../components/dashboard/payments/CustomerPaymentDialog";
-import { getCustomerPayment } from "../../../utils/payment";
 import RejectBookingDialog from "../../components/dashboard/bookings/RejectBookingDialog";
 import ReVerificationDialog from "../../components/dashboard/ReVerificationDialog";
 import AvailabilityConfirmDialog from "../../components/dashboard/AvailabilityConfirmDialog";
@@ -207,10 +205,6 @@ export default function Dashboard() {
   profile?.idBackUrl &&
   profile?.workPdfUrl;
 
-
-  const [paymentInfo, setPaymentInfo] = useState(null);
-  const [paymentOpen, setPaymentOpen] = useState(false);
-
   const [providerPaymentInfo, setProviderPaymentInfo] = useState(null);
   const [providerPaymentLoading, setProviderPaymentLoading] = useState(false);
 
@@ -326,6 +320,18 @@ export default function Dashboard() {
     }
 
     setActiveTab((prev) => prev || "dashboard");
+
+    if (profileData?.role === "CUSTOMER") {
+      try {
+        setCustomerBookingsLoading(true);
+        const data = await getCustomerBookings();
+        setCustomerBookings(data || []);
+      } catch (e) {
+        console.error("Failed to load customer bookings", e);
+      } finally {
+        setCustomerBookingsLoading(false);
+      }
+    }
 
     setLoading(false);
 
@@ -651,23 +657,18 @@ export default function Dashboard() {
   }, [role, managedBooking?.bookingId, managedBooking?.status]);
 
 
-
-  useEffect(() => {
-    if (role === "CUSTOMER") {
-        setCustomerBookingsLoading(true);
-
-        getCustomerBookings()
-          .then((data) => {
-            setCustomerBookings(data);
-          })
-          .catch(() => {
-            toast.error("Failed to load your bookings");
-          })
-          .finally(() => {
-            setCustomerBookingsLoading(false);
-          });
-      }
-  }, [role]);
+  const refreshCustomerBookings = async () => {
+    try {
+      setCustomerBookingsLoading(true);
+      const data = await getCustomerBookings();
+      setCustomerBookings(data || []);
+      toast.success("Bookings refreshed");
+    } catch {
+      toast.error("Failed to refresh bookings");
+    } finally {
+      setCustomerBookingsLoading(false);
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem("bookingStatusFilter", bookingStatusFilter);
@@ -1422,7 +1423,12 @@ const handleStartJob = async () => {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (tab.id === "myBookings" && role === "CUSTOMER") {
+                      refreshCustomerBookings();
+                    }
+                  }}
                   className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
                     activeTab === tab.id
                       ? "bg-primary text-primary-foreground"
@@ -1440,7 +1446,7 @@ const handleStartJob = async () => {
         <main className="flex-1 min-w-0 overflow-y-auto pr-1">
           <div className="bg-card/55 backdrop-blur-xl border border-white/10 dark:border-white/10 rounded-2xl p-6 shadow-lg">
             {/* CUSTOMER MANAGE BOOKING (OVERRIDES TABS) */}
-            {role === "CUSTOMER" && customerManageBookingOpen && (
+            {role === "CUSTOMER" && customerManageBookingOpen && selectedBooking && (
               <CustomerManageBooking
                 booking={selectedBooking}
                 onBack={() => {
@@ -2169,17 +2175,27 @@ const handleStartJob = async () => {
 
                     {/* Controls */}
                     <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setCustomerSearch("");
-                          setCustomerStatusFilter("ALL");
-                        }}
-                        className="sm:order-3"
-                      >
-                        Clear
-                      </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={refreshCustomerBookings}
+                      disabled={customerBookingsLoading}
+                      className="sm:order-3"
+                    >
+                      {customerBookingsLoading ? "Refreshing..." : "Refresh"}
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setCustomerSearch("");
+                        setCustomerStatusFilter("ALL");
+                      }}
+                      className="sm:order-4"
+                    >
+                      Clear
+                    </Button>
 
                       {/* Search */}
                       <input
@@ -2410,30 +2426,24 @@ const handleStartJob = async () => {
                               variant="secondary"
                               onClick={() => {
                                 setSelectedBooking(b);
-                                setViewOpen(true);
+                                setCustomerManageBookingOpen(true);
                               }}
                             >
                               <Eye className="w-4 h-4 mr-2" />
                               View
                             </Button>
-
-                            {b.status === "PAYMENT_PENDING" && (
-                              <Button
-                                size="sm"
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                onClick={async () => {
-                                  try {
-                                    const payment = await getCustomerPayment(b.bookingId);
-                                    setPaymentInfo(payment);
-                                    setPaymentOpen(true);
-                                  } catch {
-                                    toast.error("Failed to load payment info");
-                                  }
-                                }}
-                              >
-                                Pay Now
-                              </Button>
-                            )}
+                              {b.status === "PAYMENT_PENDING" && (
+                                <Button
+                                  size="sm"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  onClick={() => {
+                                    setSelectedBooking(b);
+                                    setCustomerManageBookingOpen(true);
+                                  }}
+                                >
+                                  Pay Now
+                                </Button>
+                              )}
                           </div>
                         </Card>
                       ))}
@@ -3306,18 +3316,15 @@ const handleStartJob = async () => {
           }}
         />
       )}
-      <BookingViewDialog
-        open={viewOpen}
-        onClose={() => setViewOpen(false)}
-        booking={selectedBooking}
-        mode={role === "CUSTOMER" ? "CUSTOMER" : "PROVIDER"}
-        onManage={(booking) => {
-          setViewOpen(false);
-          setSelectedBooking(booking);
+      {role === "SERVICE_PROVIDER" && (
+        <BookingViewDialog
+          open={viewOpen}
+          onClose={() => setViewOpen(false)}
+          booking={selectedBooking}
+          mode="PROVIDER"
+          onManage={(booking) => {
+            setViewOpen(false);
 
-          if (role === "CUSTOMER") {
-            setCustomerManageBookingOpen(true);
-          } else {
             localStorage.setItem(
               "activeManagedBooking",
               JSON.stringify({
@@ -3326,29 +3333,18 @@ const handleStartJob = async () => {
               })
             );
 
-            setManagedBooking((prev) =>
-              prev
-                ? prev
-                : {
-                    ...booking,
-                    bookingId: booking.bookingId ?? booking.id,
-                    scheduledAt: booking.scheduledAt,
-                    startedAt: booking.startedAt ?? null,
-                  }
-            );
+            setManagedBooking({
+              ...booking,
+              bookingId: booking.bookingId ?? booking.id,
+              scheduledAt: booking.scheduledAt,
+              startedAt: booking.startedAt ?? null,
+            });
 
             setActiveTab("managebookings");
-          }
-        }}
-        onRequestPayment={handleRequestPayment}
-      />
-
-      <CustomerPaymentDialog
-        open={paymentOpen}
-        onClose={() => setPaymentOpen(false)}
-        paymentInfo={paymentInfo}
-      />
-
+          }}
+          onRequestPayment={handleRequestPayment}
+        />
+      )}
       <RejectBookingDialog
               open={rejectOpen}
               onClose={() => {
