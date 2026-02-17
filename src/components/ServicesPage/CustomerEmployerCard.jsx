@@ -17,6 +17,7 @@ export default function CustomerEmployerCard({ employer }) {
     location,
   } = employer;
 
+
   const imgSrc = providerProfileImage
     ? providerProfileImage.startsWith("http")
       ? providerProfileImage

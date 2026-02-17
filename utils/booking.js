@@ -79,3 +79,15 @@ export const getProviderDashboardSummary = async () => {
 
   return res.data;
 };
+
+export const getCustomerDashboardSummary = async () => {
+  const auth = getAuthUser();
+
+  const res = await axios.get(`${API}/api/customer/dashboard/summary`, {
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return res.data;
+};

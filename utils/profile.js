@@ -100,7 +100,7 @@ export async function updateAvailability() {
     }
   );
 
-  return res.data; // { isAvailable: true/false }
+  return res.data; 
 }
 
 
@@ -122,9 +122,8 @@ export async function updateProviderProfile(payload) {
   return res.data;
 }
 
-// =======================
+
 // PROVIDER ADDRESS APIs
-// =======================
 
 // GET provider address
 export async function getProviderAddress() {
@@ -140,7 +139,7 @@ export async function getProviderAddress() {
     }
   );
 
-  return res.data; // null OR address object
+  return res.data; 
 }
 
 // ADD provider address
@@ -223,9 +222,8 @@ export async function updateProfessionalInfo(payload) {
   return res.data;
 }
 
-// =======================
+
 // PROVIDER ID VERIFICATION
-// =======================
 
 export async function uploadIdFront(file) {
   const auth = getAuthUser();
@@ -315,30 +313,25 @@ export const changePassword = async (payload) => {
   );
 };
 
-
-
 export const addProviderService = async (formData) => {
-  const token = localStorage.getItem("token");
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
 
   const res = await fetch(`${API}/api/provider/services`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
-      // DO NOT set Content-Type
+      Authorization: `Bearer ${auth.token}`,
     },
     body: formData,
   });
 
-  
   if (!res.ok) {
-    const text = await res.text(); 
+    const text = await res.text();
     throw new Error(text || "Failed to add service");
   }
 
-  
   return await res.text();
 };
-
 
 
 export async function getProviderServiceCategories() {
@@ -354,6 +347,19 @@ export async function getProviderServiceCategories() {
   );
 
   return res.data;
+}
+
+export async function getProviderDistricts() {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(`${API}/api/provider/districts`, {
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return res.data; 
 }
 
 export async function getProviderServices() {
@@ -382,9 +388,8 @@ export async function updateCustomerProfile(payload) {
   });
 }
 
-// =======================
+
 // CUSTOMER ADDRESS APIs
-// =======================
 
 // GET customer address
 export async function getCustomerAddress() {
@@ -398,7 +403,7 @@ export async function getCustomerAddress() {
     }
   );
 
-  return res.data; // null OR address
+  return res.data; 
 }
 
 // ADD customer address
@@ -439,7 +444,7 @@ export async function uploadUserProfilePicture(file) {
   if (!auth) throw new Error("Not authenticated");
 
   const formData = new FormData();
-  formData.append("file", file); // MUST be "file"
+  formData.append("file", file)
 
   const res = await axios.post(
     `${API}/api/user/profile/image`,
@@ -452,7 +457,7 @@ export async function uploadUserProfilePicture(file) {
     }
   );
 
-  return res.data; // image URL
+  return res.data; 
 }
 
 
@@ -472,3 +477,73 @@ export const toggleProviderServiceActive = async (providerServiceId) => {
   );
 };
 
+//Customer revirew creation
+export const createReview = async ({ bookingId, rating, comment }) => {
+  const user = getAuthUser?.();
+  const token = user?.token;
+
+  const res = await axios.post(
+    `${API}/api/reviews`,
+    { bookingId, rating, comment },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }
+  );
+
+  return res.data;
+};
+
+// Get reviewed booking IDs for logged-in customer
+export async function getMyReviewedBookingIds() {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(`${API}/api/reviews/my/reviewed-bookings`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
+
+  return res.data;
+}
+
+// Provider reviews
+export async function getProviderReviews(providerId) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(`${API}/api/reviews/provider/${providerId}`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
+
+  return res.data;
+}
+
+// Provider average rating (single number)
+export async function getProviderAverageRating(providerId) {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const res = await axios.get(`${API}/api/reviews/provider/${providerId}/rating`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
+
+  return res.data;
+}
+
+export async function getProviderServicesWithRating() {
+  const services = await getProviderServices();
+  const prof = await getUserProfile();
+  const providerId = prof?.id;
+
+  let avg = null;
+  if (providerId) {
+    avg = await getProviderAverageRating(providerId);
+  }
+
+  return (services || []).map((s) => ({
+    ...s,
+    rating: avg,
+  }));
+}
