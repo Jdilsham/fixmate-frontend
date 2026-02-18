@@ -7,6 +7,7 @@ import WantedNoticeModal from "../components/wantedPage/WantedNoticeModal";
 import { Button } from "@/components/ui/button";
 import PageBackground from "../components/animate-ui/components/backgrounds/PageBackground";
 import { getAuthUser } from "../../utils/auth";
+import toast from "react-hot-toast";
 const API = import.meta.env.VITE_BACKEND_URL;
 
 export default function Wanted() {
@@ -18,9 +19,8 @@ export default function Wanted() {
   const auth = getAuthUser();
   const isServiceProvider = auth?.role === "SERVICE_PROVIDER";
   const isCustomer = auth?.role === "CUSTOMER";
-
-  console.log("isCustomer:", isCustomer);
-  console.log("hideFab:", hideFab);
+  
+  
 
   const fetchJobs = async () => {
     try {
@@ -45,28 +45,35 @@ export default function Wanted() {
   }, []);
 
   const handleApply = async (postId) => {
-    if (!auth?.token) return alert("Please login to sign up for work.");
+  if (!auth?.token) return toast.error("Please login to sign up for work.");
 
-    try {
-      const res = await fetch(
-        `${API}/api/wanted/${postId}/apply`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${auth.token}` },
-        },
-      );
+  try {
+    const res = await fetch(`${API}/api/wanted/${postId}/apply`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${auth.token}` },
+    });
 
-      if (res.ok) {
-        alert("Success! You've joined this project.");
-        fetchJobs();
-      } else {
-        const msg = await res.text();
-        alert(msg || "Failed to join.");
-      }
-    } catch (e) {
-      console.error("Application error:", e);
+    if (!res.ok) {
+      const msg = await res.text();
+      return toast.error("Failed to apply: " + msg);
     }
-  };
+
+    toast.success("Success! You've joined this project.");
+
+    
+    setJobs((prevJobs) =>
+      prevJobs.map((job) =>
+        job.id === postId
+          ? { ...job, applied: true, currentJoined: job.currentJoined + 1 }
+          : job
+      )
+    );
+
+  } catch (e) {
+    console.error("Application error:", e);
+    toast.error("Something went wrong.");
+  }
+};
 
   useEffect(() => {
     if (!footerRef.current) return;
@@ -98,8 +105,10 @@ export default function Wanted() {
               <JobCard
                 key={job.id}
                 {...job}
+                isApplied={job.applied}
                 onApply={handleApply}
                 isProvider={isServiceProvider}
+                
               />
             ))
           ) : (
@@ -112,7 +121,6 @@ export default function Wanted() {
 
       {isCustomer && (
         <Button
-          
           size="icon-lg"
           aria-label="Add wanted notice"
           onClick={() => setIsModalOpen(true)}

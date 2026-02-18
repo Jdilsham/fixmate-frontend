@@ -2,7 +2,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { MapPin, Briefcase, Users } from "lucide-react";
 
-export default function JobCard({ id, profession, description, location, requiredCount, currentJoined, onApply, isProvider }) {
+export default function JobCard({ id, profession, description, location, requiredCount, currentJoined, onApply, isProvider ,isApplied , handleViewDetails }) {
   const isFull = currentJoined >= requiredCount;
 
   return (
@@ -39,11 +39,14 @@ export default function JobCard({ id, profession, description, location, require
       </CardContent>
       <CardFooter className="pt-3">
         <div className="w-full flex justify-between items-center">
-          <p className="text-xs text-muted-foreground">{isFull ? "This project is full." : "Sign up if you are interested."}</p>
+          <p className="text-l text-muted-foreground">{isFull ? "This project is full." : "Sign up if you are interested."}</p>
           {isProvider && (
-            <Button variant="fixmate" className="px-6 h-11 rounded-2xl" disabled={isFull} onClick={() => onApply(id)}>
-              {isFull ? "Filled" : "Sign Up for Work"}
+            <div className="flex gap-3">
+            
+            <Button variant="fixmate" className="px-6 h-11 rounded-2xl" disabled={isFull || isApplied} onClick={() => onApply(id)}>
+              {isFull ? "Filled" : isApplied ? "Already Applied" : "Sign Up for Work"}
             </Button>
+            </div>
           )}
         </div>
       </CardFooter>

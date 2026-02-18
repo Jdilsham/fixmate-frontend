@@ -30,7 +30,7 @@ export default function WantedNoticeModal({ isOpen, onClose, onCreated }) {
             <div className="space-y-2"><Label>Location</Label><Input required value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} /></div>
           </div>
           <div className="space-y-2"><Label>Description</Label><Textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} /></div>
-          <DialogFooter><Button variant="outline" onClick={onClose} type="button">Cancel</Button><Button variant="fixmate" type="submit">Publish</Button></DialogFooter>
+          <DialogFooter><Button variant="fixmate" onClick={onClose} type="button">Cancel</Button><Button variant="fixmate" type="submit">Publish</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
