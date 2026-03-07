@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import Header from "../components/header";
 import Footercard from "../components/footer";
 import JobCard from "../components/wantedPage/jobCard";
-import WantedNoticeModal from "../components/wantedPage/WantedNoticeModal";
+import WantedNoticeModal from "../components/wantedPage/wantedNoticeModal";
 import { Button } from "@/components/ui/button";
 import PageBackground from "../components/animate-ui/components/backgrounds/PageBackground";
 import { getAuthUser } from "../../utils/auth";
