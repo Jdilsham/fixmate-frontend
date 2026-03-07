@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import UserManagementTable from "../../components/adminDashboard/UserManagementTable";
 import ServiceCategoryManager from "../../components/adminDashboard/serviceCategory";
+import ServiceRequestsTable from "../../components/adminDashboard/ServiceRequestsTable";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -31,6 +32,8 @@ export default function AdminDashboard() {
 
             {activeTab === "services" && <ServiceCategoryManager />}
 
+            {activeTab === "serviceRequests" && <ServiceRequestsTable />}
+
             {activeTab === "settings" && <div>Settings coming soon ⚙️</div>}
           
           </div>
@@ -39,3 +42,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

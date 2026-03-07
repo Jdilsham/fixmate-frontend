@@ -4,6 +4,7 @@ import {
   Briefcase,
   FileCheck,
   Settings,
+  ClipboardCheck,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -14,6 +15,7 @@ export default function AdminSidebar({activeTab = "dashboard", setActiveTab = ()
   const tabs = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "approval", label: "Provider Approvals", icon: FileCheck },
+    { id: "serviceRequests", label: "Service Requests", icon: ClipboardCheck },
     { id: "users", label: "Users", icon: Users },
     { id: "services", label: "Services", icon: Briefcase },
     { id: "settings", label: "Settings", icon: Settings },
