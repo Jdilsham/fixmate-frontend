@@ -472,6 +472,10 @@ const filteredEmployees = useMemo(() => {
         )}
       </section>
 
+      <SmartBookingModal
+        open={smartBookingOpen}
+        onClose={() => setSmartBookingOpen(false)}
+      />
       <section className="pt-16 pb-24">
           <Footercard />
       </section>
