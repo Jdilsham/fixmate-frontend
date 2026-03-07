@@ -5,6 +5,8 @@ import CustomerEmployerCard from "../components/ServicesPage/CustomerEmployerCar
 import CustomerEmployerCardSkeleton from "../components/ServicesPage/CustomerEmployerCardSkeleton";
 import { useLocation, useNavigate } from "react-router-dom";
 import PageBackground from "../components/animate-ui/components/backgrounds/PageBackground";
+import SmartBookingModal from "../components/ServicesPage/SmartBookingModal";
+
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
@@ -129,6 +131,8 @@ export default function Services() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [smartBookingOpen, setSmartBookingOpen] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(locationHook.search);
@@ -280,32 +284,42 @@ const filteredEmployees = useMemo(() => {
               </p>
             </div>
 
-            <div className="flex gap-3 lg:mt-2">
-              <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
+            <div className="flex flex-col gap-3 lg:mt-2">
+              <div className="flex gap-3">
+                <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
                   <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-blue-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
-                    <span className="text-sm">👥</span>
+                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-blue-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
+                      <span className="text-sm">👥</span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Providers</p>
+                      <p className="text-xl font-semibold">
+                        {loading ? "…" : filteredEmployees.length}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Providers</p>
-                    <p className="text-xl font-semibold">
-                      {loading ? "…" : filteredEmployees.length}
-                    </p>
+                </div>
+
+                <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
+                      <span className="text-sm">🎯</span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Active filters</p>
+                      <p className="text-xl font-semibold">{activeFilterCount}</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
-                    <span className="text-sm">🎯</span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Active filters</p>
-                    <p className="text-xl font-semibold">{activeFilterCount}</p>
-                  </div>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setSmartBookingOpen(true)}
+                className="w-full rounded-3xl px-4 py-3 text-sm font-semibold transition bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90 shadow-lg shadow-cyan-500/20"
+              >
+                ⚡ Smart Booking
+              </button>
             </div>
           </div>
 
