@@ -16,7 +16,8 @@ import AdminDashboard from "./pages/admin/dashboard";
 import PaymentSuccess from "./pages/payment-success";
 import PaymentCancel from "./pages/payment-cancel";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
-
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function App() {
   return (
@@ -54,6 +55,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/verify-otp" element={<VerifyOtpPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* OPTIONAL */}
           <Route path="/wanted" element={<Wanted />} />
