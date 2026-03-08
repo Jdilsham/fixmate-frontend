@@ -24,6 +24,7 @@ export default function SignupPage() {
   const [role, setrole] = useState("");
   const [password, setpassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -39,6 +40,8 @@ export default function SignupPage() {
     }
 
     try {
+      setLoading(true);
+
       const response = await axios.post(`${API}/api/auth/signup`, {
         firstName,
         lastName,
@@ -48,9 +51,9 @@ export default function SignupPage() {
         role,
       });
 
-      console.log("Signup successful:", response.data);
-      toast.success("Signup successful! Please login.");
-      navigate("/login");
+      toast.success("Signup successful! Enter the verification code sent to your email.");
+      localStorage.setItem("pendingVerificationEmail", email);
+      navigate("/verify-otp", { state: { email } });
     } catch (error) {
       console.error("Signup failed:", error);
 
@@ -70,6 +73,8 @@ export default function SignupPage() {
       }
 
       toast.error("Signup failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -218,16 +223,19 @@ export default function SignupPage() {
 
           <CardFooter className="flex flex-col gap-5 mt-4 px-6 pb-8">
             <button
+              type="button"
               onClick={handleSignup}
+              disabled={loading}
               className="
                 w-full h-12 rounded-2xl font-semibold text-white transition
                 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600
                 hover:opacity-90
                 dark:from-cyan-500 dark:via-blue-500 dark:to-emerald-500
                 shadow-lg shadow-orange-500/20 dark:shadow-cyan-500/20
+                disabled:opacity-60 disabled:cursor-not-allowed
               "
             >
-              Sign Up
+              {loading ? "Creating account..." : "Sign Up"}
             </button>
 
             {/* <GoogleLoginButton /> */}
