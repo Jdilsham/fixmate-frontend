@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  
 
   const GLASS =
     "backdrop-blur-xl border border-black/10 dark:border-white/10 shadow-[0_20px_80px_-55px_rgba(0,0,0,0.55)]";
