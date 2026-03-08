@@ -13,10 +13,9 @@ import ProviderDashboard from "./pages/provider/Dashboard";
 import { Toaster } from "react-hot-toast";
 import BookProfessional from "./pages/BookProfessional";
 import AdminDashboard from "./pages/admin/dashboard";
-import ManageBookingPage from "./components/dashboard/bookings/ManageBookingPage";
 import PaymentSuccess from "./pages/payment-success";
 import PaymentCancel from "./pages/payment-cancel";
-
+import VerifyOtpPage from "./pages/VerifyOtpPage";
 
 
 function App() {
@@ -54,6 +53,7 @@ function App() {
           {/* AUTH */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/verify-otp" element={<VerifyOtpPage />} />
 
           {/* OPTIONAL */}
           <Route path="/wanted" element={<Wanted />} />

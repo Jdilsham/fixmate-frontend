@@ -2,7 +2,7 @@ import Header from "../components/header";
 import Footercard from "../components/footer";
 import MissionCard from "../components/aboutpage/MissionCard";
 import VisionCard from "../components/aboutpage/VissionCard";
-import PageBackground from "@/components/animate-ui/components/backgrounds/PageBackground"; // ✅ use your themed background
+import PageBackground from "@/components/animate-ui/components/backgrounds/PageBackground"; 
 import { motion } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 
@@ -12,6 +12,25 @@ export default function About() {
   return (
     <div className="relative w-full min-h-screen overflow-hidden text-foreground">
       <PageBackground interactive={false} />
+
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div className="absolute -top-10 left-[-120px] h-64 w-64 rounded-full blur-3xl bg-fuchsia-400/25 dark:bg-fuchsia-400/18" />
+
+      <div className="absolute top-10 right-[-140px] h-72 w-72 rounded-full blur-3xl bg-cyan-400/25 dark:bg-cyan-400/18" />
+
+      <div className="absolute top-40 left-1/2 -translate-x-1/2 h-72 w-[820px] rounded-full blur-3xl bg-gradient-to-r from-blue-400/20 via-indigo-400/18 to-emerald-400/20 dark:from-blue-400/16 dark:via-indigo-400/14 dark:to-emerald-400/16" />
+
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-72 w-[760px] rounded-full blur-3xl bg-gradient-to-r from-orange-300/20 via-amber-200/18 to-yellow-200/18 dark:from-cyan-500/10 dark:via-blue-500/10 dark:to-emerald-500/10" />
+
+      <div
+        className="absolute inset-0 opacity-[0.10] dark:opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.10) 1px, transparent 0)",
+          backgroundSize: "24px 24px",
+        }}
+      />
+    </div>
 
       <Header />
 

@@ -25,9 +25,8 @@ export default function CustomerEmployerCard({ employer }) {
     : null;
 
   return (
-    <div className="group relative w-full max-w-[360px] mx-auto">
+    <div className="group relative w-full max-w-[390px] mx-auto">
       
-      {/* subtle glow border */}
       <div className="pointer-events-none absolute -inset-[1px] rounded-[28px] opacity-0 group-hover:opacity-100 transition duration-300 bg-gradient-to-r from-cyan-500/30 via-blue-500/25 to-emerald-500/25 blur-[6px]" />
 
       <div
@@ -84,11 +83,11 @@ export default function CustomerEmployerCard({ employer }) {
                 {providerName || "Unknown"}
               </p>
 
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
+              <div className="mt-2 flex items-start gap-2 min-h-[40px]">
                 {/* rating */}
                 <span
                   className="
-                    inline-flex items-center gap-1
+                    inline-flex shrink-0 items-center gap-1
                     px-2.5 py-1 rounded-full text-xs font-medium
                     bg-slate-900/5 text-slate-700
                     dark:bg-white/10 dark:text-slate-200
@@ -102,16 +101,18 @@ export default function CustomerEmployerCard({ employer }) {
                 {/* location */}
                 <span
                   className="
-                    inline-flex items-center gap-1
+                    inline-flex flex-1 min-w-0 items-center gap-1
                     px-2.5 py-1 rounded-full text-xs font-medium
                     bg-slate-900/5 text-slate-700
                     dark:bg-white/10 dark:text-slate-200
-                    max-w-[170px]
                   "
                   title={location || "Unknown"}
                 >
-                  <span className="text-red-500">📍</span>
-                  <span className="truncate">{location || "Unknown"}</span>
+                  <span className="shrink-0 text-red-500">📍</span>
+
+                  <span className="break-words leading-tight">
+                    {location || "Unknown"}
+                  </span>
                 </span>
               </div>
             </div>
