@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import MapPicker from "../maps/MapPicker";
-
-const API = import.meta.env.VITE_BACKEND_URL;
+import { createSmartBooking } from "../../../utils/booking";
+import { getCustomerMe } from "../../../utils/profile";
 
 const TIME_SLOTS = [
   { label: "08:00 AM - 10:00 AM", value: "08:00" },
@@ -17,7 +17,6 @@ export default function SmartBookingModal({
   onClose,
   serviceOptions = [],
 }) {
-  const token = localStorage.getItem("token");
 
   const [pricingType, setPricingType] = useState("");
   const [serviceId, setServiceId] = useState("");
@@ -61,18 +60,10 @@ export default function SmartBookingModal({
 
   useEffect(() => {
     const fetchCustomerProfile = async () => {
-      if (!open || !token) return;
+      if (!open) return;
 
       try {
-        const res = await fetch(`${API}/api/customer/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) return;
-
-        const data = await res.json();
+        const data = await getCustomerMe();
         setCustomer(data);
         setPhone(data?.phone || "");
       } catch {
@@ -81,7 +72,7 @@ export default function SmartBookingModal({
     };
 
     fetchCustomerProfile();
-  }, [open, token]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -236,23 +227,11 @@ export default function SmartBookingModal({
         longitude: Number(coords.lng),
       };
 
-      const res = await fetch(`${API}/api/customer/bookings/smart`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Smart booking failed");
-      }
+      const data = await createSmartBooking(payload);
 
       setSuccess(data);
       toast.success("Smart booking created successfully");
+
       setTimeout(() => {
         onClose();
       }, 1000);
