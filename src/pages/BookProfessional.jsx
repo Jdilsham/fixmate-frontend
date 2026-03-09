@@ -23,7 +23,8 @@ export default function BookProfessional() {
   const [address, setAddress] = useState(null);
 
   const token = localStorage.getItem("token");
-  const isProvider = token?.includes("PROVIDER");
+  const role = localStorage.getItem("role");
+  const isProvider = role === "SERVICE_PROVIDER";
 
   useEffect(() => {
     if (!providerServiceId) return;
@@ -50,7 +51,7 @@ export default function BookProfessional() {
   }, [providerServiceId]);
 
   useEffect(() => {
-    fetch(`${API}/api/customer/me`, {
+    fetch(`${API}/api/user/me`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => {
@@ -118,9 +119,27 @@ export default function BookProfessional() {
       });
 
       if (!res.ok) {
-        const errorText = await res.text();
-        if (res.status === 409) toast.error("This time slot is already booked ❌");
-        else toast.error(errorText || "Booking failed");
+        let errorMessage = "Booking failed";
+
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          try {
+            errorMessage = await res.text();
+          } catch {
+            errorMessage = "Booking failed";
+          }
+        }
+
+        if (res.status === 409) {
+          toast.error("This time slot is already booked ❌");
+        } else if (res.status === 400 && errorMessage.includes("own service")) {
+          toast.error("You cannot book your own service");
+        } else {
+          toast.error(errorMessage);
+        }
+
         return;
       }
 
