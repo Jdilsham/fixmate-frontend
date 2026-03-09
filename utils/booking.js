@@ -91,3 +91,23 @@ export const getCustomerDashboardSummary = async () => {
 
   return res.data;
 };
+
+export const createSmartBooking = async (payload) => {
+  const auth = getAuthUser();
+
+  if (!auth?.token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await axios.post(
+    `${API}/api/customer/bookings/smart`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data;
+};

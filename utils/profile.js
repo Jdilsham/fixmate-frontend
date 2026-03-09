@@ -547,3 +547,24 @@ export async function getProviderServicesWithRating() {
     rating: avg,
   }));
 }
+
+import axios from "axios";
+import { getAuthUser } from "./auth";
+
+const API = import.meta.env.VITE_BACKEND_URL;
+
+export const getCustomerMe = async () => {
+  const auth = getAuthUser();
+
+  if (!auth?.token) {
+    throw new Error("Not authenticated");
+  }
+
+  const res = await axios.get(`${API}/api/customer/me`, {
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return res.data;
+};
