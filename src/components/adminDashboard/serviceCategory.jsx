@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 
-const API = import.meta.env.VITE_BACKEND_URL;
+import {
+  getAdminCategories,
+  createAdminCategory,
+  updateAdminCategory,
+  deleteAdminCategory,
+} from "../../../utils/admin";
 
 export default function ServiceCategoryManager() {
   const [categories, setCategories] = useState([]);
@@ -13,11 +18,7 @@ export default function ServiceCategoryManager() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${API}/api/admin/categories`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      if (!response.ok) throw new Error("Failed to fetch");
-      const data = await response.json();
+      const data = await getAdminCategories();
       setCategories(data);
     } catch (error) {
       toast.error("Could not load categories");
@@ -26,28 +27,23 @@ export default function ServiceCategoryManager() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!newCategory.name) return;
+
+    if (!newCategory.name.trim()) return;
 
     try {
       setLoading(true);
-      const response = await fetch(`${API}/api/admin/categories`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(newCategory),
+
+      await createAdminCategory({
+        name: newCategory.name,
       });
 
-      if (response.ok) {
-        toast.success("Category added!");
-        setNewCategory({ name: "", description: "" });
-        fetchCategories();
-      } else {
-        toast.error("Failed to add category");
-      }
+      toast.success("Category added!");
+
+      setNewCategory({ name: "" });
+
+      fetchCategories();
     } catch (error) {
-      toast.error("Network error");
+      toast.error("Failed to add category");
     } finally {
       setLoading(false);
     }
@@ -55,26 +51,17 @@ export default function ServiceCategoryManager() {
 
   const handleUpdate = async (id) => {
     const newName = prompt("Enter new category name:");
+
     if (!newName) return;
 
     try {
-      const response = await fetch(`${API}/api/admin/categories/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ name: newName }),
-      });
+      await updateAdminCategory(id, { name: newName });
 
-      if (response.ok) {
-        toast.success("Category updated!");
-        fetchCategories();
-      } else {
-        toast.error("Failed to update category");
-      }
+      toast.success("Category updated!");
+
+      fetchCategories();
     } catch (error) {
-      toast.error("Network error");
+      toast.error("Failed to update category");
     }
   };
 
@@ -82,19 +69,13 @@ export default function ServiceCategoryManager() {
     if (!confirm("Are you sure? This might affect existing services.")) return;
 
     try {
-      const response = await fetch(`${API}/api/admin/category/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await deleteAdminCategory(id);
 
-      if (response.ok) {
-        toast.success("Category removed");
-        fetchCategories();
-      } else {
-        toast.error("Cannot delete: Category might be in use");
-      }
+      toast.success("Category removed");
+
+      fetchCategories();
     } catch (error) {
-      toast.error("Delete failed");
+      toast.error("Cannot delete: Category might be in use");
     }
   };
 
@@ -104,8 +85,10 @@ export default function ServiceCategoryManager() {
 
   return (
     <div className="space-y-6">
+      {/* Add Category */}
       <Card className="p-6 border rounded-2xl">
         <h3 className="text-lg font-bold mb-4">Add New Category</h3>
+
         <form
           onSubmit={handleCreate}
           className="flex flex-col sm:flex-row gap-3"
@@ -118,22 +101,23 @@ export default function ServiceCategoryManager() {
             }
             className="flex-1"
           />
-          
+
           <Button type="submit" disabled={loading}>
-            <span className="mr-2"> Add Category</span>
+            Add Category
           </Button>
         </form>
       </Card>
 
+      {/* Category Table */}
       <Card className="p-4 rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="">
-            <tr className="border-b  text-left">
+          <thead>
+            <tr className="border-b text-left">
               <th className="p-3">Category Name</th>
-
-              <th className="p-3 text-right pr-15 ">Actions</th>
+              <th className="p-3 text-right pr-15">Actions</th>
             </tr>
           </thead>
+
           <tbody>
             {categories.map((cat) => (
               <tr key={cat.id} className="border-b hover:bg-muted/30">
@@ -149,9 +133,10 @@ export default function ServiceCategoryManager() {
                     >
                       Edit
                     </Button>
+
                     <Button
                       onClick={() => handleDelete(cat.id)}
-                      className="text-foreground hover:bg-muted-foreground/10"
+                      className="text-red-500 hover:bg-red-50"
                     >
                       Delete
                     </Button>
