@@ -5,6 +5,8 @@ import CustomerEmployerCard from "../components/ServicesPage/CustomerEmployerCar
 import CustomerEmployerCardSkeleton from "../components/ServicesPage/CustomerEmployerCardSkeleton";
 import { useLocation, useNavigate } from "react-router-dom";
 import PageBackground from "../components/animate-ui/components/backgrounds/PageBackground";
+import SmartBookingModal from "../components/ServicesPage/SmartBookingModal";
+
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
@@ -107,6 +109,7 @@ function cn(...x) {
   return x.filter(Boolean).join(" ");
 }
 
+
 export default function Services() {
   const locationHook = useLocation();
   const navigate = useNavigate();
@@ -129,6 +132,8 @@ export default function Services() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [smartBookingOpen, setSmartBookingOpen] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(locationHook.search);
@@ -195,43 +200,65 @@ export default function Services() {
     }
   }, [employees]);
 
-const filteredEmployees = useMemo(() => {
-  const selected = SERVICE_OPTIONS.find((o) => o.value === service);
+  const filteredEmployees = useMemo(() => {
+    const selected = SERVICE_OPTIONS.find((o) => o.value === service);
 
-  const s = norm(service);               
-  const sLabel = norm(selected?.label); 
-  const l = norm(debouncedLocation);
+    const s = norm(service);               
+    const sLabel = norm(selected?.label); 
+    const l = norm(debouncedLocation);
 
-  return (employees || []).filter((emp) => {
-    const empService = norm(emp?.serviceTitle);
-    const empCategory = norm(emp?.categoryName);
+    return (employees || []).filter((emp) => {
+      const empService = norm(emp?.serviceTitle);
+      const empCategory = norm(emp?.categoryName);
 
-    const empLoc = norm(
-      [
-        emp?.location,
-        emp?.city,
-        emp?.district,
-        emp?.area,
-        emp?.address,
-      ]
-        .filter(Boolean)
-        .join(" ")
+      const empLoc = norm(
+        [
+          emp?.location,
+          emp?.city,
+          emp?.district,
+          emp?.area,
+          emp?.address,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      );
+
+      const okService =
+        !s ||
+        empService === s ||
+        empService === sLabel ||
+        empService.includes(s) ||
+        empService.includes(sLabel) ||
+        empCategory === s ||
+        empCategory.includes(s);
+
+      const okLoc = !l || empLoc.includes(l);
+
+      return okService && okLoc;
+    });
+  }, [employees, service, debouncedLocation]);
+
+  const smartBookingServices = useMemo(() => {
+    const map = new Map();
+
+    (employees || []).forEach((item) => {
+      const id = item?.serviceId;
+      const title = item?.serviceTitle;
+
+      if (!id || !title) return;
+
+      if (!map.has(String(id))) {
+        map.set(String(id), {
+          value: String(id),
+          label: title,
+        });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) =>
+      a.label.localeCompare(b.label)
     );
-
-    const okService =
-      !s ||
-      empService === s ||
-      empService === sLabel ||
-      empService.includes(s) ||
-      empService.includes(sLabel) ||
-      empCategory === s ||
-      empCategory.includes(s);
-
-    const okLoc = !l || empLoc.includes(l);
-
-    return okService && okLoc;
-  });
-}, [employees, service, debouncedLocation]);
+  }, [employees]);
 
   const activeFilterCount = (service ? 1 : 0) + (location ? 1 : 0);
 
@@ -280,32 +307,42 @@ const filteredEmployees = useMemo(() => {
               </p>
             </div>
 
-            <div className="flex gap-3 lg:mt-2">
-              <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
+            <div className="flex flex-col gap-3 lg:mt-2">
+              <div className="flex gap-3">
+                <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
                   <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-blue-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
-                    <span className="text-sm">👥</span>
+                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-blue-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
+                      <span className="text-sm">👥</span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Providers</p>
+                      <p className="text-xl font-semibold">
+                        {loading ? "…" : filteredEmployees.length}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Providers</p>
-                    <p className="text-xl font-semibold">
-                      {loading ? "…" : filteredEmployees.length}
-                    </p>
+                </div>
+
+                <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
+                      <span className="text-sm">🎯</span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Active filters</p>
+                      <p className="text-xl font-semibold">{activeFilterCount}</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className={`rounded-3xl px-4 py-3 min-w-[150px] ${SURFACE}`}>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/15 border border-black/10 dark:border-white/10 flex items-center justify-center">
-                    <span className="text-sm">🎯</span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Active filters</p>
-                    <p className="text-xl font-semibold">{activeFilterCount}</p>
-                  </div>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setSmartBookingOpen(true)}
+                className="w-full rounded-3xl px-4 py-3 text-sm font-semibold transition bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90 shadow-lg shadow-cyan-500/20"
+              >
+                ⚡ Smart Booking
+              </button>
             </div>
           </div>
 
@@ -458,6 +495,11 @@ const filteredEmployees = useMemo(() => {
         )}
       </section>
 
+      <SmartBookingModal
+        open={smartBookingOpen}
+        onClose={() => setSmartBookingOpen(false)}
+        serviceOptions={smartBookingServices}
+      />
       <section className="pt-16 pb-24">
           <Footercard />
       </section>

@@ -313,52 +313,56 @@ export default function BookingViewDialog({
               </div>
             </div>
 
-            <Row label="Location">
-              <div className="flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="fixmateOutline"
-                  onClick={openViewLocation}
-                  disabled={!hasCoords}
-                  className="
-                    rounded-xl
-                    transition-all duration-200
-                    hover:-translate-y-[1px]
-                    focus-visible:ring-2 focus-visible:ring-primary/30
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                  "
-                >
-                  View Location
-                </Button>
+            {isProvider && (
+            <>
+              <Row label="Location">
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="fixmateOutline"
+                    onClick={openViewLocation}
+                    disabled={!hasCoords}
+                    className="
+                      rounded-xl
+                      transition-all duration-200
+                      hover:-translate-y-[1px]
+                      focus-visible:ring-2 focus-visible:ring-primary/30
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                    "
+                  >
+                    View Location
+                  </Button>
 
-                <Button
-                  type="button"
-                  onClick={openDirections}
-                  disabled={!hasCoords}
-                  className="
-                    rounded-xl
-                    bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600
-                    dark:bg-gradient-to-r dark:from-cyan-500 dark:via-sky-500 dark:to-emerald-500
-                    text-white
-                    hover:brightness-110
-                    transition-all duration-200
-                    active:scale-95
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    dark:ring-1 dark:ring-white/10
-                  "
-                >
-                  Get Directions
-                </Button>
-              </div>
-            </Row>
-
-            {!hasCoords && (
-              <div className="mt-2 flex items-center justify-between rounded-2xl border border-black/5 dark:border-white/10 bg-white/55 dark:bg-white/5 px-4 py-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  Location not available for this booking.
+                  <Button
+                    type="button"
+                    onClick={openDirections}
+                    disabled={!hasCoords}
+                    className="
+                      rounded-xl
+                      bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600
+                      dark:bg-gradient-to-r dark:from-cyan-500 dark:via-sky-500 dark:to-emerald-500
+                      text-white
+                      hover:brightness-110
+                      transition-all duration-200
+                      active:scale-95
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                      dark:ring-1 dark:ring-white/10
+                    "
+                  >
+                    Get Directions
+                  </Button>
                 </div>
-              </div>
+              </Row>
+
+              {!hasCoords && (
+                <div className="mt-2 flex items-center justify-between rounded-2xl border border-black/5 dark:border-white/10 bg-white/55 dark:bg-white/5 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    Location not available for this booking.
+                  </div>
+                </div>
+              )}
+            </>
             )}
           </Section>
 

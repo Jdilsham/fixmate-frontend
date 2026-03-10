@@ -111,25 +111,31 @@ export async function updateAvailability() {
       headers: {
         Authorization: `Bearer ${auth.token}`,
       },
-    },
+    }
   );
 
-  return res.data;
+  return res.data; 
 }
+
 
 export async function updateProviderProfile(payload) {
   const auth = getAuthUser();
   if (!auth) throw new Error("Not Authenticated");
 
-  const res = await axios.put(`${API}/api/provider/profile`, payload, {
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await axios.put(
+    `${API}/api/provider/profile`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   return res.data;
 }
+
 
 // PROVIDER ADDRESS APIs
 
@@ -138,13 +144,16 @@ export async function getProviderAddress() {
   const auth = getAuthUser();
   if (!auth) throw new Error("Not authenticated");
 
-  const res = await axios.get(`${API}/api/provider/address`, {
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-    },
-  });
+  const res = await axios.get(
+    `${API}/api/provider/address`,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
 
-  return res.data;
+  return res.data; 
 }
 
 // ADD provider address
@@ -152,27 +161,37 @@ export async function addProviderAddress(address) {
   const auth = getAuthUser();
   if (!auth) throw new Error("Not authenticated");
 
-  const res = await axios.post(`${API}/api/provider/address`, address, {
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await axios.post(
+    `${API}/api/provider/address`, 
+    address,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   return res.data;
 }
+
+
 
 // UPDATE provider address
 export async function updateProviderAddress(address) {
   const auth = getAuthUser();
   if (!auth) throw new Error("Not authenticated");
 
-  const res = await axios.put(`${API}/api/provider/address`, address, {
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  const res = await axios.put(
+    `${API}/api/provider/address`,   
+    address,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
   return res.data;
 }
@@ -184,15 +203,20 @@ export async function updateProviderProfilePicture(file) {
   const formData = new FormData();
   formData.append("profilePic", file); // MUST match backend param name
 
-  const res = await axios.put(`${API}/api/provider/profile/picture`, formData, {
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  const res = await axios.put(
+    `${API}/api/provider/profile/picture`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 
   return res.data;
 }
+
 
 export async function updateProfessionalInfo(payload) {
   const auth = getAuthUser();
@@ -206,11 +230,12 @@ export async function updateProfessionalInfo(payload) {
         Authorization: `Bearer ${auth.token}`,
         "Content-Type": "application/json",
       },
-    },
+    }
   );
 
   return res.data;
 }
+
 
 // PROVIDER ID VERIFICATION
 
@@ -221,12 +246,16 @@ export async function uploadIdFront(file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  return axios.put(`${API}/api/provider/verification/id-front`, formData, {
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  return axios.put(
+    `${API}/api/provider/verification/id-front`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 }
 
 export async function uploadIdBack(file) {
@@ -236,12 +265,16 @@ export async function uploadIdBack(file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  return axios.put(`${API}/api/provider/verification/id-back`, formData, {
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  return axios.put(
+    `${API}/api/provider/verification/id-back`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 }
 
 export async function uploadWorkPdf(file) {
@@ -259,11 +292,12 @@ export async function uploadWorkPdf(file) {
         Authorization: `Bearer ${auth.token}`,
         "Content-Type": "multipart/form-data",
       },
-    },
+    }
   );
 
   return res.data;
 }
+
 
 export async function requestVerification() {
   const auth = getAuthUser();
@@ -274,9 +308,10 @@ export async function requestVerification() {
     {},
     {
       headers: { Authorization: `Bearer ${auth.token}` },
-    },
+    }
   );
 }
+
 
 export const changePassword = async (payload) => {
   const auth = getAuthUser();
@@ -288,7 +323,7 @@ export const changePassword = async (payload) => {
       headers: {
         Authorization: `Bearer ${auth.token}`,
       },
-    },
+    }
   );
 };
 
@@ -312,6 +347,7 @@ export const addProviderService = async (formData) => {
   return await res.text();
 };
 
+
 export async function getProviderServiceCategories() {
   const auth = getAuthUser();
 
@@ -321,7 +357,7 @@ export async function getProviderServiceCategories() {
       headers: {
         Authorization: `Bearer ${auth.token}`,
       },
-    },
+    }
   );
 
   return res.data;
@@ -337,7 +373,7 @@ export async function getProviderDistricts() {
     },
   });
 
-  return res.data;
+  return res.data; 
 }
 
 export async function getProviderServices() {
@@ -349,11 +385,12 @@ export async function getProviderServices() {
       headers: {
         Authorization: `Bearer ${auth.token}`,
       },
-    },
+    }
   );
 
   return res.data;
 }
+
 
 export async function updateCustomerProfile(payload) {
   const auth = getAuthUser();
@@ -365,6 +402,7 @@ export async function updateCustomerProfile(payload) {
   });
 }
 
+
 // CUSTOMER ADDRESS APIs
 
 // GET customer address
@@ -372,11 +410,14 @@ export async function getCustomerAddress() {
   const auth = getAuthUser();
   if (!auth) throw new Error("Not authenticated");
 
-  const res = await axios.get(`${API}/api/customer/address`, {
-    headers: { Authorization: `Bearer ${auth.token}` },
-  });
+  const res = await axios.get(
+    `${API}/api/customer/address`,
+    {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    }
+  );
 
-  return res.data;
+  return res.data; 
 }
 
 // ADD customer address
@@ -384,9 +425,13 @@ export async function addCustomerAddress(address) {
   const auth = getAuthUser();
   if (!auth) throw new Error("Not authenticated");
 
-  const res = await axios.post(`${API}/api/customer/address`, address, {
-    headers: { Authorization: `Bearer ${auth.token}` },
-  });
+  const res = await axios.post(
+    `${API}/api/customer/address`,
+    address,
+    {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    }
+  );
 
   return res.data;
 }
@@ -396,9 +441,13 @@ export async function updateCustomerAddress(address) {
   const auth = getAuthUser();
   if (!auth) throw new Error("Not authenticated");
 
-  const res = await axios.put(`${API}/api/customer/address`, address, {
-    headers: { Authorization: `Bearer ${auth.token}` },
-  });
+  const res = await axios.put(
+    `${API}/api/customer/address`,
+    address,
+    {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    }
+  );
 
   return res.data;
 }
@@ -409,17 +458,22 @@ export async function uploadUserProfilePicture(file) {
   if (!auth) throw new Error("Not authenticated");
 
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", file)
 
-  const res = await axios.post(`${API}/api/user/profile/image`, formData, {
-    headers: {
-      Authorization: `Bearer ${auth.token}`,
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  const res = await axios.post(
+    `${API}/api/user/profile/image`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
 
-  return res.data;
+  return res.data; 
 }
+
 
 // toggle service active/inactive
 export const toggleProviderServiceActive = async (providerServiceId) => {
@@ -433,7 +487,7 @@ export const toggleProviderServiceActive = async (providerServiceId) => {
       headers: {
         Authorization: `Bearer ${auth.token}`,
       },
-    },
+    }
   );
 };
 
@@ -450,7 +504,7 @@ export const createReview = async ({ bookingId, rating, comment }) => {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-    },
+    }
   );
 
   return res.data;
@@ -485,12 +539,9 @@ export async function getProviderAverageRating(providerId) {
   const auth = getAuthUser();
   if (!auth) throw new Error("Not authenticated");
 
-  const res = await axios.get(
-    `${API}/api/reviews/provider/${providerId}/rating`,
-    {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    },
-  );
+  const res = await axios.get(`${API}/api/reviews/provider/${providerId}/rating`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  });
 
   return res.data;
 }
