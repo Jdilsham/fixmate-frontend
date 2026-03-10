@@ -1,96 +1,108 @@
 import { Card } from "@/components/ui/card";
-import { useEffect } from "react";
-import { Users, ShieldCheck, Clock, Calendar } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Users, ShieldCheck, Clock, Calendar, Wallet } from "lucide-react";
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
-export default function AdminStats() {
-  const [stats, setStats] = useState([]);
+export default function AdminStats({ onStatsLoaded }) {
+  const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const response = await fetch(`${API}/api/admin/stats`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch stats");
+        }
+
         const data = await response.json();
         setStats(data);
+        onStatsLoaded?.(data);
       } catch (error) {
         console.error("Failed to fetch stats", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchStats();
-  }, []);
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card
-            key={i}
-            className="p-4 h-24 animate-pulse bg-muted/20 border-none"
-          />
-        ))}
-      </div>
-    );
-  }
+    fetchStats();
+  }, [onStatsLoaded]);
 
   const statCards = [
     {
       label: "Total Users",
       value: stats.totalUsers || 0,
       icon: Users,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
     },
     {
       label: "Providers",
       value: stats.totalProviders || 0,
       icon: ShieldCheck,
-      color: "text-green-600",
-      bg: "bg-green-50",
     },
     {
       label: "Pending Approvals",
       value: stats.pendingApprovals || 0,
       icon: Clock,
-      color: "text-orange-600",
-      bg: "bg-orange-50",
     },
     {
-      label: "Active Bookings",
-      value: stats.activeBookings || 0,
+      label: "Total Bookings",
+      value: stats.totalBookings || 0,
       icon: Calendar,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
+    },
+    {
+      label: "Total Earnings",
+      value: `Rs. ${Number(stats.totalEarnings || 0).toLocaleString()}`,
+      icon: Wallet,
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Card
+            key={i}
+            className="h-28 rounded-3xl border border-slate-200 bg-white animate-pulse dark:border-cyan-400/15 dark:bg-[#0a2236]"
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {statCards.map((stat) => (
-        <Card
-          key={stat.label}
-          className="p-5 rounded-2xl border bg-card hover:shadow-sm transition-all"
-        >
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </p>
-              <p className="text-3xl font-bold mt-1">
-                {stat.value.toLocaleString()}
-              </p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+      {statCards.map((stat) => {
+        const Icon = stat.icon;
+
+        return (
+          <Card
+            key={stat.label}
+            className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white px-5 py-5 text-slate-900 shadow-[0_10px_25px_rgba(0,0,0,0.08)] dark:border-cyan-400/20 dark:bg-[linear-gradient(180deg,#071c2c_0%,#0a2236_100%)] dark:text-white dark:shadow-[0_10px_25px_rgba(0,0,0,0.20)] transition-colors"
+          >
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 via-primary to-cyan-400" />
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {stat.label}
+                </p>
+                <p className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">
+                  {stat.value}
+                </p>
+              </div>
+
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-cyan-400/20 dark:bg-[#0d2a42]">
+                <Icon size={20} className="text-slate-700 dark:text-slate-200" />
+              </div>
             </div>
-            <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color}`}>
-              <stat.icon size={20} />
-            </div>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        );
+      })}
     </div>
   );
 }

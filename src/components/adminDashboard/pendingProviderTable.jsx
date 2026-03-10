@@ -97,63 +97,52 @@ export default function PendingProvidersTable() {
       <Card className="p-4 rounded-2xl">
         <h2 className="text-lg font-semibold mb-4">Pending Providers</h2>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 dark:border-cyan-400/10 dark:bg-[#0d2a42]">
+          <table className="w-full table-fixed text-sm">
             <thead>
-              <tr className="text-left border-b ">
-                <th className="py-2">Name</th>
-                <th>Email</th>
-                <th>Skill</th>
-                <th>Actions</th>
+              <tr className="border-b border-slate-200 text-left text-slate-500 dark:border-cyan-400/10 dark:text-slate-300">
+                <th className="px-6 py-4 w-1/4">Name</th>
+                <th className="px-6 py-4 w-1/3">Email</th>
+                <th className="px-6 py-4 w-1/6">Skill</th>
+                <th className="px-6 py-4 w-1/4 text-right">Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              {providers.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="4"
-                    className="text-center py-4 text-muted-foreground"
-                  >
-                    No pending providers
+              {providers.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-b border-slate-200 hover:bg-slate-100/70 dark:border-cyan-400/10 dark:hover:bg-white/5"
+                >
+                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                    {p.fullName}
+                  </td>
+
+                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
+                    {p.email}
+                  </td>
+
+                  <td className="px-6 py-4 text-slate-700 dark:text-slate-200">
+                    {p.skill}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button className="px-3 py-1.5 rounded-md bg-slate-600 text-white text-xs hover:bg-slate-700">
+                        View
+                      </button>
+
+                      <button className="px-3 py-1.5 rounded-md bg-green-600 text-white text-xs hover:bg-green-700">
+                        Approve
+                      </button>
+
+                      <button className="px-3 py-1.5 rounded-md bg-red-500 text-white text-xs hover:bg-red-600">
+                        Reject
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ) : (
-                providers.map((provider) => (
-                  <tr
-                    key={provider.providerId}
-                    className="border-b hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="py-3">
-                      {provider.firstName} {provider.lastName}
-                    </td>
-                    <td className="py-3">{provider.email}</td>
-                    <td className="py-3">{provider.skill || "N/A"}</td>
-                    <td className="py-3 text-right space-x-2 flex items-center justify-center">
-                      <Button
-                        onClick={() => handleViewDetails(provider.providerId)}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        className="bg-green-600 hover:bg-green-700"
-                        onClick={() => handleApproval(provider.providerId)}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        className="bg-red-400 hover:bg-red-700"
-                        onClick={() => {
-                          setRejectionId(provider.providerId);
-                          setIsRejectionModalOpen(true);
-                        }}
-                      >
-                        Reject
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>

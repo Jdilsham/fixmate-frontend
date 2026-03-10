@@ -4,80 +4,94 @@ const API = import.meta.env.VITE_BACKEND_URL;
 
 export async function getUserProfile() {
   const auth = getAuthUser();
-  if (!auth){
+  if (!auth) {
     console.log("No auth found");
     return null;
-  } 
+  }
 
   const { role, token } = auth;
 
-
   try {
-    //SERVICE PROVIDER
+    // SERVICE PROVIDER
     if (role === "SERVICE_PROVIDER") {
       const res = await axios.get(`${API}/api/provider/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      
       const p = res.data;
+      const fullName = (p.fullName || "").trim();
+      const parts = fullName.split(/\s+/);
 
       return {
         id: p.providerId,
-        fullName: p.fullName,
+        fullName,
+        firstName: parts[0] || "",
+        lastName: parts.slice(1).join(" ") || "",
         city: p.city,
-
         skill: p.skill,
         experience: p.experience,
         description: p.description,
-
         rating: p.rating,
-
         verified: p.isVerified,
         verificationStatus: p.verificationStatus,
-
         idFrontUrl: p.idFrontUrl,
         idBackUrl: p.idBackUrl,
         workPdfUrl: p.workPdfUrl,
-
         available: p.isAvailable,
-
         profilePicture: p.profileImage
           ? `${API}${p.profileImage}?t=${Date.now()}`
           : null,
-
         services: p.services || [],
-        phone: p.phone,
+        phone: p.phone || "",
         role,
       };
-
-
     }
-    
-    //CUSTOMER
+
+    // CUSTOMER
     if (role === "CUSTOMER") {
       const res = await axios.get(`${API}/api/customer/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      
-
       const c = res.data;
 
       return {
         id: c.id,
-        fullName: `${c.firstName} ${c.lastName}`,
+        fullName: `${c.firstName || ""} ${c.lastName || ""}`.trim(),
+        firstName: c.firstName || "",
+        lastName: c.lastName || "",
         email: c.email,
-        phone: c.phone,
+        phone: c.phone || "",
         profilePicture: c.profilePic
-        ? `${API}${c.profilePic}?t=${Date.now()}`
-        : null,
+          ? `${API}${c.profilePic}?t=${Date.now()}`
+          : null,
         verified: false,
         role,
       };
     }
 
-    //Unknown role
+    // ADMIN
+    if (role === "ADMIN") {
+      const res = await axios.get(`${API}/api/customer/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const a = res.data;
+
+      return {
+        id: a.id,
+        fullName: `${a.firstName || ""} ${a.lastName || ""}`.trim(),
+        firstName: a.firstName || "",
+        lastName: a.lastName || "",
+        email: a.email,
+        phone: a.phone || "",
+        profilePicture: a.profilePic
+          ? `${API}${a.profilePic}?t=${Date.now()}`
+          : null,
+        role,
+      };
+    }
+
     console.warn("Unknown role:", role);
     return null;
   } catch (err) {
@@ -547,11 +561,6 @@ export async function getProviderServicesWithRating() {
     rating: avg,
   }));
 }
-
-import axios from "axios";
-import { getAuthUser } from "./auth";
-
-const API = import.meta.env.VITE_BACKEND_URL;
 
 export const getCustomerMe = async () => {
   const auth = getAuthUser();

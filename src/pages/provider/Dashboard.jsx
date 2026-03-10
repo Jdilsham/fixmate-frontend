@@ -286,8 +286,8 @@ export default function Dashboard() {
 
 
     setProfileForm({
-      firstName: profileData?.fullName?.split(" ")[0] || "",
-      lastName: profileData?.fullName?.split(" ")[1] || "",
+      firstName: profileData?.firstName || "",
+      lastName: profileData?.lastName || "",
       phone: profileData?.phone || "",
     });
 
