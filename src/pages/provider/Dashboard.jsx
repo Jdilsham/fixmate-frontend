@@ -11,7 +11,6 @@ import CustomerDashboard from "../../components/customer-dashboard/CustomerDashb
 import ReviewDialog from "../../components/review/ReviewDialog";
 import ProviderReviewsPage from "../../components/review/ProviderReviews";
 
-import BookingsTable from "../../components/dashboard/bookingTable";
 import {
   Home,
   Calendar as CalendarIcon,

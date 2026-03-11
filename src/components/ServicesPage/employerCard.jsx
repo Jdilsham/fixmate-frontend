@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-export default function EmployerCard({ employer, onToggleActive }) {
+export default function EmployerCard({ employer, onToggleActive, onDeleteService }) {
   const navigate = useNavigate();
   if (!employer) return null;
 
@@ -38,6 +38,7 @@ export default function EmployerCard({ employer, onToggleActive }) {
       : "bg-slate-900/5 text-slate-700 dark:bg-white/10 dark:text-slate-200";
 
   const canToggle = isProviderView && status.includes("APPROV") && typeof isActive === "boolean";
+  const canDelete = isProviderView;
 
   const displayRating =
     rating === null || rating === undefined || Number.isNaN(Number(rating))
@@ -208,7 +209,26 @@ export default function EmployerCard({ employer, onToggleActive }) {
           </div>
         )}
 
-        {/* CTA (keep compatible) */}
+        {canDelete && (
+          <div className="mt-auto pt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => onDeleteService?.(providerServiceId)}
+              className="
+                px-4 py-2
+                rounded-xl
+                text-sm
+                bg-red-500 text-white
+                hover:bg-red-600
+                font-semibold
+                transition
+              "
+            >
+              Delete
+            </button>
+          </div>
+        )}
+
         {showViewProfile && (
           <button
             onClick={() => navigate(`/book/${providerServiceId}`)}

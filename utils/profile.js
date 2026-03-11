@@ -136,9 +136,6 @@ export async function updateProviderProfile(payload) {
   return res.data;
 }
 
-
-// PROVIDER ADDRESS APIs
-
 // GET provider address
 export async function getProviderAddress() {
   const auth = getAuthUser();
@@ -175,8 +172,6 @@ export async function addProviderAddress(address) {
   return res.data;
 }
 
-
-
 // UPDATE provider address
 export async function updateProviderAddress(address) {
   const auth = getAuthUser();
@@ -201,8 +196,7 @@ export async function updateProviderProfilePicture(file) {
   if (!auth) throw new Error("Not authenticated");
 
   const formData = new FormData();
-  formData.append("profilePic", file); // MUST match backend param name
-
+  formData.append("profilePic", file);
   const res = await axios.put(
     `${API}/api/provider/profile/picture`,
     formData,
@@ -402,9 +396,6 @@ export async function updateCustomerProfile(payload) {
   });
 }
 
-
-// CUSTOMER ADDRESS APIs
-
 // GET customer address
 export async function getCustomerAddress() {
   const auth = getAuthUser();
@@ -483,6 +474,20 @@ export const toggleProviderServiceActive = async (providerServiceId) => {
   return axios.patch(
     `${API}/api/provider/service/${providerServiceId}/active`,
     {},
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+};
+
+export const deleteProviderService = async (providerServiceId) => {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  return axios.delete(
+    `${API}/api/provider/service/${providerServiceId}`,
     {
       headers: {
         Authorization: `Bearer ${auth.token}`,
