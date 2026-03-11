@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, CheckCircle2, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { Briefcase, CheckCircle2, XCircle } from "lucide-react";
+import { Eye } from "lucide-react";
 import ProviderServiceConfirmDialog from "./ProviderServiceConfirmDialog";
 import {
   getPendingProviderServices,
+  getProviderServiceDetails,
   verifyProviderService,
 } from "../../../utils/admin";
+import AdminProviderServiceDetailsDialog from "./AdminProviderServiceDetailsDialog";
 
 export default function PendingProviderServicesTable() {
   const [services, setServices] = useState([]);
@@ -17,6 +20,8 @@ export default function PendingProviderServicesTable() {
   const [selectedService, setSelectedService] = useState(null);
   const [confirmMode, setConfirmMode] = useState("APPROVED");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   const fetchPendingServices = async () => {
     try {
@@ -35,6 +40,20 @@ export default function PendingProviderServicesTable() {
     setSelectedService(service);
     setConfirmMode(mode);
     setIsConfirmOpen(true);
+  };
+
+  const openDetailsDialog = async (service) => {
+    try {
+      setDetailsLoading(true);
+      const data = await getProviderServiceDetails(service.providerServiceId);
+      setSelectedService(data);
+      setIsDetailsOpen(true);
+    } catch (error) {
+      console.error("Failed to load provider service details", error);
+      toast.error("Failed to load provider service details");
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
   const handleVerify = async () => {
@@ -62,6 +81,7 @@ export default function PendingProviderServicesTable() {
       );
 
       setIsConfirmOpen(false);
+      setIsDetailsOpen(false);
       setSelectedService(null);
     } catch (error) {
       console.error("Service verification failed", error);
@@ -155,6 +175,15 @@ export default function PendingProviderServicesTable() {
                     <td className="px-4 py-4">
                       <div className="flex flex-wrap items-center justify-center gap-2">
                         <Button
+                          variant="outline"
+                          className="rounded-full"
+                          onClick={() => openDetailsDialog(item)}
+                          disabled={actionLoadingId === item.providerServiceId}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View
+                        </Button>
+                        <Button
                           className="rounded-full bg-green-600 text-white hover:bg-green-700"
                           onClick={() => openConfirmDialog(item, "APPROVED")}
                           disabled={actionLoadingId === item.providerServiceId}
@@ -193,6 +222,24 @@ export default function PendingProviderServicesTable() {
         mode={confirmMode}
         serviceTitle={selectedService?.serviceTitle || ""}
         providerName={selectedService?.providerName || ""}
+      />
+      <AdminProviderServiceDetailsDialog
+        open={isDetailsOpen}
+        onClose={() => {
+          if (actionLoadingId || detailsLoading) return;
+          setIsDetailsOpen(false);
+          setSelectedService(null);
+        }}
+        service={selectedService}
+        loading={actionLoadingId === selectedService?.providerServiceId}
+        onApprove={() => {
+          setIsDetailsOpen(false);
+          openConfirmDialog(selectedService, "APPROVED");
+        }}
+        onReject={() => {
+          setIsDetailsOpen(false);
+          openConfirmDialog(selectedService, "REJECTED");
+        }}
       />
     </>
   );

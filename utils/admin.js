@@ -97,6 +97,16 @@ export const getProviderDetails = async (providerId) => {
 };
 
 // Provider Services
+export const getProviderServiceDetails = async (providerServiceId) => {
+  const res = await axios.get(
+    `${API}/api/admin/provider-services/${providerServiceId}`,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return res.data;
+};
+
 export const getPendingProviderServices = async () => {
   const res = await axios.get(`${API}/api/admin/provider-services/pending`, {
     headers: getAuthHeaders(),
