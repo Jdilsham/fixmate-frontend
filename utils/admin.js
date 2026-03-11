@@ -15,6 +15,20 @@ const getAuthHeaders = () => {
   };
 };
 
+export const buildAdminAssetUrl = (filePath) => {
+  if (!filePath) return null;
+
+  if (
+    filePath.startsWith("http://") ||
+    filePath.startsWith("https://") ||
+    filePath.startsWith("data:")
+  ) {
+    return filePath;
+  }
+
+  return `${API.replace(/\/$/, "")}/${filePath.replace(/^\//, "")}`;
+};
+
 // Dashboard
 export const getAdminStats = async () => {
   const res = await axios.get(`${API}/api/admin/stats`, {
@@ -64,7 +78,7 @@ export const approveProvider = async (providerId) => {
 export const rejectProvider = async (providerId, reason) => {
   const res = await axios.put(
     `${API}/api/admin/providers/${providerId}/reject`,
-    { reason },
+    reason || "",
     {
       headers: {
         ...getAuthHeaders(),
