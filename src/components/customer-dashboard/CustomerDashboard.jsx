@@ -370,7 +370,6 @@ export default function CustomerDashboard({ onViewAll, onPayNow }) {
             <Tip label="Year spent" value={money(data?.yearSpending)} icon={TrendingUp} />
           </div>
 
-          {/* Spending Chart + Alerts/Pie */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Spending */}
             <FxCard className="p-6 overflow-hidden">
@@ -419,7 +418,6 @@ export default function CustomerDashboard({ onViewAll, onPayNow }) {
                 </ResponsiveContainer>
               </div>
 
-            {/* ===== Spending Insights (fills bottom space) ===== */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="rounded-2xl border bg-background/40 p-4">
                 <p className="text-xs text-muted-foreground">Growth</p>
@@ -458,7 +456,6 @@ export default function CustomerDashboard({ onViewAll, onPayNow }) {
             </div>
             </div>
 
-            {/* ===== Smart Suggestions ===== */}
             <div className="mt-6 rounded-2xl border bg-background/40 p-5">
             <p className="font-semibold mb-2">Save money & time</p>
 

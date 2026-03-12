@@ -17,7 +17,7 @@ RUN echo "VITE_BACKEND_URL=$VITE_BACKEND_URL" > .env.production
 
 RUN npm run build
 
-
+#Run Stage
 FROM nginx:alpine
 
 RUN rm -rf /usr/share/nginx/html/*
