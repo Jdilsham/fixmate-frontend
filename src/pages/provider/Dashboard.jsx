@@ -2915,7 +2915,7 @@ const handleStartJob = async () => {
 
                               <div className="relative overflow-hidden rounded-2xl border bg-background">
                               <img
-                                src={`${API}${profile.idFrontUrl}`}
+                                src={profile.idFrontUrl}
                                 alt="ID Front"
                                 className="
                                   w-full h-64 md:h-72 object-cover
@@ -2961,7 +2961,7 @@ const handleStartJob = async () => {
 
                               <Button
                                 onClick={handleUploadIdBack}
-                                disabled={!idFrontFile}
+                                disabled={!idBackFile}
                                 className="shrink-0 rounded-full px-5"
                               >
                                 Upload
@@ -2985,7 +2985,7 @@ const handleStartJob = async () => {
 
                               <div className="relative overflow-hidden rounded-2xl border bg-background">
                                 <img
-                                  src={`${API}${profile.idBackUrl}`}
+                                  src={profile.idBackUrl}
                                   alt="ID Back"
                                   className="
                                     w-full h-64 md:h-72 object-cover
@@ -3084,7 +3084,7 @@ const handleStartJob = async () => {
 
                             {/* View */}
                             <a
-                              href={`${API}${profile.workPdfUrl}`}
+                              href={profile.workPdfUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="shrink-0 inline-flex items-center justify-center rounded-full border bg-muted px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/80 transition"

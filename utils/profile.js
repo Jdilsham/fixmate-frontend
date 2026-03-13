@@ -2,6 +2,16 @@ import axios from "axios";
 import { getAuthUser } from "./auth";
 const API = import.meta.env.VITE_BACKEND_URL;
 
+function buildFileUrl(path) {
+  if (!path) return null;
+
+  if (path.startsWith("http")) {
+    return `${path}?t=${Date.now()}`;
+  }
+
+  return `${API}${path}?t=${Date.now()}`;
+}
+
 export async function getUserProfile() {
   const auth = getAuthUser();
   if (!auth) {
@@ -34,13 +44,11 @@ export async function getUserProfile() {
         rating: p.rating,
         verified: p.isVerified,
         verificationStatus: p.verificationStatus,
-        idFrontUrl: p.idFrontUrl,
-        idBackUrl: p.idBackUrl,
-        workPdfUrl: p.workPdfUrl,
+        idFrontUrl: buildFileUrl(p.idFrontUrl),
+        idBackUrl: buildFileUrl(p.idBackUrl),
+        workPdfUrl: buildFileUrl(p.workPdfUrl),
         available: p.isAvailable,
-        profilePicture: p.profileImage
-          ? `${API}${p.profileImage}?t=${Date.now()}`
-          : null,
+        profilePicture: buildFileUrl(p.profileImage),
         services: p.services || [],
         phone: p.phone || "",
         role,
@@ -63,7 +71,9 @@ export async function getUserProfile() {
         email: c.email,
         phone: c.phone || "",
         profilePicture: c.profilePic
-          ? `${API}${c.profilePic}?t=${Date.now()}`
+          ? (c.profilePic.startsWith("http")
+              ? `${c.profilePic}?t=${Date.now()}`
+              : `${API}${c.profilePic}?t=${Date.now()}`)
           : null,
         verified: false,
         role,
@@ -86,7 +96,9 @@ export async function getUserProfile() {
         email: a.email,
         phone: a.phone || "",
         profilePicture: a.profilePic
-          ? `${API}${a.profilePic}?t=${Date.now()}`
+          ? (a.profilePic.startsWith("http")
+              ? `${a.profilePic}?t=${Date.now()}`
+              : `${API}${a.profilePic}?t=${Date.now()}`)
           : null,
         role,
       };
