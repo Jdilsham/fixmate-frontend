@@ -29,7 +29,12 @@ import {
 } from "lucide-react";
 
 import { getProviderDashboardSummary } from "../../../utils/booking";
-import { getProviderReviews, getUserProfile } from "../../../utils/profile";
+import {
+  getProviderReviews,
+  getUserProfile,
+  downloadProviderDashboardPdf,
+} from "../../../utils/profile";
+
 
 const money = (v) => `Rs. ${Number(v || 0).toLocaleString("en-LK")}`;
 
@@ -242,6 +247,7 @@ function BookingTable({ title, subtitle, rows, onViewAll }) {
   );
 }
 
+
 export default function ProviderDashboardOverview({
   onGoManageBookings,
   onGoServices,
@@ -323,6 +329,8 @@ export default function ProviderDashboardOverview({
     return { growth, last, best, estimate };
   }, [data]);
 
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
   useEffect(() => {
     loadDashboard();
   }, []);
@@ -366,6 +374,36 @@ export default function ProviderDashboardOverview({
     { name: "Other", value: other },
   ].filter((x) => x.value > 0);
 
+  const handleDownloadPdf = async () => {
+    try {
+      setDownloadingPdf(true);
+
+      const blob = await downloadProviderDashboardPdf();
+
+      const url = window.URL.createObjectURL(
+        new Blob([blob], { type: "application/pdf" })
+      );
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "provider-dashboard-report.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("PDF download failed", e);
+      alert(
+        e?.response?.data?.message ||
+          e.message ||
+          "Failed to download dashboard PDF"
+      );
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -382,14 +420,26 @@ export default function ProviderDashboardOverview({
           </p>
         </div>
 
-        <Button
-          variant="fixmateOutline"
-          className="rounded-2xl"
-          onClick={loadDashboard}
-          disabled={loading}
-        >
-          {loading ? "Refreshing..." : "Refresh"}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button
+            variant="fixmateOutline"
+            className="rounded-2xl"
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+          >
+            {downloadingPdf ? "Downloading..." : "Genarate PDF"}
+          </Button>
+
+          <Button
+            variant="fixmateOutline"
+            className="rounded-2xl"
+            onClick={loadDashboard}
+            disabled={loading}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
+        </div>
+
       </div>
 
       {loading ? (
