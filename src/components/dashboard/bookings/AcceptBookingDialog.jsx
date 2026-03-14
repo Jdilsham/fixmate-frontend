@@ -13,7 +13,7 @@ export default function AcceptBookingDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className="
-          max-w-md p-0 overflow-hidden rounded-3xl
+          w-[95vw] max-w-md p-0 overflow-hidden rounded-3xl
           border bg-background text-foreground
           shadow-[0_24px_80px_-40px_rgba(2,6,23,0.45)]
           dark:shadow-[0_26px_90px_-45px_rgba(34,211,238,0.18)]
@@ -128,7 +128,7 @@ export default function AcceptBookingDialog({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-5 border-t flex items-center justify-end gap-3">
+        <div className="px-6 py-5 border-t flex flex-wrap items-center justify-end gap-3">
           <Button
             variant="secondary"
             className="
