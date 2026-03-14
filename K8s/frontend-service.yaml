@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: fixmate-frontend-service
   namespace: fixmate
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
 spec:
   selector:
     app: fixmate-frontend
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 80
       targetPort: 80
- 
