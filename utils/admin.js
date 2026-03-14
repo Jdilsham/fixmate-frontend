@@ -160,3 +160,17 @@ export const deleteAdminCategory = async (id) => {
   });
   return res.data;
 };
+
+export const downloadAdminDashboardPdf = async () => {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const response = await axios.get(`${API}/api/admin/dashboard/export`, {
+    responseType: "blob",
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return response.data;
+};

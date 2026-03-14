@@ -594,3 +594,17 @@ export const getCustomerMe = async () => {
 
   return res.data;
 };
+
+export const downloadProviderDashboardPdf = async () => {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const response = await axios.get(`${API}/api/provider/dashboard/export`, {
+    responseType: "blob",
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return response.data;
+};
