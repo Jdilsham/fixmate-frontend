@@ -71,8 +71,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          build-args: |
-            VITE_BACKEND_URL=${{ secrets.FRONTEND_BACKEND_URL }}
           tags: |
             ${{ steps.image.outputs.IMAGE_URI }}:latest
             ${{ steps.image.outputs.IMAGE_URI }}:${{ steps.vars.outputs.TAG }}
