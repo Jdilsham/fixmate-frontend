@@ -1,6 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   NavigationMenu,
@@ -14,48 +13,66 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import * as Avatar from "@radix-ui/react-avatar";
 import { Button } from "@/components/ui/button";
 import DarkmodeToggle from "./darkmodeToggle";
-import { Menu } from "lucide-react";
+import { Menu, Wrench, LayoutDashboard, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { getUserProfile } from "../../utils/profile";
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
 
-  const [initials, setInitials] = useState("U");
+  const [profile, setProfile] = useState(null);
+  const [role, setRole] = useState(null);
 
-  //Fetch user using token
-  // useEffect(() => {
-  //   const fetchUser = async () => {
-  //     try {
-  //       if (!token) return;
+  const isAdmin = role === "ADMIN";
+  const dashboardPath = isAdmin ? "/admin/dashboard" : "/provider/dashboard";
 
-  //       const res = await axios.get(`${API}/api/auth/login`, {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
+  useEffect(() => {
+    let alive = true;
 
-  //       const user = res.data;
+    async function load() {
+      if (!isLoggedIn) {
+        setProfile(null);
+        setRole(null);
+        return;
+      }
 
-  //       // handle different backend casing styles
-  //       const first = user.firstName || user.firstname || user.first_name || "";
+      try {
+        const p = await getUserProfile();
 
-  //       const last = user.lastName || user.lastname || user.last_name || "";
+        if (alive) {
+          setProfile(p);
+          setRole(p?.role?.toUpperCase() || null);
+        }
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+        if (alive) {
+          setProfile(null);
+          setRole(null);
+        }
+      }
+    }
 
-  //       const i = ((first[0] || "") + (last[0] || "")).toUpperCase();
+    load();
 
-  //       setInitials(i || "U");
-  //     } catch (err) {
-  //       console.error("Could not fetch user", err);
-  //     }
-  //   };
+    return () => {
+      alive = false;
+    };
+  }, [isLoggedIn, token, location.pathname]);
 
-  //   fetchUser();
-  // }, [token]);
+  const fullName =
+    profile?.fullName ||
+    `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() ||
+    "User";
+
+  const initials = (fullName?.trim()?.[0] || "U").toUpperCase();
+  const profileSrc = profile?.profilePicture || "";
 
   const navLinks = [
     { label: "Home", path: "/" },
@@ -68,123 +85,204 @@ export default function Header() {
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("dashboardActiveTab");
+    localStorage.removeItem("adminActiveTab");
     navigate("/login");
   }
 
+  function goToDashboard() {
+    if (isAdmin) {
+      localStorage.setItem("adminActiveTab", "dashboard");
+    } else {
+      localStorage.setItem("dashboardActiveTab", "dashboard");
+    }
+
+    navigate(dashboardPath);
+  }
+
+  const isActive = (path) => {
+    if (path === "/") return location.pathname === "/";
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <motion.header
-      initial={{ y: -20, opacity: 0 }}
+      initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur"
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="sticky top-0 z-50 w-full"
     >
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-        {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          className="cursor-pointer text-2xl font-semibold text-primary"
-        >
-          FixMate
-        </div>
+      <div className="border-b border-border/60 bg-background/70 backdrop-blur-xl">
+        <div className="relative mx-auto flex h-20 max-w-7xl items-center px-4 sm:px-6">
+          <div className="flex flex-1 items-center">
+            <button
+              onClick={() => navigate("/")}
+              className="group flex items-center gap-3 rounded-xl px-2 py-1 transition hover:bg-accent/40"
+            >
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 transition group-hover:scale-[1.02]">
+                <Wrench className="h-5 w-5" />
+              </span>
 
-        {/* Navigation */}
-        <NavigationMenu className="hidden md:flex">
-          <NavigationMenuList className="space-x-8">
-            {navLinks.map((link) => (
-              <NavigationMenuItem key={link.label}>
-                <button
-                  onClick={() => navigate(link.path)}
-                  className="text-base font-medium text-foreground transition-colors hover:text-accent"
-                >
-                  {link.label}
-                </button>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
-
-        <div className="flex items-center gap-3">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu />
-              </Button>
-            </SheetTrigger>
-
-            <SheetContent side="right" className="pt-10">
-              <div className="flex flex-col gap-6">
-                {navLinks.map((link) => (
-                  <Button
-                    key={link.label}
-                    onClick={() => navigate(link.path)}
-                    className="text-lg font-medium text-left"
-                  >
-                    {link.label}
-                  </Button>
-                ))}
-
-                {!isLoggedIn && (
-                  <>
-                    <Button onClick={() => navigate("/login")}>Login</Button>
-                    <Button onClick={() => navigate("/signup")}>Sign Up</Button>
-                  </>
-                )}
+              <div className="text-left leading-tight">
+                <div className="text-xl font-semibold tracking-tight">
+                  Fix<span className="text-primary">Mate</span>
+                </div>
+                <div className="hidden text-[12px] text-muted-foreground sm:block">
+                  Fast • Verified • Reliable
+                </div>
               </div>
-            </SheetContent>
-          </Sheet>
+            </button>
+          </div>
 
-          {!isLoggedIn ? (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/login")}
-                className="hidden sm:inline-flex"
-              >
-                Login
-              </Button>
+          <div className="absolute left-1/2 hidden -translate-x-1/2 md:block">
+            <NavigationMenu>
+              <NavigationMenuList className="flex items-center gap-1">
+                {navLinks.map((link) => (
+                  <NavigationMenuItem key={link.label}>
+                    <button
+                      onClick={() => navigate(link.path)}
+                      className={[
+                        "relative rounded-xl px-4 py-2 text-sm font-medium transition",
+                        "text-foreground/80 hover:bg-accent/40 hover:text-foreground",
+                        isActive(link.path) ? "bg-accent/35 text-foreground" : "",
+                      ].join(" ")}
+                    >
+                      {link.label}
+                      {isActive(link.path) && (
+                        <span className="absolute left-3 right-3 -bottom-[6px] h-[2px] rounded-full bg-primary" />
+                      )}
+                    </button>
+                  </NavigationMenuItem>
+                ))}
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
 
-              <Button
-                onClick={() => navigate("/signup")}
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                Sign up
-              </Button>
-            </>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring">
-                  <Avatar>
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
+          <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-xl md:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
 
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem onClick={() => navigate("/provider/dashboard")}>
-                  Dashboard
-                </DropdownMenuItem>
+              <SheetContent side="right" className="pt-10">
+                <div className="flex flex-col gap-2">
+                  <div className="mb-2 text-sm font-semibold text-muted-foreground">
+                    Navigation
+                  </div>
 
-                <DropdownMenuItem onClick={() => navigate("/settings")}>
-                  Settings
-                </DropdownMenuItem>
+                  {navLinks.map((link) => (
+                    <Button
+                      key={link.label}
+                      variant={isActive(link.path) ? "secondary" : "ghost"}
+                      onClick={() => navigate(link.path)}
+                      className="justify-start rounded-xl"
+                    >
+                      {link.label}
+                    </Button>
+                  ))}
 
-                <DropdownMenuSeparator />
+                  <div className="my-4 h-px bg-border" />
 
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-destructive focus:text-destructive"
+                  {!isLoggedIn ? (
+                    <div className="grid gap-2">
+                      <Button onClick={() => navigate("/login")} variant="secondary">
+                        Login
+                      </Button>
+                      <Button onClick={() => navigate("/signup")}>Sign Up</Button>
+                    </div>
+                  ) : (
+                    <Button onClick={goToDashboard} variant="secondary">
+                      Go to Dashboard
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {!isLoggedIn ? (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate("/login")}
+                  className="hidden rounded-xl sm:inline-flex"
                 >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+                  Login
+                </Button>
 
-          <DarkmodeToggle />
+                <Button onClick={() => navigate("/signup")} className="rounded-xl">
+                  Sign up
+                </Button>
+              </>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="
+                      relative flex h-10 w-10 items-center justify-center
+                      overflow-hidden rounded-full border border-border/60
+                      bg-muted transition hover:scale-[1.04]
+                      focus:outline-none focus:ring-2 focus:ring-ring/60
+                    "
+                  >
+                    <Avatar.Root className="h-full w-full overflow-hidden rounded-full">
+                      <Avatar.Image
+                        src={profileSrc}
+                        alt="Profile"
+                        className="h-full w-full object-cover object-center"
+                      />
+                      <Avatar.Fallback
+                        className="
+                          flex h-full w-full items-center justify-center
+                          bg-primary/20 text-sm font-semibold text-foreground
+                        "
+                      >
+                        {initials}
+                      </Avatar.Fallback>
+                    </Avatar.Root>
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 rounded-2xl border border-border/60 bg-background/95 p-2 shadow-xl backdrop-blur"
+                >
+                  <div className="px-2 py-2">
+                    <div className="text-sm font-semibold leading-none">Account</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Manage your profile & settings
+                    </div>
+                  </div>
+
+                  <DropdownMenuSeparator className="my-2" />
+
+                  <DropdownMenuItem
+                    onClick={goToDashboard}
+                    className="cursor-pointer rounded-xl px-3 py-2 focus:bg-accent/50"
+                  >
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="my-2" />
+
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="cursor-pointer rounded-xl px-3 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            <DarkmodeToggle />
+          </div>
         </div>
+
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
       </div>
     </motion.header>
   );

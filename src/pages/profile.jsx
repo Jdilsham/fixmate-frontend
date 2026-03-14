@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Header from "../components/header";
 import { useNavigate, useParams } from "react-router-dom";
-import { Calendar } from "@/components/ui/calendar";
+
 import { Button } from "../components/ui/button";
 import { getAuthUser } from "../../utils/auth";
 
@@ -10,7 +10,7 @@ const API = import.meta.env.VITE_BACKEND_URL;
 export default function ProfilePage() {
   const { id } = useParams(); // provider id
   const navigate = useNavigate();
-  const authUser = getAuthUser();
+  const [authUser] = useState(() => getAuthUser());
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,6 +28,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!authUser) return;
 
+    const controller = new AbortController();
+
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -36,31 +38,33 @@ export default function ProfilePage() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal: controller.signal,
         });
 
-        if (!res.ok) {
-          throw new Error("Profile not found");
-        }
+        if (!res.ok) throw new Error("Profile not found");
 
         const data = await res.json();
         setProfile(data);
       } catch (err) {
-        console.error(err);
-        setProfile(null);
+        if (err.name !== "AbortError") {
+          console.error(err);
+          setProfile(null);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [id, authUser]);
+
+    return () => controller.abort();
+  }, [id]);
 
   // ---------------- TABS ----------------
   const tabs = [
     { id: "overview", label: "Overview" },
-    { id: "services", label: "Services" },
+
     { id: "reviews", label: "Reviews" },
-    { id: "availability", label: "Availability" },
   ];
 
   // ---------------- UI STATES ----------------
@@ -95,9 +99,7 @@ export default function ProfilePage() {
 
               <div>
                 <h3 className="font-semibold">{profile.fullName}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {profile.skill}
-                </p>
+                <p className="text-sm text-muted-foreground">{profile.skill}</p>
                 <p className="text-sm text-muted-foreground">
                   {profile.location}
                 </p>
@@ -110,9 +112,7 @@ export default function ProfilePage() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-3 rounded-xl text-left transition ${
-                    activeTab === tab.id
-                      ? "bg-accent"
-                      : "hover:bg-muted"
+                    activeTab === tab.id ? "bg-accent" : "hover:bg-muted"
                   }`}
                 >
                   {tab.label}
@@ -125,36 +125,53 @@ export default function ProfilePage() {
         {/* ================= CONTENT ================= */}
         <main className="flex-1 bg-card border rounded-3xl p-8 relative">
           {activeTab === "overview" && (
-            <div className="space-y-4">
-              <p className="text-muted-foreground">
-                {profile.description}
-              </p>
+            <div className="space-y-4 ">
+              <p className="text-muted-foreground">{profile.description}</p>
+              <p className="text-muted-foreground">{profile.experience}</p>
+
               <p>⭐ Rating: {profile.rating ?? "N/A"}</p>
+
+              <h3 className="text-lg font-semibold mt-6">Services</h3>
+
+              <div className="space-y-3">
+                {(profile.services ?? []).map((service) => (
+                  <div
+                    key={service.providerServiceId}
+                    className="flex items-center justify-between border rounded-xl p-4"
+                  >
+                    <div>
+                      <p className="font-medium">{service.serviceTitle}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {service.fixedPriceAvailable
+                          ? "Fixed price available"
+                          : service.hourlyRate
+                            ? `Rs. ${service.hourlyRate}`
+                            : "—"}
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={() =>
+                        navigate(`/book/${service.providerServiceId}`)
+
+                      }
+                    >
+                      Book
+                    </Button>
+                  </div>
+                ))}
+
+                {(!profile.services || profile.services.length === 0) && (
+                  <p className="text-sm text-muted-foreground">
+                    No services available.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
-          {activeTab === "services" && (
-           <>
-           <p className="mb-6">{profile.description}</p>
-           <Button onClick={() => navigate(`/book/${profile.id}`)}>
-            Book Services
-           </Button>
-           </> 
-          )}
-
-          {activeTab === "availability" && (
-            <Calendar
-              mode="single"
-              selected={date}
-              disabled
-              className="rounded-2xl border"
-            />
-          )}
-
           {activeTab === "reviews" && (
-            <p className="text-muted-foreground">
-              Reviews coming soon.
-            </p>
+            <p className="text-muted-foreground">Reviews coming soon.</p>
           )}
         </main>
       </div>
