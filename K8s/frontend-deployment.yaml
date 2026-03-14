@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: fixmate-frontend
-          image: janithad/fixmate-frontend
+          image: asia-south1-docker.pkg.dev/fixmate-490017/fixmate-repo/fixmate-frontend:latest
           ports:
             - containerPort: 80
           env:

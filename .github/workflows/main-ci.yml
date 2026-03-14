@@ -60,6 +60,11 @@ jobs:
         run: |
           echo "TAG=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
 
+      - name: Set Image URI
+        id: image
+        run: |
+          echo "IMAGE_URI=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPO }}/fixmate-frontend" >> $GITHUB_OUTPUT
+
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
