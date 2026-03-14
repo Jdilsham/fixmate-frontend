@@ -28,11 +28,11 @@ spec:
                   key: REACT_APP_BACKEND_URL
           resources:
             requests:
-              cpu: "100m"
-              memory: "128Mi"
-            limits:
-              cpu: "300m"
+              cpu: "200m"
               memory: "256Mi"
+            limits:
+              cpu: "400m"
+              memory: "500Mi"
 
           livenessProbe:
             httpGet:
