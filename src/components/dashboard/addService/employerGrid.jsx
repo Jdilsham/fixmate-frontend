@@ -9,9 +9,10 @@ import {
   getProviderServices,
   getProviderAddress,
   toggleProviderServiceActive,
-  getProviderAverageRating
-
+  getProviderAverageRating,
+  deleteProviderService
 } from "../../../../utils/profile";
+import DeleteConfirmDialog from "./DeleteConfirmDialog";
 
 export default function EmployerGrid({ profile, districts = [] }) {
   const [services, setServices] = useState([]);
@@ -20,6 +21,8 @@ export default function EmployerGrid({ profile, districts = [] }) {
   const [open, setOpen] = useState(false);
   const [location, setLocation] = useState("Not specified");
   const [avgRating, setAvgRating] = useState(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
 
   const [serviceForm, setServiceForm] = useState({
     serviceId: "",
@@ -31,9 +34,7 @@ export default function EmployerGrid({ profile, districts = [] }) {
 
   const [pdfFile, setPdfFile] = useState(null);
 
-  /* =======================
-     LOAD SERVICES (ONE PLACE)
-  ======================= */
+
   const loadProviderServices = async () => {
     try {
       const data = await getProviderServices();
@@ -45,22 +46,6 @@ export default function EmployerGrid({ profile, districts = [] }) {
   };
 
   const handleToggleActive = async (providerServiceId) => {
-  // optimistic UI update
-  setServices((prev) =>
-    prev.map((s) =>
-      s.providerServiceId === providerServiceId
-        ? { ...s, isActive: !s.isActive }
-        : s
-    )
-  );
-
-  try {
-    await toggleProviderServiceActive(providerServiceId);
-    toast.success("Service status updated");
-  } catch (err) {
-    toast.error("Failed to update service status");
-
-    // rollback if failed
     setServices((prev) =>
       prev.map((s) =>
         s.providerServiceId === providerServiceId
@@ -68,10 +53,51 @@ export default function EmployerGrid({ profile, districts = [] }) {
           : s
       )
     );
-  }
-};
 
+    try {
+      await toggleProviderServiceActive(providerServiceId);
+      toast.success("Service status updated");
+    } catch (err) {
+      toast.error("Failed to update service status");
 
+      setServices((prev) =>
+        prev.map((s) =>
+          s.providerServiceId === providerServiceId
+            ? { ...s, isActive: !s.isActive }
+            : s
+        )
+      );
+    }
+  };
+
+  const handleDeleteService = (providerServiceId) => {
+    setSelectedService(providerServiceId);
+    setDeleteOpen(true);
+  };
+
+  const confirmDeleteService = async () => {
+    try {
+      await deleteProviderService(selectedService);
+
+      setServices((prev) =>
+        prev.filter((s) => s.providerServiceId !== selectedService)
+      );
+
+      setProviderServices((prev) =>
+        prev.filter((s) => s.providerServiceId !== selectedService)
+      );
+
+      toast.success("Service deleted successfully");
+
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to delete service"
+      );
+    } finally {
+      setDeleteOpen(false);
+      setSelectedService(null);
+    }
+  };
 
   useEffect(() => {
     loadProviderServices();
@@ -95,9 +121,6 @@ export default function EmployerGrid({ profile, districts = [] }) {
       .catch(() => toast.error("Failed to load service categories"));
   }, []);
 
-  /* =======================
-     ADD SERVICE
-  ======================= */
   const addService = async (payload) => {
     try {
       const formData = new FormData();
@@ -157,28 +180,21 @@ export default function EmployerGrid({ profile, districts = [] }) {
             key={s.providerServiceId}
             employer={{
               providerServiceId: s.providerServiceId,
-
-              // provider info
               providerName: profile.fullName,
               providerProfileImage: profile.profilePicture,
-
-              // service info
               serviceTitle: s.serviceTitle,
               serviceDescription: s.description,
               fixedPriceAvailable: s.fixedPriceAvailable,
               hourlyRate: s.hourlyRate,
-
-              // meta
               rating: avgRating,
               location: s.district || "Unknown",
-              
-              //PROVIDER-ONLY
               verificationStatus: s.verificationStatus,
               isActive: s.isActive,
-              isProviderView: true,      
-              showViewProfile: false,   
+              isProviderView: true,
+              showViewProfile: false,
             }}
-             onToggleActive={handleToggleActive}
+            onToggleActive={handleToggleActive}
+            onDeleteService={handleDeleteService}
           />
         ))}
 
@@ -201,7 +217,13 @@ export default function EmployerGrid({ profile, districts = [] }) {
           providerServices={providerServices}
           districts={districts}
         />
+        
       )}
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={confirmDeleteService}
+      />
     </>
   );
 }

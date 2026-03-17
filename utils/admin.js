@@ -15,6 +15,20 @@ const getAuthHeaders = () => {
   };
 };
 
+export const buildAdminAssetUrl = (filePath) => {
+  if (!filePath) return null;
+
+  if (
+    filePath.startsWith("http://") ||
+    filePath.startsWith("https://") ||
+    filePath.startsWith("data:")
+  ) {
+    return filePath;
+  }
+
+  return `${API.replace(/\/$/, "")}/${filePath.replace(/^\//, "")}`;
+};
+
 // Dashboard
 export const getAdminStats = async () => {
   const res = await axios.get(`${API}/api/admin/stats`, {
@@ -64,7 +78,7 @@ export const approveProvider = async (providerId) => {
 export const rejectProvider = async (providerId, reason) => {
   const res = await axios.put(
     `${API}/api/admin/providers/${providerId}/reject`,
-    { reason },
+    reason || "",
     {
       headers: {
         ...getAuthHeaders(),
@@ -83,6 +97,16 @@ export const getProviderDetails = async (providerId) => {
 };
 
 // Provider Services
+export const getProviderServiceDetails = async (providerServiceId) => {
+  const res = await axios.get(
+    `${API}/api/admin/provider-services/${providerServiceId}`,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return res.data;
+};
+
 export const getPendingProviderServices = async () => {
   const res = await axios.get(`${API}/api/admin/provider-services/pending`, {
     headers: getAuthHeaders(),
@@ -135,4 +159,18 @@ export const deleteAdminCategory = async (id) => {
     headers: getAuthHeaders(),
   });
   return res.data;
+};
+
+export const downloadAdminDashboardPdf = async () => {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const response = await axios.get(`${API}/api/admin/dashboard/export`, {
+    responseType: "blob",
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return response.data;
 };

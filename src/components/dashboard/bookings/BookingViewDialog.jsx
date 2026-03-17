@@ -108,6 +108,7 @@ export default function BookingViewDialog({
   };
 
   return (
+    
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent
         className="

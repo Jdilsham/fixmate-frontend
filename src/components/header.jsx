@@ -16,18 +16,22 @@ import {
 import * as Avatar from "@radix-ui/react-avatar";
 import { Button } from "@/components/ui/button";
 import DarkmodeToggle from "./darkmodeToggle";
-import { Menu, Wrench, LayoutDashboard, Settings, LogOut } from "lucide-react";
+import { Menu, Wrench, LayoutDashboard, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-
-import { getUserProfile } from "../../utils/profile"; 
+import { getUserProfile } from "../../utils/profile";
 
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
 
   const [profile, setProfile] = useState(null);
+  const [role, setRole] = useState(null);
+
+  const isAdmin = role === "ADMIN";
+  const dashboardPath = isAdmin ? "/admin/dashboard" : "/provider/dashboard";
 
   useEffect(() => {
     let alive = true;
@@ -35,20 +39,38 @@ export default function Header() {
     async function load() {
       if (!isLoggedIn) {
         setProfile(null);
+        setRole(null);
         return;
       }
 
-      const p = await getUserProfile(); // returns object with fullName + profilePicture
-      if (alive) setProfile(p);
+      try {
+        const p = await getUserProfile();
+
+        if (alive) {
+          setProfile(p);
+          setRole(p?.role?.toUpperCase() || null);
+        }
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+        if (alive) {
+          setProfile(null);
+          setRole(null);
+        }
+      }
     }
 
     load();
+
     return () => {
       alive = false;
     };
   }, [isLoggedIn, token, location.pathname]);
 
-  const fullName = profile?.fullName || "User";
+  const fullName =
+    profile?.fullName ||
+    `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() ||
+    "User";
+
   const initials = (fullName?.trim()?.[0] || "U").toUpperCase();
   const profileSrc = profile?.profilePicture || "";
 
@@ -62,8 +84,20 @@ export default function Header() {
 
   function handleLogout() {
     localStorage.removeItem("token");
-    localStorage.removeItem("user"); // ok even if not used
+    localStorage.removeItem("user");
+    localStorage.removeItem("dashboardActiveTab");
+    localStorage.removeItem("adminActiveTab");
     navigate("/login");
+  }
+
+  function goToDashboard() {
+    if (isAdmin) {
+      localStorage.setItem("adminActiveTab", "dashboard");
+    } else {
+      localStorage.setItem("dashboardActiveTab", "dashboard");
+    }
+
+    navigate(dashboardPath);
   }
 
   const isActive = (path) => {
@@ -80,7 +114,6 @@ export default function Header() {
     >
       <div className="border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="relative mx-auto flex h-20 max-w-7xl items-center px-4 sm:px-6">
-          {/* LEFT (Logo) */}
           <div className="flex flex-1 items-center">
             <button
               onClick={() => navigate("/")}
@@ -90,7 +123,7 @@ export default function Header() {
                 <Wrench className="h-5 w-5" />
               </span>
 
-              <div className="leading-tight text-left">
+              <div className="text-left leading-tight">
                 <div className="text-xl font-semibold tracking-tight">
                   Fix<span className="text-primary">Mate</span>
                 </div>
@@ -101,8 +134,7 @@ export default function Header() {
             </button>
           </div>
 
-          {/* CENTER NAV (Desktop) */}
-          <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
+          <div className="absolute left-1/2 hidden -translate-x-1/2 md:block">
             <NavigationMenu>
               <NavigationMenuList className="flex items-center gap-1">
                 {navLinks.map((link) => (
@@ -111,8 +143,8 @@ export default function Header() {
                       onClick={() => navigate(link.path)}
                       className={[
                         "relative rounded-xl px-4 py-2 text-sm font-medium transition",
-                        "text-foreground/80 hover:text-foreground hover:bg-accent/40",
-                        isActive(link.path) ? "text-foreground bg-accent/35" : "",
+                        "text-foreground/80 hover:bg-accent/40 hover:text-foreground",
+                        isActive(link.path) ? "bg-accent/35 text-foreground" : "",
                       ].join(" ")}
                     >
                       {link.label}
@@ -126,12 +158,10 @@ export default function Header() {
             </NavigationMenu>
           </div>
 
-          {/* RIGHT */}
           <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">
-            {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden rounded-xl">
+                <Button variant="ghost" size="icon" className="rounded-xl md:hidden">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -163,10 +193,7 @@ export default function Header() {
                       <Button onClick={() => navigate("/signup")}>Sign Up</Button>
                     </div>
                   ) : (
-                    <Button
-                      onClick={() => navigate("/provider/dashboard")}
-                      variant="secondary"
-                    >
+                    <Button onClick={goToDashboard} variant="secondary">
                       Go to Dashboard
                     </Button>
                   )}
@@ -174,13 +201,12 @@ export default function Header() {
               </SheetContent>
             </Sheet>
 
-            {/* Auth buttons / Avatar */}
             {!isLoggedIn ? (
               <>
                 <Button
                   variant="ghost"
                   onClick={() => navigate("/login")}
-                  className="hidden sm:inline-flex rounded-xl"
+                  className="hidden rounded-xl sm:inline-flex"
                 >
                   Login
                 </Button>
@@ -191,39 +217,33 @@ export default function Header() {
               </>
             ) : (
               <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className="
-                        relative flex items-center justify-center
-                        h-10 w-10
-                        rounded-full
-                        overflow-hidden
-                        border border-border/60
-                        bg-muted
-                        focus:outline-none focus:ring-2 focus:ring-ring/60
-                        transition
-                        hover:scale-[1.04]
-                      "
-                    >
-                      <Avatar.Root className="h-full w-full rounded-full overflow-hidden">
-                        <Avatar.Image
-                          src={profileSrc}
-                          alt="Profile"
-                          className="h-full w-full object-cover object-center"
-                        />
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="
+                      relative flex h-10 w-10 items-center justify-center
+                      overflow-hidden rounded-full border border-border/60
+                      bg-muted transition hover:scale-[1.04]
+                      focus:outline-none focus:ring-2 focus:ring-ring/60
+                    "
+                  >
+                    <Avatar.Root className="h-full w-full overflow-hidden rounded-full">
+                      <Avatar.Image
+                        src={profileSrc}
+                        alt="Profile"
+                        className="h-full w-full object-cover object-center"
+                      />
+                      <Avatar.Fallback
+                        className="
+                          flex h-full w-full items-center justify-center
+                          bg-primary/20 text-sm font-semibold text-foreground
+                        "
+                      >
+                        {initials}
+                      </Avatar.Fallback>
+                    </Avatar.Root>
+                  </button>
+                </DropdownMenuTrigger>
 
-                        <Avatar.Fallback
-                          className="
-                            flex h-full w-full items-center justify-center
-                            text-sm font-semibold
-                            bg-primary/20 text-foreground
-                          "
-                        >
-                          {initials}
-                        </Avatar.Fallback>
-                      </Avatar.Root>
-                    </button>
-                  </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
                   className="w-56 rounded-2xl border border-border/60 bg-background/95 p-2 shadow-xl backdrop-blur"
@@ -236,17 +256,14 @@ export default function Header() {
                   </div>
 
                   <DropdownMenuSeparator className="my-2" />
-                    <DropdownMenuItem
-                        onClick={() => {
-                          localStorage.setItem("dashboardActiveTab", "dashboard");
-                          navigate("/provider/dashboard");
-                        }}
-                        className="cursor-pointer rounded-xl px-3 py-2 focus:bg-accent/50"
-                      >
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        Dashboard
-                    </DropdownMenuItem>
-                  
+
+                  <DropdownMenuItem
+                    onClick={goToDashboard}
+                    className="cursor-pointer rounded-xl px-3 py-2 focus:bg-accent/50"
+                  >
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
 
                   <DropdownMenuSeparator className="my-2" />
 

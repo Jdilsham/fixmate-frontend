@@ -2,6 +2,16 @@ import axios from "axios";
 import { getAuthUser } from "./auth";
 const API = import.meta.env.VITE_BACKEND_URL;
 
+function buildFileUrl(path) {
+  if (!path) return null;
+
+  if (path.startsWith("http")) {
+    return `${path}?t=${Date.now()}`;
+  }
+
+  return `${API}${path}?t=${Date.now()}`;
+}
+
 export async function getUserProfile() {
   const auth = getAuthUser();
   if (!auth) {
@@ -34,13 +44,11 @@ export async function getUserProfile() {
         rating: p.rating,
         verified: p.isVerified,
         verificationStatus: p.verificationStatus,
-        idFrontUrl: p.idFrontUrl,
-        idBackUrl: p.idBackUrl,
-        workPdfUrl: p.workPdfUrl,
+        idFrontUrl: buildFileUrl(p.idFrontUrl),
+        idBackUrl: buildFileUrl(p.idBackUrl),
+        workPdfUrl: buildFileUrl(p.workPdfUrl),
         available: p.isAvailable,
-        profilePicture: p.profileImage
-          ? `${API}${p.profileImage}?t=${Date.now()}`
-          : null,
+        profilePicture: buildFileUrl(p.profileImage),
         services: p.services || [],
         phone: p.phone || "",
         role,
@@ -63,7 +71,9 @@ export async function getUserProfile() {
         email: c.email,
         phone: c.phone || "",
         profilePicture: c.profilePic
-          ? `${API}${c.profilePic}?t=${Date.now()}`
+          ? (c.profilePic.startsWith("http")
+              ? `${c.profilePic}?t=${Date.now()}`
+              : `${API}${c.profilePic}?t=${Date.now()}`)
           : null,
         verified: false,
         role,
@@ -86,7 +96,9 @@ export async function getUserProfile() {
         email: a.email,
         phone: a.phone || "",
         profilePicture: a.profilePic
-          ? `${API}${a.profilePic}?t=${Date.now()}`
+          ? (a.profilePic.startsWith("http")
+              ? `${a.profilePic}?t=${Date.now()}`
+              : `${API}${a.profilePic}?t=${Date.now()}`)
           : null,
         role,
       };
@@ -136,9 +148,6 @@ export async function updateProviderProfile(payload) {
   return res.data;
 }
 
-
-// PROVIDER ADDRESS APIs
-
 // GET provider address
 export async function getProviderAddress() {
   const auth = getAuthUser();
@@ -175,8 +184,6 @@ export async function addProviderAddress(address) {
   return res.data;
 }
 
-
-
 // UPDATE provider address
 export async function updateProviderAddress(address) {
   const auth = getAuthUser();
@@ -201,8 +208,7 @@ export async function updateProviderProfilePicture(file) {
   if (!auth) throw new Error("Not authenticated");
 
   const formData = new FormData();
-  formData.append("profilePic", file); // MUST match backend param name
-
+  formData.append("profilePic", file);
   const res = await axios.put(
     `${API}/api/provider/profile/picture`,
     formData,
@@ -402,9 +408,6 @@ export async function updateCustomerProfile(payload) {
   });
 }
 
-
-// CUSTOMER ADDRESS APIs
-
 // GET customer address
 export async function getCustomerAddress() {
   const auth = getAuthUser();
@@ -483,6 +486,20 @@ export const toggleProviderServiceActive = async (providerServiceId) => {
   return axios.patch(
     `${API}/api/provider/service/${providerServiceId}/active`,
     {},
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+};
+
+export const deleteProviderService = async (providerServiceId) => {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  return axios.delete(
+    `${API}/api/provider/service/${providerServiceId}`,
     {
       headers: {
         Authorization: `Bearer ${auth.token}`,
@@ -576,4 +593,18 @@ export const getCustomerMe = async () => {
   });
 
   return res.data;
+};
+
+export const downloadProviderDashboardPdf = async () => {
+  const auth = getAuthUser();
+  if (!auth) throw new Error("Not authenticated");
+
+  const response = await axios.get(`${API}/api/provider/dashboard/export`, {
+    responseType: "blob",
+    headers: {
+      Authorization: `Bearer ${auth.token}`,
+    },
+  });
+
+  return response.data;
 };

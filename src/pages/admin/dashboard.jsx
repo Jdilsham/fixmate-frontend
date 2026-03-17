@@ -10,8 +10,8 @@ import PendingProviderServicesTable from "@/components/adminDashboard/PendingPro
 import AdminDashboardInsights from "@/components/adminDashboard/AdminDashboardInsights";
 import Header from "@/components/header";
 import toast from "react-hot-toast";
-import { Card } from "@/components/ui/card";
 import AdminProfileSection from "@/components/adminDashboard/AdminProfileSection";
+import { downloadAdminDashboardPdf } from "../../../utils/admin";
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
@@ -20,6 +20,7 @@ export default function AdminDashboard() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [dashboardStats, setDashboardStats] = useState({});
   const [statsLoading, setStatsLoading] = useState(true);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const fetchDashboardStats = async () => {
     try {
@@ -45,6 +46,34 @@ export default function AdminDashboard() {
       setStatsLoading(false);
     }
   };
+
+  const handleDownloadPdf = async () => {
+    try {
+      setDownloadingPdf(true);
+
+      const blob = await downloadAdminDashboardPdf();
+
+      const url = window.URL.createObjectURL(
+        new Blob([blob], { type: "application/pdf" })
+      );
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "admin-dashboard-report.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+      toast.success("Admin dashboard PDF downloaded");
+    } catch (error) {
+      console.error("Failed to download admin dashboard PDF", error);
+      toast.error("Failed to download admin dashboard PDF");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchDashboardStats();
@@ -128,13 +157,23 @@ export default function AdminDashboard() {
                 </div>
 
                 {isDashboardTab ? (
-                  <Button
-                    onClick={fetchDashboardStats}
-                    disabled={statsLoading}
-                    className="rounded-full border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 dark:border-cyan-400/20 dark:bg-transparent dark:text-white dark:hover:bg-white/10"
-                  >
-                    {statsLoading ? "Refreshing..." : "Refresh"}
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      onClick={handleDownloadPdf}
+                      disabled={downloadingPdf}
+                      className="rounded-full border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 dark:border-cyan-400/20 dark:bg-transparent dark:text-white dark:hover:bg-white/10"
+                    >
+                      {downloadingPdf ? "Downloading..." : "Genarate PDF"}
+                    </Button>
+
+                    <Button
+                      onClick={fetchDashboardStats}
+                      disabled={statsLoading}
+                      className="rounded-full border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 dark:border-cyan-400/20 dark:bg-transparent dark:text-white dark:hover:bg-white/10"
+                    >
+                      {statsLoading ? "Refreshing..." : "Refresh"}
+                    </Button>
+                  </div>
                 ) : null}
               </div>
 
