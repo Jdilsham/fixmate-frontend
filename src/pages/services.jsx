@@ -234,6 +234,8 @@ export default function Services() {
 
       const okLoc = !l || empLoc.includes(l);
 
+      useRealTimeUpdates('provider-updates', fetchProviders);
+
       return okService && okLoc;
     });
   }, [employees, service, debouncedLocation]);
