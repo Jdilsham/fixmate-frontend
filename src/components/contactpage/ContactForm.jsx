@@ -1,8 +1,10 @@
 import { useState } from "react";
+import axios from "axios";
 import ContactLabel from "./ContactLabel";
 import ContactInput from "./ContactInput";
 import ContactTextarea from "./ContactTextarea";
 import ContactButton from "./ContactButton";
+import toast from "react-hot-toast";
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -14,6 +16,9 @@ export default function ContactForm() {
 
   const [loading, setLoading] = useState(false);
 
+  const API_BASE_URL =
+    import.meta.env.VITE_API_URL || "http://localhost:8081";
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -24,18 +29,19 @@ export default function ContactForm() {
     setLoading(true);
 
     try {
-      // ✅ Replace this with your API call later
-      console.log("CONTACT FORM DATA:", formData);
+      await axios.post(`${API_BASE_URL}/api/v1/contact/send`, formData);
 
-      // fake delay (optional)
-      await new Promise((r) => setTimeout(r, 800));
+      toast.success("Message sent successfully!");
 
-      // clear form
-      setFormData({ name: "", email: "", phone: "", message: "" });
-      alert("Message sent successfully!");
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong. Please try again!");
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message. Please try again.");
     } finally {
       setLoading(false);
     }
