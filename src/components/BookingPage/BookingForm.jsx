@@ -42,13 +42,11 @@ export default function BookingForm({
   });
 
   useEffect(() => {
-    // phone preload
     setFormData((p) => ({
       ...p,
       phone: address?.phone || user?.phone || "",
     }));
 
-    // optional preload coords
     if (address?.latitude && address?.longitude) {
       setCoords({
         lat: Number(address.latitude),
@@ -94,7 +92,6 @@ export default function BookingForm({
       const province = addr.state || addr.region || "";
       const suburbLike = addr.suburb || addr.neighbourhood || addr.hamlet || "";
 
-      // Build short line from structured fields
       const parts = [
         addr.house_number,
         addr.road,
@@ -105,15 +102,12 @@ export default function BookingForm({
         .filter(Boolean)
         .join(", ");
 
-      // Strong fallback: use display_name if parts are empty
       let addressLine1 = parts;
       if (!addressLine1) {
         const display = (data?.display_name || "").trim();
-        // keep it short and clean: first 2–3 chunks
         addressLine1 = display ? display.split(",").slice(0, 3).join(", ").trim() : "";
       }
 
-      // avoid duplicates like "Kohombagaswewa, Kohombagaswewa"
       if (
         city &&
         suburbLike &&
@@ -128,7 +122,6 @@ export default function BookingForm({
         province: province || "",
       });
     } catch {
-      // silent
     }
   };
 

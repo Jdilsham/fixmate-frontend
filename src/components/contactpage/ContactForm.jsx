@@ -17,7 +17,7 @@ export default function ContactForm() {
   const [loading, setLoading] = useState(false);
 
   const API_BASE_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:8081";
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:8081";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
