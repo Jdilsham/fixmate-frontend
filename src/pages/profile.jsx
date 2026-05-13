@@ -1,63 +1,85 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../components/header";
-import { useParams } from "react-router-dom";
-import { Calendar } from "@/components/ui/calendar";
+import { useNavigate, useParams } from "react-router-dom";
+
+import { Button } from "../components/ui/button";
+import { getAuthUser } from "../../utils/auth";
+
+const API = import.meta.env.VITE_BACKEND_URL;
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState("overview");
-  const { id } = useParams();
+  const { id } = useParams(); // provider id
+  const navigate = useNavigate();
+  const [authUser] = useState(() => getAuthUser());
 
-  const EMPLOYEES = [
-    {
-      id: "john-doe",
-      name: "John Doe",
-      service: "electrician",
-      description:
-        "Experienced electrician specializing in residential and commercial projects.",
-      location: "Galle",
-    },
-    {
-      id: "jane-smith",
-      name: "Jane Smith",
-      service: "plumber",
-      description:
-        "Experienced plumber specializing in residential and commercial projects.",
-      location: "Matara",
-    },
-    {
-      id: "mike-johnson",
-      name: "Mike Johnson",
-      service: "carpenter",
-      description:
-        "Experienced carpenter specializing in residential and commercial projects.",
-      location: "Hambantota",
-    },
-    {
-      id: "sara-lee",
-      name: "Sara Lee",
-      service: "mechanic",
-      description: "Experienced mechanic specializing in vehicle repair.",
-      location: "Gampaha",
-    },
-    {
-      id: "jason-borne",
-      name: "Jason Borne",
-      service: "electrician",
-      description:
-        "Experienced electrician specializing in residential and commercial projects.",
-      location: "Colombo",
-    },
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [date, setDate] = useState(new Date());
+
+  // ---------------- AUTH GUARD ----------------
+  useEffect(() => {
+    if (!authUser) {
+      navigate("/login");
+    }
+  }, [authUser, navigate]);
+
+  // ---------------- FETCH PROVIDER PROFILE ----------------
+  useEffect(() => {
+    if (!authUser) return;
+
+    const controller = new AbortController();
+
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await fetch(`${API}/api/provider/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+
+        if (!res.ok) throw new Error("Profile not found");
+
+        const data = await res.json();
+        setProfile(data);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error(err);
+          setProfile(null);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+
+    return () => controller.abort();
+  }, [id]);
+
+  // ---------------- TABS ----------------
+  const tabs = [
+    { id: "overview", label: "Overview" },
+
+    { id: "reviews", label: "Reviews" },
   ];
 
-  const profile = EMPLOYEES.find((emp) => emp.id === id) || EMPLOYEES[0];
-
-  // FIXED CALENDAR STATE
-  const [date, setDate] = useState(new Date());
+  // ---------------- UI STATES ----------------
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading profile...
+      </div>
+    );
+  }
 
   if (!profile) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center">
-        <h2 className="text-2xl font-semibold">Profile not found</h2>
+      <div className="h-screen flex items-center justify-center">
+        Profile not found
       </div>
     );
   }
@@ -66,144 +88,92 @@ export default function ProfilePage() {
     <div className="w-full min-h-screen bg-background text-foreground">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-6 pt-16 pb-32">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* ================= SIDEBAR ================= */}
-          <aside className="w-full lg:w-1/4 lg:min-w-[260px]">
-            <div className="lg:sticky lg:top-24 bg-card border border-border rounded-3xl p-6">
-              {/* Profile summary */}
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-lg font-semibold">
-                  {profile.name[0]}
-                </div>
-                <div>
-                  <h3 className="font-semibold">{profile.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {profile.service}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {profile.location}
-                  </p>
-                </div>
+      <div className="max-w-7xl mx-auto px-6 pt-16 pb-32 flex gap-8">
+        {/* ================= SIDEBAR ================= */}
+        <aside className="w-1/4">
+          <div className="bg-card border rounded-3xl p-6 sticky top-24">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center font-semibold">
+                {profile.fullName?.charAt(0)}
               </div>
 
-              {/* Navigation */}
-              <nav className="flex lg:flex-col gap-2 overflow-x-auto">
-                {[
-                  { id: "overview", label: "Overview" },
-                  { id: "services", label: "Services" },
-                  { id: "reviews", label: "Reviews" },
-                  { id: "settings", label: "Settings" },
-                  { id: "calendar", label: "Calendar" },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`
-                      shrink-0 text-left px-4 py-3 rounded-xl transition
-                      ${
-                        activeTab === item.id
-                          ? "bg-accent text-accent-foreground"
-                          : "hover:bg-muted text-foreground"
-                      }
-                    `}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
+              <div>
+                <h3 className="font-semibold">{profile.fullName}</h3>
+                <p className="text-sm text-muted-foreground">{profile.skill}</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile.location}
+                </p>
+              </div>
             </div>
-          </aside>
 
-          {/* ================= CONTENT ================= */}
-          <main className="w-full lg:w-3/4">
-            <div className="bg-card border border-border rounded-3xl p-8 min-h-[500px]">
-              {activeTab === "overview" && (
-                <section>
-                  <h2 className="text-3xl font-semibold mb-4">
-                    Profile Overview
-                  </h2>
-                  <p className="text-muted-foreground max-w-2xl">
-                    This section shows general information about the
-                    professional, including experience, location, and
-                    availability.
-                  </p>
-                </section>
-              )}
+            <nav className="flex flex-col gap-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-3 rounded-xl text-left transition ${
+                    activeTab === tab.id ? "bg-accent" : "hover:bg-muted"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </aside>
 
-              {activeTab === "services" && (
-                <section>
-                  <h2 className="text-3xl font-semibold mb-4">
-                    Services Offered
-                  </h2>
-                  <p className="text-muted-foreground">{profile.description}</p>
-                </section>
-              )}
+        {/* ================= CONTENT ================= */}
+        <main className="flex-1 bg-card border rounded-3xl p-8 relative">
+          {activeTab === "overview" && (
+            <div className="space-y-4 ">
+              <p className="text-muted-foreground">{profile.description}</p>
+              <p className="text-muted-foreground">{profile.experience}</p>
 
-              {activeTab === "reviews" && (
-                <section>
-                  <h2 className="text-3xl font-semibold mb-4">
-                    Customer Reviews
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Ratings and feedback from previous clients.
-                  </p>
-                </section>
-              )}
+              <p>⭐ Rating: {profile.rating ?? "N/A"}</p>
 
-              {activeTab === "settings" && (
-                <section>
-                  <h2 className="text-3xl font-semibold mb-4">
-                    Account Settings
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Manage profile and account preferences.
-                  </p>
-                </section>
-              )}
+              <h3 className="text-lg font-semibold mt-6">Services</h3>
 
-              {activeTab === "calendar" && (
-                <section>
-                  <div className="flex justify-around">
+              <div className="space-y-3">
+                {(profile.services ?? []).map((service) => (
+                  <div
+                    key={service.providerServiceId}
+                    className="flex items-center justify-between border rounded-xl p-4"
+                  >
                     <div>
-                      <h2 className="text-3xl font-semibold mb-4">Calendar</h2>
-
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        className="rounded-2xl border"
-                      />
-
-                      <p className="text-muted-foreground mt-4">
-                        View and manage your schedule.
+                      <p className="font-medium">{service.serviceTitle}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {service.fixedPriceAvailable
+                          ? "Fixed price available"
+                          : service.hourlyRate
+                            ? `Rs. ${service.hourlyRate}`
+                            : "—"}
                       </p>
                     </div>
-                    <div>
-                      <h3 className="text-2xl font-semibold mt-8 mb-4">
-                        Appointments
-                      </h3>
-                      <div className="space-y-4">
-                        <div className="p-4 border border-border rounded-xl">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-semibold">
-                                Appointment with John Doe
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                10:00 AM - 11:00 AM
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+
+                    <Button
+                      onClick={() =>
+                        navigate(`/book/${service.providerServiceId}`)
+
+                      }
+                    >
+                      Book
+                    </Button>
                   </div>
-                </section>
-              )}
+                ))}
+
+                {(!profile.services || profile.services.length === 0) && (
+                  <p className="text-sm text-muted-foreground">
+                    No services available.
+                  </p>
+                )}
+              </div>
             </div>
-          </main>
-        </div>
+          )}
+
+          {activeTab === "reviews" && (
+            <p className="text-muted-foreground">Reviews coming soon.</p>
+          )}
+        </main>
       </div>
     </div>
   );

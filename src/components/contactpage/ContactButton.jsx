@@ -1,11 +1,15 @@
+import { Button } from "@/components/ui/button";
+
 export default function ContactButton({ text, loading }) {
   return (
-    <button
+    <Button
       type="submit"
+      variant="fixmate"
+      size="lg"
       disabled={loading}
-      className="w-full bg-accent text-white py-2 rounded-md font-semibold hover:opacity-90 transition disabled:opacity-50"
+      className="w-full rounded-2xl"
     >
       {loading ? "Sending..." : text}
-    </button>
+    </Button>
   );
 }
