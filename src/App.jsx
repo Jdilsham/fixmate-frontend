@@ -7,6 +7,9 @@ import Services from "./pages/services";
 import Wanted from "./pages/wanted";
 import About from "./pages/about";
 import Contact from "./pages/contact";
+import PaymentPage from "./pages/payment/PaymentPage";
+import VerifyEmail from "./pages/VerifyEmail";
+
 
 import ProfilePage from "./pages/profile";
 import ProviderDashboard from "./pages/provider/Dashboard";
@@ -67,6 +70,10 @@ function App() {
 
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/payment-cancel" element={<PaymentCancel />} />
+
+          <Route path="/payment" element={<PaymentPage />} />
+
+          <Route path="/verify-email" element={<VerifyEmail />}/>
 
           {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />

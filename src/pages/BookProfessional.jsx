@@ -25,6 +25,7 @@ export default function BookProfessional() {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
   const isProvider = role === "SERVICE_PROVIDER";
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!providerServiceId) return;
@@ -81,6 +82,7 @@ export default function BookProfessional() {
   const handleFinalConfirm = async () => {
     if (!bookingData) return;
 
+    setIsSubmitting(true); 
     const {
       service,
       pricingType,
@@ -132,21 +134,17 @@ export default function BookProfessional() {
           }
         }
 
-        if (res.status === 409) {
-          toast.error("This time slot is already booked ❌");
-        } else if (res.status === 400 && errorMessage.includes("own service")) {
-          toast.error("You cannot book your own service");
-        } else {
-          toast.error(errorMessage);
-        }
-
+        toast.error(errorMessage);
         return;
       }
 
       toast.success("Booking confirmed 🎉");
       setShowSummary(false);
+
     } catch {
       toast.error("Booking failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -254,6 +252,7 @@ export default function BookProfessional() {
           onConfirm={handleFinalConfirm}
           onCancel={() => setShowSummary(false)}
           onEdit={() => setShowSummary(false)}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>
