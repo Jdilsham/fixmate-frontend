@@ -1,12 +1,12 @@
 import { useState } from "react";
+import axios from "axios";
 import ContactLabel from "./ContactLabel";
 import ContactInput from "./ContactInput";
 import ContactTextarea from "./ContactTextarea";
 import ContactButton from "./ContactButton";
-
+import toast from "react-hot-toast";
 
 export default function ContactForm() {
-  // Form state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,96 +16,81 @@ export default function ContactForm() {
 
   const [loading, setLoading] = useState(false);
 
-  // Handle input change
+  const API_BASE_URL =
+    import.meta.env.VITE_BACKEND_URL || "https://fixmate.works";
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle submit (NO backend yet)
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Simple validation
-    if (!formData.name || !formData.email || !formData.message) {
-      alert("Please fill all required fields");
-      return;
-    }
-
     setLoading(true);
 
-    // Demo submit action
-    setTimeout(() => {
-      console.log("Contact Form Data:", formData);
-      alert("Message sent successfully ✅");
+    try {
+      await axios.post(`${API_BASE_URL}/api/v1/contact/send`, formData);
 
-      // Reset form
+      toast.success("Message sent successfully!");
+
       setFormData({
         name: "",
         email: "",
         phone: "",
         message: "",
       });
-
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message. Please try again.");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="bg-card p-8 rounded-xl shadow-md w-full max-w-md">
-      <h3 className="text-2xl font-semibold mb-6">Get In Touch</h3>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <ContactLabel text="Name" />
+        <ContactInput
+          name="name"
+          placeholder="Enter your name"
+          value={formData.name}
+          onChange={handleChange}
+        />
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Name */}
-        <div>
-          <ContactLabel text="Name" />
-          <ContactInput
-            name="name"
-            placeholder="Enter your name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-        </div>
+      <div>
+        <ContactLabel text="Email" />
+        <ContactInput
+          type="email"
+          name="email"
+          placeholder="Enter your email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+      </div>
 
-        {/* Email */}
-        <div>
-          <ContactLabel text="Email" />
-          <ContactInput
-            type="email"
-            name="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-        </div>
+      <div>
+        <ContactLabel text="Phone No" />
+        <ContactInput
+          name="phone"
+          placeholder="Enter phone number"
+          value={formData.phone}
+          onChange={handleChange}
+        />
+      </div>
 
-        {/* Phone */}
-        <div>
-          <ContactLabel text="Phone No" />
-          <ContactInput
-            name="phone"
-            placeholder="Enter phone number"
-            value={formData.phone}
-            onChange={handleChange}
-          />
-        </div>
+      <div>
+        <ContactLabel text="Message" />
+        <ContactTextarea
+          name="message"
+          placeholder="Write your message"
+          value={formData.message}
+          onChange={handleChange}
+        />
+      </div>
 
-        {/* Message */}
-        <div>
-          <ContactLabel text="Message" />
-          <ContactTextarea
-            name="message"
-            placeholder="Write your message"
-            value={formData.message}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Submit Button */}
-        <ContactButton text="SEND MESSAGE" loading={loading} />
-      </form>
-    </div>
+      <ContactButton text="SEND MESSAGE" loading={loading} />
+    </form>
   );
 }

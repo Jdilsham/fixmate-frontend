@@ -11,7 +11,7 @@ export default function UserAvatar() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const res = await axios.get(`${API}/api/auth/user`, {
+        const res = await axios.get(`${API}/api/auth/login`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

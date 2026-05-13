@@ -11,8 +11,11 @@ export default function Footercard() {
           border border-black/10 dark:border-white/10
           shadow-[0_20px_60px_rgba(0,0,0,0.15)]
           px-10 pt-16
+          overflow-auto
         "
       >
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent/80 via-primary/70 to-cyan-400/60" />
+
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
           

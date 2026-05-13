@@ -5,24 +5,29 @@ pipeline{
             timestamps()
             disableConcurrentBuilds()
             buildDiscarder(logRotator(numToKeepStr: '20'))
+            skipDefaultCheckout(true)
     }
 
     parameters {
-    string(
-        name: 'IMAGE_TAG',
-        description: 'Docker image tag to deploy (From GitHub Actions)'
-    )
+        string(
+            name: 'IMAGE_TAG',
+            defaultValue: 'latest',
+            description: 'Docker image tag to deploy (From GitHub Actions)'
+        )
     }
 
     environment {
-        DOCKERHUB_USER = credentials('dockerhub-username')
-        IMAGE_NAME = credentials('dockerhub-image-name-frontend')
+        // DOCKERHUB_USER = credentials('dockerhub-username') #DOCKERHUB
+        // IMAGE_NAME = credentials('dockerhub-image-name-frontend') #DOCKERHUB
         GCP_PROJECT		=	credentials('gcp-project-id')
 		GKE_CLUSTER		=	credentials('gke-cluster-name')
 		GKE_ZONE		=	credentials('gke-zone')
 		K8S_NAMESPACE	=	credentials('k8s-namespace')
 
-        NEW_IMAGE		=	"${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
+        IMAGE_REPO = "asia-south1-docker.pkg.dev/${GCP_PROJECT}/fixmate-repo/fixmate-frontend"
+        NEW_IMAGE  = "${IMAGE_REPO}:${IMAGE_TAG}"
+
+        // NEW_IMAGE		=	"${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}" #DOCKERHUB
     }
 
     stages{
@@ -39,7 +44,7 @@ pipeline{
                         echo Authenticating to Google Cloud...
                         gcloud auth activate-service-account --key-file=${GCLOUD_KEY}
                         gcloud config set project ${GCP_PROJECT}
-                        gcloud container clusters get-credentials ${GKE_CLUSTER} --zone ${GKE_ZONE}
+                        gcloud container clusters get-credentials ${GKE_CLUSTER} --zone ${GKE_ZONE} --project ${GCP_PROJECT}
                     """
                 }
             }
@@ -63,17 +68,21 @@ pipeline{
             }
         }
 
-        stage('verify Rollout'){
-            steps{
-                script{
-                    try{
+        stage('Verify Rollout') {
+            steps {
+                script {
+                    try {
                         sh """
                             echo Verifying rollout status...
                             kubectl rollout status deployment/fixmate-frontend -n ${K8S_NAMESPACE} --timeout=120s
+                            echo Current pods:
+                            kubectl get pods -n ${K8S_NAMESPACE}
                         """
-                    }catch(err){
-                        echo "Rollout failed, initiating rollback..."
+                    } catch (err) {
+                        echo "Rollout failed, showing debug info before rollback..."
                         sh """
+                            kubectl get pods -n ${K8S_NAMESPACE}
+                            kubectl describe deployment fixmate-frontend -n ${K8S_NAMESPACE}
                             kubectl rollout undo deployment/fixmate-frontend -n ${K8S_NAMESPACE}
                         """
                         error("Rollout verification failed, rolled back to previous version.")
