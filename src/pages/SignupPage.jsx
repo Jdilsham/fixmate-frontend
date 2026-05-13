@@ -50,10 +50,9 @@ export default function SignupPage() {
         password,
         role,
       });
-
-      toast.success("Signup successful! Enter the verification code sent to your email.");
-      localStorage.setItem("pendingVerificationEmail", email);
-      navigate("/verify-otp", { state: { email } });
+      console.log("Signup successful:", response.data);
+      toast.success("Signup successful! Please login.");
+      navigate("/verify-email");
     } catch (error) {
       console.error("Signup failed:", error);
 
