@@ -23,6 +23,7 @@ export default function BookingSummary({
   onConfirm,
   onCancel,
   onEdit,
+  isSubmitting,
 }) {
   const {
     service,
@@ -216,12 +217,19 @@ export default function BookingSummary({
         <div className="mt-5 flex flex-col sm:flex-row gap-3">
         <Button
           onClick={onConfirm}
-          disabled={addressInvalid}
+          disabled={addressInvalid || isSubmitting}
           variant="fixmate"
           size="lg"
           className="w-full sm:flex-1 rounded-2xl"
         >
-          Confirm Booking
+          {isSubmitting ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              Booking is creating...
+            </span>
+          ) : (
+            "Confirm Booking"
+          )}
         </Button>
         <Button
           onClick={onEdit}

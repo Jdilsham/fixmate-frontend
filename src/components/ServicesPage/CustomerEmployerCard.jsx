@@ -95,7 +95,9 @@ export default function CustomerEmployerCard({ employer }) {
                   title={rating ?? "New"}
                 >
                   <span className="text-yellow-500">★</span>
-                  <span className="leading-none">{rating ?? "New"}</span>
+                  <span className="leading-none">
+                    {rating ? Number(rating).toFixed(1) : "New"}
+                  </span>
                 </span>
 
                 {/* location */}

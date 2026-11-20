@@ -111,3 +111,34 @@ export const createSmartBooking = async (payload) => {
 
   return res.data;
 };
+
+
+export const getProviderRating = async (providerId) => {
+  const auth = getAuthUser();
+
+  const res = await axios.get(
+    `${API}/api/reviews/provider/${providerId}/rating`,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data;
+};
+
+export const getProviderReviews = async (providerId) => {
+  const auth = getAuthUser();
+
+  const res = await axios.get(
+    `${API}/api/reviews/provider/${providerId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+    }
+  );
+
+  return res.data;
+};
